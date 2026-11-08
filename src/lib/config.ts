@@ -7,6 +7,8 @@ function env(name: string, fallback?: string): string {
   return v;
 }
 const opt = (name: string, fallback = "") => process.env[name] || fallback;
+// On Vercel, default URLs to this deployment's production domain.
+const vercelBase = process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "";
 const bool = (name: string, fallback: boolean) =>
   process.env[name] === undefined ? fallback : process.env[name] === "true";
 
@@ -16,13 +18,13 @@ export const config = {
   registry: { api: opt("REGISTRY_API", "https://agent-registry-mcp.concordium.com"), network: opt("REGISTRY_NETWORK", "testnet") },
   facilitator: {
     port: Number(opt("FACILITATOR_PORT", "4020")),
-    url: opt("FACILITATOR_URL", "http://localhost:4020"),
+    url: opt("FACILITATOR_URL", vercelBase ? `${vercelBase}/facilitator` : "http://localhost:4020"),
     address: () => env("CCD_FACILITATOR_ADDRESS"),
     privateKey: () => env("CCD_FACILITATOR_PRIVATE_KEY"),
   },
   seller: {
     port: Number(opt("SELLER_PORT", "4021")),
-    url: opt("SELLER_URL", "http://localhost:4021"),
+    url: opt("SELLER_URL", vercelBase || "http://localhost:4021"),
     payTo: () => env("SELLER_PAY_TO"),
     badge: opt("SELLER_BADGE"),
     asset: opt("PRICE_ASSET", "CCD"),
