@@ -5,7 +5,9 @@
   "description": "Cord: trust-gated agent commerce on Concordium. Verified agents buy and sell procurement intelligence over x402 with sponsored fees and an auditable receipt trail.",
   "type": "module",
   "license": "MIT",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "facilitator": "tsx src/facilitator/server.ts",
     "seller": "tsx src/seller/server.ts",
@@ -19,10 +21,10 @@
   "dependencies": {
     "@concordium/web-sdk": "^12.0.0",
     "@modelcontextprotocol/sdk": "^1.12.0",
-    "@x402/concordium": "~2.30.0",
-    "@x402/core": "~2.30.0",
-    "@x402/express": "~2.30.0",
-    "@x402/fetch": "~2.30.0",
+    "@x402/concordium": "~2.31.0",
+    "@x402/core": "~2.31.0",
+    "@x402/express": "~2.31.0",
+    "@x402/fetch": "~2.31.0",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
     "zod": "^3.24.1"
