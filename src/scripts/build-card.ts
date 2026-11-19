@@ -12,6 +12,12 @@ import { config } from "../lib/config.js";
 
 const who = (process.argv[2] ?? "seller") as "seller" | "buyer";
 const chain = config.network; // CAIP-2, e.g. ccd:4221332d34e1694168c2a0c0b3fd0f27
+// The registry writes owner accounts and contract addresses with the FULL genesis hash
+// (see "expected" in its badge-check response); token addresses use the short CAIP-2 form.
+const FULL_GENESIS: Record<string, string> = {
+  "ccd:4221332d34e1694168c2a0c0b3fd0f27": "ccd:4221332d34e1694168c2a0c0b3fd0f273809612cb13d000d5c2e00e85f50f796",
+};
+const chainFull = process.env.CHAIN_FULL_ID || FULL_GENESIS[chain] || chain;
 const registry = process.env.REGISTRY_CONTRACT ?? ""; // "<index>.<subindex>" of the testnet CIS-8004 contract
 const cis8 = process.env.CIS8_CONTRACT ?? "";
 const tokenId = process.env[who === "seller" ? "SELLER_TOKEN_ID" : "BUYER_TOKEN_ID"];
@@ -48,8 +54,8 @@ const card = {
       required: false,
       params: {
         tokenAddress: `${chain}/cis-2:${badge}`,
-        owner: { account: `${chain}:${owner}` },
-        contracts: { cis8004: `${chain}:${registry}`, ...(cis8 ? { cis8: `${chain}:${cis8}` } : {}) },
+        owner: { account: `${chainFull}:${owner}` },
+        contracts: { cis8004: `${chainFull}:${registry}`, ...(cis8 ? { cis8: `${chainFull}:${cis8}` } : {}) },
         verify: "Resolve tokenAddress via CIS-8004 agent_of; confirm owner + status is Active + card SHA-256 equals metadata_hash.",
         verification: {
           service: "Concordium Agent Registry",
@@ -66,7 +72,7 @@ const card = {
   services: [{ name: "A2A", endpoint: `${base}/.well-known/agent-card.json`, version: "1.0" }],
   x402Support: who === "seller",
   active: true,
-  registrations: tokenId && registry ? [{ agentId: Number(tokenId), agentRegistry: `${chain}:${registry}` }] : [],
+  registrations: tokenId && registry ? [{ agentId: Number(tokenId), agentRegistry: `${chainFull}:${registry}` }] : [],
 };
 
 const bytes = JSON.stringify(card, null, 2);
