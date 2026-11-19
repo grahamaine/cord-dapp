@@ -41,3 +41,18 @@ trail**. Built for the Concordium "Make your Agents Accountable" hackathon. See 
 6. `npm run audit:verify` checks the receipt chain.
 
 Seller data in `src/seller/data.ts` is sample data.
+
+## Owner dashboard (`npm run web`)
+With the facilitator and seller running, start the web UI in a fourth terminal and open http://localhost:4030.
+
+- **Dashboard**: service status, account balances and Verified by Concordium badges, every payment with its
+  CCDExplorer link, and whether the hash-chained receipt log is intact.
+- **Owner**: supplier invoices (Ugandan hotel suppliers, sample data) with a **Pay** button, plus the spending
+  policy the agent must obey before signing anything: max per payment, daily limit, allowed assets,
+  "only Verified by Concordium payees", and an approved-supplier list. Saved to `data/policy.json`.
+
+Paying an invoice runs the same trust-gated x402 flow as the CLI: the seller quotes the invoice amount (402),
+ProcureBot checks the owner policy and the payee's badge, signs a sponsored transaction, the facilitator settles
+it, and both sides add a receipt. Already-paid invoices are refused before a price is quoted.
+
+The web server holds the buyer's key, so it only listens on localhost. Don't expose it without authentication.

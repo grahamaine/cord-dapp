@@ -13,6 +13,7 @@ import { getExplorerTxUrl } from "@x402/concordium";
 import { AccountAddress, buildBasicAccountSigner } from "@concordium/web-sdk";
 import { config } from "../lib/config.js";
 import { checkBadge } from "../lib/badge.js";
+import { loadPolicy, policyViolation, type Policy } from "../lib/policy.js";
 import { appendReceipt, type Receipt } from "../lib/receipts.js";
 
 export interface PurchaseResult {
@@ -22,11 +23,19 @@ export interface PurchaseResult {
 }
 
 let paidFetch: ReturnType<typeof wrapFetchWithPayment> | undefined;
+let paidFetchPolicy = "";
 type Selection = { payTo: string; amount: string; asset: string; verified: boolean };
 let lastSelected: Selection | undefined;
+let lastRefusal: string | undefined;
 
-function getPaidFetch() {
-  if (paidFetch) return paidFetch;
+/** Thrown when the owner's policy or the trust gate refuses a payment (nothing was signed). */
+export class PaymentRefused extends Error {}
+
+function getPaidFetch(policy: Policy) {
+  // Rebuild the x402 client whenever the owner changes the policy.
+  const key = JSON.stringify(policy);
+  if (paidFetch && key === paidFetchPolicy) return paidFetch;
+  paidFetchPolicy = key;
   const scheme = new ExactConcordiumScheme(
     { accountAddress: AccountAddress.fromBase58(config.buyer.address()), signer: buildBasicAccountSigner(config.buyer.privateKey()) },
     { grpcUrl: `${config.grpc.host}:${config.grpc.port}`, useTls: true },
@@ -34,22 +43,25 @@ function getPaidFetch() {
 
   // x402 spend controls: only these assets, each capped per payment (atomic units).
   const client = new x402Client().register(config.network, scheme).setSpendControls({
-    allowedAssets: config.buyer.allowedAssets.map((asset) => ({
+    allowedAssets: policy.allowedAssets.map((asset) => ({
       network: config.network,
       asset,
-      maxAmountPerPayment: config.buyer.maxPayment.toString(),
+      maxAmountPerPayment: policy.maxPayment,
     })),
   });
 
   // Trust gate: runs after the 402 is received and BEFORE anything is signed.
   client.onBeforePaymentCreation(async ({ selectedRequirements: r }) => {
-    if (BigInt(r.amount) > config.buyer.maxPayment) {
-      return { abort: true as const, reason: `amount ${r.amount} exceeds spend cap ${config.buyer.maxPayment}` };
-    }
+    const refuse = (reason: string) => {
+      lastRefusal = reason;
+      return { abort: true as const, reason };
+    };
+    const violation = policyViolation(policy, r.payTo, r.amount, r.asset);
+    if (violation) return refuse(violation);
     const v = await checkBadge(r.payTo);
     lastSelected = { payTo: r.payTo, amount: r.amount, asset: r.asset, verified: v.verified };
-    if (!v.verified && config.buyer.requireSellerBadge) {
-      return { abort: true as const, reason: `payee ${r.payTo} has no valid Verified by Concordium agent: ${v.issues.join("; ")}` };
+    if (!v.verified && policy.requireSellerBadge) {
+      return refuse(`payee ${r.payTo} has no valid Verified by Concordium agent: ${v.issues.join("; ")}`);
     }
   });
 
@@ -59,10 +71,27 @@ function getPaidFetch() {
 
 export async function buy(url: string, purpose: string): Promise<PurchaseResult> {
   lastSelected = undefined;
+  lastRefusal = undefined;
   const headers: Record<string, string> = {};
   if (config.buyer.badge) headers["X-Agent-Badge"] = config.buyer.badge;
 
-  const res = await getPaidFetch()(url, { headers });
+  const policy = loadPolicy();
+  let res: Response;
+  try {
+    res = await getPaidFetch(policy)(url, { headers });
+  } catch (e) {
+    if (lastRefusal) throw new PaymentRefused(`refused before signing: ${lastRefusal}`);
+    // x402's built-in spend controls run before our hook; report them in the same plain terms.
+    const msg = (e as Error).message;
+    if (/spendControls/i.test(msg)) {
+      throw new PaymentRefused(
+        /maxAmountPerPayment/.test(msg)
+          ? `refused before signing: price is above the per-payment limit ${policy.maxPayment}`
+          : `refused before signing: asset not allowed (allowed: ${policy.allowedAssets.join(", ")})`,
+      );
+    }
+    throw e;
+  }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(`${res.status} from ${url}: ${JSON.stringify(data)}`);
 

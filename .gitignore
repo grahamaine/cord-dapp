@@ -2,3 +2,4 @@ node_modules
 dist
 .env
 data/receipts.jsonl
+data/policy.json

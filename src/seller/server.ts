@@ -12,8 +12,8 @@ import { HTTPFacilitatorClient } from "@x402/core/server";
 import { ExactConcordiumScheme } from "@x402/concordium/exact/server";
 import { config } from "../lib/config.js";
 import { checkBadge } from "../lib/badge.js";
-import { appendReceipt } from "../lib/receipts.js";
-import { benchmarks, tenders } from "./data.js";
+import { appendReceipt, readReceipts } from "../lib/receipts.js";
+import { benchmarks, invoices, tenders } from "./data.js";
 
 const payTo = config.seller.payTo();
 const resourceServer = new x402ResourceServer(new HTTPFacilitatorClient({ url: config.facilitator.url })).register(
@@ -21,8 +21,21 @@ const resourceServer = new x402ResourceServer(new HTTPFacilitatorClient({ url: c
   new ExactConcordiumScheme(),
 );
 
-const route = (amount: string, description: string) => ({
-  accepts: { scheme: "exact", network: config.network, payTo, price: { amount, asset: config.seller.asset } },
+const invoicePath = (id: string) => `/invoices/${id}/pay`;
+const findInvoice = (id: string) => invoices.find((i) => i.id === id);
+/** An invoice is paid once a settled receipt exists for its pay URL (the receipt log is the source of truth). */
+function invoicePayment(id: string) {
+  return readReceipts().find((r) => r.role === "seller" && r.resource.split("?")[0] === invoicePath(id));
+}
+const invoiceIdFromPath = (path: string) => decodeURIComponent(path.split("/")[2] ?? "");
+
+const route = (amount: string | ((ctx: { path: string }) => { amount: string; asset: string }), description: string) => ({
+  accepts: {
+    scheme: "exact",
+    network: config.network,
+    payTo,
+    price: typeof amount === "string" ? { amount, asset: config.seller.asset } : amount,
+  },
   description,
   mimeType: "application/json",
 });
@@ -30,8 +43,40 @@ const route = (amount: string, description: string) => ({
 export const app = express();
 
 app.get("/", (_req, res) =>
-  res.json({ agent: "TenderScout", by: "Cord", paid: ["GET /tenders?sector=", "GET /price-benchmark?item="], card: "/.well-known/agent-card.json", facilitator: config.facilitator.url }),
+  res.json({
+    agent: "TenderScout",
+    by: "Cord",
+    paid: ["GET /tenders?sector=", "GET /price-benchmark?item=", "GET /invoices/:id/pay"],
+    free: ["GET /invoices", "GET /healthz"],
+    card: "/.well-known/agent-card.json",
+    facilitator: config.facilitator.url,
+  }),
 );
+
+app.get("/healthz", (_req, res) =>
+  res.json({ ok: true, agent: "TenderScout", payTo, badge: config.seller.badge || null, requireBuyerBadge: config.seller.requireBuyerBadge, network: config.network }),
+);
+
+// Public: open supplier invoices and their payment status.
+app.get("/invoices", (_req, res) =>
+  res.json({
+    payTo,
+    asset: config.seller.asset,
+    items: invoices.map((inv) => {
+      const r = invoicePayment(inv.id);
+      return { ...inv, payTo, asset: config.seller.asset, status: r ? "paid" : "open", paidTx: r?.txHash ?? null, paidAt: r?.ts ?? null };
+    }),
+  }),
+);
+
+// Refuse unknown or already-paid invoices BEFORE quoting a price, so nothing is paid twice.
+app.use("/invoices/:id/pay", (req, res, next) => {
+  const inv = findInvoice(req.params.id);
+  if (!inv) return res.status(404).json({ error: "unknown_invoice" });
+  const r = invoicePayment(inv.id);
+  if (r) return res.status(409).json({ error: "already_paid", tx: r.txHash, paidAt: r.ts });
+  next();
+});
 
 // Public: Agent Card (hash-anchored on-chain in the CIS-8004 registry)
 app.get("/.well-known/agent-card.json", (_req, res) => {
@@ -42,7 +87,7 @@ app.get("/.well-known/agent-card.json", (_req, res) => {
 });
 
 // Accountability gate: only identity-backed agents may buy. Runs BEFORE payment is requested.
-app.use(["/tenders", "/price-benchmark"], async (req, res, next) => {
+app.use(["/tenders", "/price-benchmark", "/invoices/:id/pay"], async (req, res, next) => {
   if (!config.seller.requireBuyerBadge) return next();
   const badge = req.header("x-agent-badge");
   if (!badge) return res.status(403).json({ error: "badge_required", message: "Send X-Agent-Badge: <your CIS-8004 badge>" });
@@ -57,6 +102,10 @@ app.use(
     {
       "GET /tenders": route(config.seller.priceTenders, "Open public tenders by sector (Uganda)"),
       "GET /price-benchmark": route(config.seller.priceBenchmark, "Supplier price benchmark for an item"),
+      "GET /invoices/:id/pay": route(
+        (ctx) => ({ amount: findInvoice(invoiceIdFromPath(ctx.path))?.amount ?? "0", asset: config.seller.asset }),
+        "Settle a supplier invoice",
+      ),
     },
     resourceServer,
   ),
@@ -76,7 +125,9 @@ app.use((req, res, next) => {
         buyerBadge: res.locals.buyerBadge,
         sellerAccount: payTo,
         sellerBadge: config.seller.badge || undefined,
-        amount: req.path === "/tenders" ? config.seller.priceTenders : config.seller.priceBenchmark,
+        amount: req.path.startsWith("/invoices/")
+          ? findInvoice(invoiceIdFromPath(req.path))?.amount ?? "0"
+          : req.path === "/tenders" ? config.seller.priceTenders : config.seller.priceBenchmark,
         asset: config.seller.asset,
         network: config.network,
         txHash: settle.transaction,
@@ -91,6 +142,11 @@ app.use((req, res, next) => {
 app.get("/tenders", (req, res) => {
   const sector = String(req.query.sector ?? "").toLowerCase();
   res.json({ source: "TenderScout (sample data)", items: sector ? tenders.filter((t) => t.sector === sector) : tenders });
+});
+
+app.get("/invoices/:id/pay", (req, res) => {
+  const inv = findInvoice(req.params.id)!;
+  res.json({ invoice: inv.id, supplier: inv.supplier, status: "paid", amountUgx: inv.amountUgx, settled: { amount: inv.amount, asset: config.seller.asset } });
 });
 
 app.get("/price-benchmark", (req, res) => {

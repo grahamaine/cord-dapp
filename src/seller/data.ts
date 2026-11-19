@@ -15,3 +15,25 @@ export const benchmarks: Record<string, { unit: string; low: number; median: num
   "rice (25kg)": { unit: "bag", low: 105_000, median: 118_000, high: 132_000, samples: 52 },
   "cooking oil (20l)": { unit: "jerrycan", low: 140_000, median: 152_000, high: 171_000, samples: 44 },
 };
+
+/**
+ * SAMPLE supplier invoices for the owner page. Amounts are shown in UGX; on testnet each is
+ * settled with a small CCD amount (atomic units, 6 decimals) so demos don't drain test funds.
+ * In production the invoice would be priced in a PLT stablecoin (e.g. USDR) at the real value.
+ */
+export interface Invoice {
+  id: string;
+  supplier: string;
+  category: string;
+  description: string;
+  issued: string;
+  due: string;
+  amountUgx: number;
+  amount: string; // atomic units of PRICE_ASSET charged on-chain
+}
+export const invoices: Invoice[] = [
+  { id: "INV-LAU-1107", supplier: "Lakeside Laundry Services", category: "Laundry", description: "Linen & towel laundry, 1–15 Nov", issued: "2026-11-15", due: "2026-11-29", amountUgx: 1_850_000, amount: "300000" },
+  { id: "INV-PRO-2231", supplier: "Entebbe Fresh Produce", category: "Food supply", description: "Vegetables & fruit, week 46", issued: "2026-11-16", due: "2026-11-23", amountUgx: 2_420_000, amount: "400000" },
+  { id: "INV-TRN-0418", supplier: "Kitooro Airport Transfers", category: "Transport", description: "Guest airport transfers, 14 trips", issued: "2026-11-17", due: "2026-12-01", amountUgx: 980_000, amount: "150000" },
+  { id: "INV-MNT-0092", supplier: "Wakiso Plumbing & Repairs", category: "Maintenance", description: "Kitchen drainage repair", issued: "2026-11-18", due: "2026-12-02", amountUgx: 640_000, amount: "100000" },
+];

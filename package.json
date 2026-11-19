@@ -16,6 +16,7 @@
     "card": "tsx src/scripts/build-card.ts",
     "badge": "tsx src/scripts/check-badge.ts",
     "audit:verify": "tsx src/scripts/verify-receipts.ts",
+    "web": "tsx src/web/server.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
