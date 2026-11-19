@@ -20,7 +20,7 @@ const TTL_MS = 60_000;
 async function getJson(path: string): Promise<{ status: number; body: any }> {
   const url = `${config.registry.api}${path}${path.includes("?") ? "&" : "?"}network=${config.registry.network}`;
   try {
-    const res = await fetch(url, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(10_000) });
+    const res = await fetch(url, { headers: { accept: "application/json" }, signal: AbortSignal.timeout(Number(process.env.REGISTRY_TIMEOUT_MS || 30_000)) });
     const body = await res.json().catch(() => ({}));
     return { status: res.status, body };
   } catch (e) {
