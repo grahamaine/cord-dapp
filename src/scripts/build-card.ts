@@ -1,5 +1,5 @@
 /**
- * Build an Agent Card (ERC-8004 registration file + A2A v1.0 card, with the
+ * Build an Agent Card (badge block matches the registry's build_agent_badge output) (ERC-8004 registration file + A2A v1.0 card, with the
  * Verified by Concordium badge extension) and print its SHA-256 for on-chain anchoring.
  *   npm run card -- seller
  * Then: host data/agent-card.seller.json at SELLER_URL/.well-known/agent-card.json,
@@ -12,12 +12,6 @@ import { config } from "../lib/config.js";
 
 const who = (process.argv[2] ?? "seller") as "seller" | "buyer";
 const chain = config.network; // CAIP-2, e.g. ccd:4221332d34e1694168c2a0c0b3fd0f27
-// The registry writes owner accounts and contract addresses with the FULL genesis hash
-// (see "expected" in its badge-check response); token addresses use the short CAIP-2 form.
-const FULL_GENESIS: Record<string, string> = {
-  "ccd:4221332d34e1694168c2a0c0b3fd0f27": "ccd:4221332d34e1694168c2a0c0b3fd0f273809612cb13d000d5c2e00e85f50f796",
-};
-const chainFull = process.env.CHAIN_FULL_ID || FULL_GENESIS[chain] || chain;
 const registry = process.env.REGISTRY_CONTRACT ?? ""; // "<index>.<subindex>" of the testnet CIS-8004 contract
 const cis8 = process.env.CIS8_CONTRACT ?? "";
 const tokenId = process.env[who === "seller" ? "SELLER_TOKEN_ID" : "BUYER_TOKEN_ID"];
@@ -54,12 +48,13 @@ const card = {
       required: false,
       params: {
         tokenAddress: `${chain}/cis-2:${badge}`,
-        owner: { account: `${chainFull}:${owner}` },
-        contracts: { cis8004: `${chainFull}:${registry}`, ...(cis8 ? { cis8: `${chainFull}:${cis8}` } : {}) },
-        verify: "Resolve tokenAddress via CIS-8004 agent_of; confirm owner + status is Active + card SHA-256 equals metadata_hash.",
+        owner: { account: `${chain}:${owner}` },
+        agentWallet: `${chain}:${process.env[who === "seller" ? "SELLER_AGENT_WALLET" : "BUYER_AGENT_WALLET"] || owner}`,
+        contracts: { cis8004: `${chain}:${registry}`, ...(cis8 ? { cis8: `${chain}:${cis8}` } : {}) },
+        verify: "Resolve tokenAddress via CIS-8004 agent_of; confirm owner + status == Active + card SHA-256 == metadata_hash.",
         verification: {
           service: "Concordium Agent Registry",
-          verifyUrl: `${config.registry.api}/v1/badge-check/${badge}?network=${config.registry.network}`,
+          verifyUrl: `${config.registry.api}/v1/badge-check/${badge}`,
           mcp: `${config.registry.api}/mcp`,
           docs: "https://docs.concordium.com/en/mainnet/technical-reference/agent-registry/concordium-badge.html",
         },
@@ -72,7 +67,7 @@ const card = {
   services: [{ name: "A2A", endpoint: `${base}/.well-known/agent-card.json`, version: "1.0" }],
   x402Support: who === "seller",
   active: true,
-  registrations: tokenId && registry ? [{ agentId: Number(tokenId), agentRegistry: `${chainFull}:${registry}` }] : [],
+  registrations: tokenId && registry ? [{ agentId: Number(tokenId), agentRegistry: `${chain}:${registry}` }] : [],
 };
 
 const bytes = JSON.stringify(card, null, 2);
