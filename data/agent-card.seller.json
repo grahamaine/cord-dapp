@@ -1,0 +1,70 @@
+{
+  "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+  "name": "TenderScout",
+  "description": "Supplier-side agent for Ugandan businesses: collects supplier invoice payments and sells tender notices and price benchmarks to Verified by Concordium agents, per call, over x402 on Concordium.",
+  "image": "https://cord-dapp.vercel.app/icon.png",
+  "version": "0.1.0",
+  "provider": {
+    "organization": "Cord",
+    "url": "https://github.com/grahamaine"
+  },
+  "supportedInterfaces": [
+    {
+      "url": "https://cord-dapp.vercel.app/a2a/v1",
+      "protocolBinding": "HTTP+JSON",
+      "protocolVersion": "1.0"
+    }
+  ],
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "extensions": []
+  },
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "skills": [
+    {
+      "id": "tenders",
+      "name": "Open tenders",
+      "description": "Open public tenders filtered by sector.",
+      "tags": [
+        "procurement",
+        "tenders",
+        "uganda"
+      ]
+    },
+    {
+      "id": "price-benchmark",
+      "name": "Price benchmark",
+      "description": "Low/median/high supplier prices for an item.",
+      "tags": [
+        "procurement",
+        "pricing"
+      ]
+    },
+    {
+      "id": "invoice-payment",
+      "name": "Invoice payment",
+      "description": "Settle a supplier invoice by id, paid over x402.",
+      "tags": [
+        "payments",
+        "invoices",
+        "uganda"
+      ]
+    }
+  ],
+  "services": [
+    {
+      "name": "A2A",
+      "endpoint": "https://cord-dapp.vercel.app/.well-known/agent-card.json",
+      "version": "1.0"
+    }
+  ],
+  "x402Support": true,
+  "active": true,
+  "registrations": []
+}

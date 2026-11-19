@@ -1,0 +1,50 @@
+{
+  "type": "https://eips.ethereum.org/EIPS/eip-8004#registration-v1",
+  "name": "ProcureBot",
+  "description": "Hotel purchasing agent (Entebbe, Uganda) that pays supplier invoices and buys procurement data only from Verified by Concordium agents, within owner-set spending limits, with an auditable receipt trail.",
+  "image": "https://cord-dapp.vercel.app/procurebot/icon.png",
+  "version": "0.1.0",
+  "provider": {
+    "organization": "Cord",
+    "url": "https://github.com/grahamaine"
+  },
+  "supportedInterfaces": [
+    {
+      "url": "https://cord-dapp.vercel.app/procurebot/a2a/v1",
+      "protocolBinding": "HTTP+JSON",
+      "protocolVersion": "1.0"
+    }
+  ],
+  "capabilities": {
+    "streaming": false,
+    "pushNotifications": false,
+    "extensions": []
+  },
+  "defaultInputModes": [
+    "application/json"
+  ],
+  "defaultOutputModes": [
+    "application/json"
+  ],
+  "skills": [
+    {
+      "id": "purchase",
+      "name": "Purchase data",
+      "description": "Buys data from verified agents over x402.",
+      "tags": [
+        "procurement",
+        "buyer"
+      ]
+    }
+  ],
+  "services": [
+    {
+      "name": "A2A",
+      "endpoint": "https://cord-dapp.vercel.app/procurebot/.well-known/agent-card.json",
+      "version": "1.0"
+    }
+  ],
+  "x402Support": false,
+  "active": true,
+  "registrations": []
+}

@@ -17,15 +17,18 @@ const cis8 = process.env.CIS8_CONTRACT ?? "";
 const tokenId = process.env[who === "seller" ? "SELLER_TOKEN_ID" : "BUYER_TOKEN_ID"];
 const badge = who === "seller" ? config.seller.badge : config.buyer.badge;
 const owner = process.env[who === "seller" ? "SELLER_OWNER" : "BUYER_OWNER"] ?? "";
-const base = who === "seller" ? config.seller.url : "https://example.invalid/procurebot";
+// Cards must use PUBLIC URLs (the registry and other agents fetch them), never localhost.
+const publicUrl = (process.env.PUBLIC_URL || "https://cord-dapp.vercel.app").replace(/\/$/, "");
+const base = who === "seller" ? publicUrl : `${publicUrl}/procurebot`;
 
 const profile = who === "seller"
-  ? { name: "TenderScout", description: "Sells East African public-tender notices and supplier price benchmarks to verified agents, per call, over x402 on Concordium.",
+  ? { name: "TenderScout", description: "Supplier-side agent for Ugandan businesses: collects supplier invoice payments and sells tender notices and price benchmarks to Verified by Concordium agents, per call, over x402 on Concordium.",
       skills: [
         { id: "tenders", name: "Open tenders", description: "Open public tenders filtered by sector.", tags: ["procurement", "tenders", "uganda"] },
         { id: "price-benchmark", name: "Price benchmark", description: "Low/median/high supplier prices for an item.", tags: ["procurement", "pricing"] },
+        { id: "invoice-payment", name: "Invoice payment", description: "Settle a supplier invoice by id, paid over x402.", tags: ["payments", "invoices", "uganda"] },
       ] }
-  : { name: "ProcureBot", description: "Purchasing agent that buys procurement data only from Verified by Concordium agents, within a spend cap, with an auditable receipt trail.",
+  : { name: "ProcureBot", description: "Hotel purchasing agent (Entebbe, Uganda) that pays supplier invoices and buys procurement data only from Verified by Concordium agents, within owner-set spending limits, with an auditable receipt trail.",
       skills: [{ id: "purchase", name: "Purchase data", description: "Buys data from verified agents over x402.", tags: ["procurement", "buyer"] }] };
 
 const card = {
@@ -71,5 +74,6 @@ mkdirSync("data", { recursive: true });
 const path = `data/agent-card.${who}.json`;
 writeFileSync(path, bytes);
 console.log(`wrote ${path}`);
+console.log(`agent URI ${base}/.well-known/agent-card.json`);
 console.log(`sha256 ${createHash("sha256").update(bytes).digest("hex")}`);
 if (!badge) console.log("note: no badge yet — register the agent, set the badge/token id in .env, and re-run.");

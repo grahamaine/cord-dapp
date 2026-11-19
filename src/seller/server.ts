@@ -86,6 +86,13 @@ app.get("/.well-known/agent-card.json", (_req, res) => {
   res.type("application/json").send(readFileSync(path));
 });
 
+// Public: the buyer agent's (ProcureBot) card, hosted here so it has a public URL too.
+app.get("/procurebot/.well-known/agent-card.json", (_req, res) => {
+  const path = "data/agent-card.buyer.json";
+  if (!existsSync(path)) return res.status(404).json({ error: "run `npm run card -- buyer` first" });
+  res.type("application/json").send(readFileSync(path));
+});
+
 // Accountability gate: only identity-backed agents may buy. Runs BEFORE payment is requested.
 app.use(["/tenders", "/price-benchmark", "/invoices/:id/pay"], async (req, res, next) => {
   if (!config.seller.requireBuyerBadge) return next();
