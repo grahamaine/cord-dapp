@@ -465,9 +465,12 @@ const OP_TEXT = {
   release: (l) => `RELEASE PAYMENT\n\nYou are approving a payment prepared by an AI agent:\n${eur(l.amountEur)} to ${l.supplier} (${l.invoiceId}).\n\nThis signs and settles it on Concordium. It can't be undone.`,
   cancel: (l) => `Cancel lock ${l.id}? Any amount set aside goes back to today's budget.`,
 };
+const lockBusy = new Set();
 async function lockOp(btn) {
   const l = locks.find((x) => x.id === btn.dataset.id); const op = btn.dataset.op;
+  if (lockBusy.has(l.id)) return toast("<b>Still working</b>This lock is already being processed — check your wallet.", "");
   if (!confirm(OP_TEXT[op](l))) return;
+  lockBusy.add(l.id);
   btn.disabled = true; btn.textContent = op === "release" ? "Releasing…" : op === "send" ? "Checking…" : "…";
   try {
     let body = {};
@@ -490,6 +493,7 @@ async function lockOp(btn) {
   } catch (e) {
     toast(`<b>${e.body?.refused ? "Refused" : "Failed"} · ${esc(op)}</b>${esc(e.message)}`, "bad");
   }
+  lockBusy.delete(l.id);
   await loadOverview().catch(() => {});
   await loadLocksTab();
   loadAccounts();
@@ -674,7 +678,10 @@ $("#wm-browser").onclick = async () => {
     const { detectConcordiumProvider } = await import("https://esm.sh/@concordium/browser-wallet-api-helpers@3.3.0");
     const provider = await detectConcordiumProvider(3000).catch(() => null);
     if (!provider) throw new Error("Concordium Wallet for Web wasn't found in this browser. Install it, or use the mobile wallet.");
-    const account = await provider.connect();
+    if (wallet.busy) throw new Error("A wallet request is already open. Finish it in the wallet first.");
+    wallet.busy = true;
+    let account;
+    try { account = await provider.connect(); } finally { wallet.busy = false; }
     if (!account) throw new Error("No account was shared.");
     wallet.provider = provider; await connected("browser", String(account));
   } catch (e) { toast(`<b>Couldn't connect</b>${esc(e.message)}`, "bad"); }
@@ -694,7 +701,17 @@ $("#wm-mobile").onclick = async () => {
     wallet.session = session; await connected("mobile", account);
   } catch (e) { $("#wm-qr").innerHTML = ""; toast(`<b>Couldn't connect</b>${esc(e.message)}`, "bad"); }
 };
+// The Concordium wallet allows one open prompt at a time: never send a second request while one is open.
 async function walletSign(message) {
+  if (wallet.busy) throw new Error("A signing request is already open in your wallet. Approve or reject it there first.");
+  wallet.busy = true;
+  try { return await walletSignOnce(message); }
+  catch (e) {
+    if (/another prompt is already open/i.test(e?.message || "")) throw new Error("Your Concordium wallet still has an unfinished request. Click the wallet icon in Chrome and approve or reject it. If you can't see one, turn the extension off and on at chrome://extensions, reload this page and connect again.");
+    throw e;
+  } finally { wallet.busy = false; }
+}
+async function walletSignOnce(message) {
   if (wallet.kind === "browser") return wallet.provider.signMessage(wallet.account, message);
   if (wallet.kind === "mobile") {
     const cfg = await walletCfg();
