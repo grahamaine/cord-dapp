@@ -14,6 +14,7 @@ import { AccountAddress, buildBasicAccountSigner } from "@concordium/web-sdk";
 import { config } from "../lib/config.js";
 import { checkBadge } from "../lib/badge.js";
 import { loadPolicy, policyViolation, type Policy } from "../lib/policy.js";
+import { eurToAtomic } from "../lib/eur.js";
 import { appendReceipt, type Receipt } from "../lib/receipts.js";
 
 export interface PurchaseResult {
@@ -24,6 +25,7 @@ export interface PurchaseResult {
 
 let paidFetch: ReturnType<typeof wrapFetchWithPayment> | undefined;
 let paidFetchPolicy = "";
+let reservedEurForCall = 0; // budget set aside by OTHER locks, for the call in progress
 type Selection = { payTo: string; amount: string; asset: string; verified: boolean };
 let lastSelected: Selection | undefined;
 let lastRefusal: string | undefined;
@@ -46,7 +48,7 @@ function getPaidFetch(policy: Policy) {
     allowedAssets: policy.allowedAssets.map((asset) => ({
       network: config.network,
       asset,
-      maxAmountPerPayment: policy.maxPayment,
+      maxAmountPerPayment: policy.maxPerLockEur > 0 ? eurToAtomic(policy.maxPerLockEur) : "1000000000000000",
     })),
   });
 
@@ -56,7 +58,7 @@ function getPaidFetch(policy: Policy) {
       lastRefusal = reason;
       return { abort: true as const, reason };
     };
-    const violation = policyViolation(policy, r.payTo, r.amount, r.asset);
+    const violation = policyViolation(policy, r.payTo, r.amount, r.asset, reservedEurForCall);
     if (violation) return refuse(violation);
     const v = await checkBadge(r.payTo);
     lastSelected = { payTo: r.payTo, amount: r.amount, asset: r.asset, verified: v.verified };
@@ -69,7 +71,8 @@ function getPaidFetch(policy: Policy) {
   return paidFetch;
 }
 
-export async function buy(url: string, purpose: string): Promise<PurchaseResult> {
+export async function buy(url: string, purpose: string, opts: { reservedEur?: number } = {}): Promise<PurchaseResult> {
+  reservedEurForCall = opts.reservedEur ?? 0;
   lastSelected = undefined;
   lastRefusal = undefined;
   const headers: Record<string, string> = {};
@@ -86,7 +89,7 @@ export async function buy(url: string, purpose: string): Promise<PurchaseResult>
     if (/spendControls/i.test(msg)) {
       throw new PaymentRefused(
         /maxAmountPerPayment/.test(msg)
-          ? `refused before signing: price is above the per-payment limit ${policy.maxPayment}`
+          ? `refused before signing: price is above the per-payment limit of €${policy.maxPerLockEur.toLocaleString()}`
           : `refused before signing: asset not allowed (allowed: ${policy.allowedAssets.join(", ")})`,
       );
     }

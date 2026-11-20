@@ -2,8 +2,11 @@
  * Cord web: the owner's dashboard and control page.
  *   Dashboard  - service status, account balances + badges, payments with CCDExplorer links,
  *                and the tamper-evident receipt chain.
- *   Owner      - spending policy (limits, approved suppliers, badge rule), supplier invoices,
- *                and a Pay button that runs the same trust-gated x402 flow as the CLI.
+ *   Locks      - the five-step, human-supervised payment lifecycle for supplier invoices:
+ *                create → fund → send (agent checks) → release (human; settles on-chain) | cancel.
+ *   Policy     - per-lock and daily limits in demo EUR (€10,000 defaults), allowed assets,
+ *                badge rule, approved suppliers, human release, and a pause switch.
+ *   Audit      - hash-chained log of every operation (EU AI Act Art. 12 / 26(6)).
  *
  *   npm run web   ->  http://localhost:4030
  *
@@ -16,7 +19,10 @@ import { getExplorerTxUrl } from "@x402/concordium";
 import { config } from "../lib/config.js";
 import { checkBadge } from "../lib/badge.js";
 import { readReceipts, verifyChain, type Receipt } from "../lib/receipts.js";
-import { loadPolicy, savePolicy, spentToday } from "../lib/policy.js";
+import { loadPolicy, savePolicy, spentTodayEur } from "../lib/policy.js";
+import { audit, readAudit, verifyAudit } from "../lib/audit.js";
+import { createLock, fundLock, sendLock, releaseLock, cancelLock, readLocks, lockTotals, LockError, type Lock } from "../lib/locks.js";
+import { atomicToEur, ATOMIC_PER_EUR } from "../lib/eur.js";
 import { buy, PaymentRefused } from "../buyer/procurebot.js";
 import { mountAssets } from "../ui/assets.js";
 
@@ -103,9 +109,15 @@ app.get("/api/overview", async (_req, res) => {
     totals: {
       payments: rows.filter((r) => r.txHash).length,
       paid: rows.reduce((s, r) => s + BigInt(r.amount), 0n).toString(),
-      spentToday: spentToday().toString(),
-      dailyLimit: policy.dailyLimit,
+      paidEur: atomicToEur(rows.reduce((s, r) => s + BigInt(r.amount), 0n)),
+      spentTodayEur: spentTodayEur(),
+      dailyLimitEur: policy.dailyLimitEur,
+      maxPerLockEur: policy.maxPerLockEur,
+      ...lockTotals(),
     },
+    policy: { paused: policy.paused, requireHumanRelease: policy.requireHumanRelease },
+    audit: verifyAudit(),
+    demoRate: { atomicPerEur: ATOMIC_PER_EUR.toString() },
   });
 });
 
@@ -135,11 +147,25 @@ app.get("/api/receipts/raw", (_req, res) => res.json({ chain: verifyChain(), rec
 app.get("/api/policy", (_req, res) => res.json(loadPolicy()));
 app.put("/api/policy", (req, res) => {
   try {
-    res.json(savePolicy(req.body));
+    const before = loadPolicy();
+    const saved = savePolicy(req.body);
+    const changed = Object.keys(saved).filter((k) => !["updatedAt", "updatedBy"].includes(k) && JSON.stringify((saved as any)[k]) !== JSON.stringify((before as any)[k]));
+    audit({ actor: "owner", op: "policy", outcome: "ok", detail: changed.length ? `Policy changed: ${changed.join(", ")}` : "Policy saved (no changes)", data: { maxPerLockEur: saved.maxPerLockEur, dailyLimitEur: saved.dailyLimitEur, requireSellerBadge: saved.requireSellerBadge, requireHumanRelease: saved.requireHumanRelease, approvedSuppliers: saved.approvedSuppliers.length } });
+    res.json(saved);
   } catch (e) {
     res.status(400).json({ error: (e as Error).message });
   }
 });
+
+// Stop switch (EU AI Act Art. 14(4)(e)): pause or resume the agent.
+app.post("/api/agent/:action(pause|resume)", (req, res) => {
+  const paused = req.params.action === "pause";
+  const saved = savePolicy({ ...loadPolicy(), paused });
+  audit({ actor: "owner", op: req.params.action, outcome: "ok", detail: paused ? "Agent paused: all payments refused until resumed" : "Agent resumed" });
+  res.json(saved);
+});
+
+app.get("/api/audit", (_req, res) => res.json({ chain: verifyAudit(), entries: readAudit().slice(-200).reverse() }));
 
 app.get("/api/invoices", async (_req, res) => {
   const r = await getJson(`${config.seller.url}/invoices`);
@@ -149,16 +175,37 @@ app.get("/api/invoices", async (_req, res) => {
   res.json({ ...r.body, items, payeeBadge: badge ? { verified: badge.verified, agents: badge.agents, issues: badge.issues } : null });
 });
 
-app.post("/api/invoices/:id/pay", async (req, res) => {
-  const id = req.params.id;
-  const purpose = String(req.body?.purpose || `Owner paid invoice ${id}`);
+// ---------------- payment locks: create → fund → send → release | cancel ----------------
+async function invoiceRef(id: string) {
+  const r = await getJson(`${config.seller.url}/invoices`);
+  if (!r.ok) throw new LockError(`seller unreachable at ${config.seller.url}`, false);
+  const i = (r.body.items ?? []).find((x: any) => x.id === id);
+  if (!i) throw new LockError(`unknown invoice ${id}`);
+  return { ...i, payTo: r.body.payTo, asset: r.body.asset };
+}
+const withExplorer = (l: Lock) => ({ ...l, explorerUrl: l.explorerUrl || (l.txHash ? getExplorerTxUrl(config.network, l.txHash) : undefined) });
+
+/** Release = the only place money moves: a sponsored x402 payment through ProcureBot. */
+async function payLock(lock: Lock, reservedOtherEur: number) {
+  const r = await buy(`${config.seller.url}/invoices/${encodeURIComponent(lock.invoiceId)}/pay`, `Lock ${lock.id}: pay ${lock.invoiceId} (${lock.supplier})`, { reservedEur: reservedOtherEur });
+  return { txHash: r.receipt?.txHash, explorerUrl: r.receipt?.explorerUrl, receiptSeq: r.receipt?.seq };
+}
+
+const lockRoute = (fn: (req: express.Request) => Promise<unknown> | unknown) => async (req: express.Request, res: express.Response) => {
   try {
-    const r = await buy(`${config.seller.url}/invoices/${encodeURIComponent(id)}/pay`, purpose);
-    res.json({ ok: true, data: r.data, receipt: r.receipt ?? null, sellerVerified: r.sellerVerified });
+    const out = await fn(req);
+    res.json({ ok: true, lock: out && typeof out === "object" && "id" in (out as any) ? withExplorer(out as Lock) : out });
   } catch (e) {
-    const refused = e instanceof PaymentRefused;
-    res.status(refused ? 403 : 502).json({ ok: false, refused, error: (e as Error).message });
+    const refused = e instanceof LockError ? e.refused : e instanceof PaymentRefused;
+    res.status(refused ? 409 : 502).json({ ok: false, refused, error: (e as Error).message });
   }
-});
+};
+
+app.get("/api/locks", (_req, res) => res.json({ locks: readLocks().map(withExplorer).reverse(), totals: lockTotals() }));
+app.post("/api/locks", lockRoute(async (req) => createLock(await invoiceRef(String(req.body?.invoiceId || "")), "owner")));
+app.post("/api/locks/:id/fund", lockRoute((req) => fundLock(req.params.id, "owner")));
+app.post("/api/locks/:id/send", lockRoute((req) => sendLock(req.params.id, (l) => releaseLock(l.id, "agent", payLock))));
+app.post("/api/locks/:id/release", lockRoute((req) => releaseLock(req.params.id, "owner", payLock)));
+app.post("/api/locks/:id/cancel", lockRoute((req) => cancelLock(req.params.id, "owner", String(req.body?.note || ""))));
 
 app.listen(PORT, HOST, () => console.log(`${APP_NAME} dashboard on http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`));

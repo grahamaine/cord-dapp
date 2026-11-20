@@ -57,13 +57,45 @@ https://agent-registry-mcp.concordium.com/v1/badge-check/JyP9U3BHQRbFTuQx4N1Gn
 | Protocol-Level Tokens | set `PRICE_ASSET` / `ALLOWED_ASSETS` to a PLT such as USDR (planned) |
 | MCP | `src/mcp/server.ts` lets Claude or any MCP client drive ProcureBot |
 
+## Payment locks: five operations, one human decision
+Every invoice payment goes through a lock (`src/lib/locks.ts`). Amounts are in **demo EUR**; the default
+limits are **€10,000 per lock and €10,000 per day**.
+
+| Step | Who | What happens |
+|---|---|---|
+| 1. **Create** | owner | Opens a lock for one supplier invoice |
+| 2. **Fund** | owner | Sets the amount aside against today's budget; refused if over a limit |
+| 3. **Send** | AI agent | Checks the payee's Verified by Concordium badge and every owner rule, and records the result |
+| 4. **Release** | **a person** | Approves; only now is the payment signed and settled on Concordium (fee sponsored) |
+| 5. **Cancel** | owner | Stops the lock at any point before release; frees the budget |
+
+"Fund" reserves budget in Cord's records; it does not move money into an on-chain escrow. Money moves once,
+on release. On testnet each EUR amount settles as a small CCD amount at a fixed demo rate
+(`DEMO_ATOMIC_PER_EUR`, default €1,000 = 0.1 CCD); in production invoices would be paid in a euro stablecoin.
+
+## EU AI Act alignment
+Cord prepares business-to-business supplier payments, which is not on the AI Act's high-risk list, but it
+applies the Act's core safeguards by design:
+
+| AI Act | How Cord does it |
+|---|---|
+| Art. 14 human oversight | Release needs a person; the owner can cancel any lock or **pause the agent** (every payment refused while paused) |
+| Art. 12 record-keeping | Hash-chained audit log of every operation, refusal and policy change (`data/audit.jsonl`) plus payment receipts |
+| Art. 13 / 50 transparency | The owner page tells users they're working with an AI agent and shows its checks and reasons before release |
+| Art. 9 / 15 risk controls | Per-lock and daily limits, verified-supplier checks, refusal before any signature |
+| Art. 26 deployer duties | Keep logs at least six months; assign named people to oversight |
+
+Timing: Art. 50 transparency duties apply from 2 August 2026; after the 2026 Digital Omnibus, high-risk
+obligations for stand-alone systems apply from 2 December 2027. This describes Cord's design, not legal advice.
+
 ## Owner dashboard (`npm run web`, http://localhost:4030)
 - **Dashboard**: service status, account balances, badge status, every payment with its
   CCDExplorer link, and whether the receipt chain is intact.
-- **Owner**: supplier invoices with a **Pay** button, plus the spending policy the agent must obey:
-  max per payment, daily limit, allowed assets, "only pay Verified by Concordium suppliers", and an
-  approved-supplier list (saved to `data/policy.json`). Already-paid invoices are refused before a
-  price is quoted, so nothing is paid twice.
+- **Locks**: supplier invoices, the five lock operations, and today's budget (released + set aside vs limit).
+- **Policy**: per-lock and daily limits in EUR, allowed assets, "only pay Verified by Concordium suppliers",
+  "a person must release every payment", and an approved-supplier list (saved to `data/policy.json`).
+- **Audit log**: every operation with who did it (owner or AI agent), the outcome and the reason.
+- **Pause agent** (top right): stops all payments until resumed.
 
 The web server holds the buyer's signing key, so it listens on localhost only. Don't expose it without authentication.
 
@@ -90,7 +122,7 @@ Requires Node.js 20+. On Windows PowerShell, use `npm.cmd` in place of `npm`, or
    npm run seller          # :4021, supplier agent + invoices
    npm run web             # :4030, dashboard + owner page
    ```
-5. **Pay.** Open http://localhost:4030 → Owner → Pay an invoice. Or use the CLI:
+5. **Pay.** Open http://localhost:4030 → Locks → Create lock → Fund → Send to agent → Release. Or use the CLI:
    `npm run buyer -- tenders hospitality`.
 6. **Audit.** `npm run audit:verify` checks the receipt hash chain. `npm run badge -- <account or badge>` checks a badge.
 

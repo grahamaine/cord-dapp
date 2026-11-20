@@ -3,64 +3,89 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<meta name="theme-color" content="#070d10" />
+<meta name="theme-color" content="#faf7f1" />
 <title>{{APP_NAME}} · Owner dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&display=swap" />
 <link rel="stylesheet" href="/assets/cord.css" />
 <style>
-  main.wrap { padding-top: 2rem; padding-bottom: 3rem; }
-  .page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem; margin-bottom: 1.6rem; }
-  .page-head h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); line-height: 1.05; }
-  .tabs { display: inline-flex; gap: .3rem; padding: .3rem; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); }
-  .tab { padding: .5rem 1.3rem; border: 0; border-radius: 999px; background: transparent; color: var(--text); font: 600 .95rem var(--font); letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
-  .tab.on { background: var(--grad-cta); color: #000; }
-  .tab:not(.on):hover { color: var(--text-h); }
-  h2.h { font-size: 1.25rem; margin: 2.4rem 0 1rem; display: flex; align-items: baseline; gap: .8rem; flex-wrap: wrap; }
-  h2.h small { color: var(--muted); font-size: .85rem; font-weight: 400; text-transform: none; letter-spacing: .02em; }
+  main.wrap { padding-top: 1.6rem; padding-bottom: 3rem; }
+  .page-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem; margin: 1.4rem 0 1.6rem; }
+  .page-head h1 { font-size: clamp(1.8rem, 4vw, 2.7rem); line-height: 1.05; }
+  .tabs { display: inline-flex; flex-wrap: wrap; gap: .3rem; padding: .3rem; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.7); }
+  .tab { padding: .5rem 1.2rem; border: 0; border-radius: 999px; background: transparent; color: var(--ink-2); font: 500 .95rem var(--font); letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
+  .tab.on { background: var(--grad); color: #fff; }
+  .tab:not(.on):hover { background: rgba(34,29,46,.05); }
+  .tab .count { display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: .35rem; padding: 0 .35rem; border-radius: 999px; background: var(--warn); color: #fff; font-size: .75rem; }
+  h2.h { font-size: 1.25rem; margin: 2.2rem 0 1rem; display: flex; align-items: baseline; gap: .8rem; flex-wrap: wrap; }
+  h2.h small { color: var(--muted); font-size: .88rem; font-weight: 400; text-transform: none; letter-spacing: .02em; }
   .acct-top { display: flex; justify-content: space-between; align-items: center; gap: .8rem; }
-  .acct-role { color: var(--text-h); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
-  .bal { color: var(--text-h); font-size: 1.6rem; font-weight: 600; margin: .5rem 0 .2rem; }
+  .acct-role { color: var(--ink); font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+  .bal { color: var(--ink); font-size: 1.6rem; font-weight: 600; margin: .5rem 0 .2rem; }
   .hint { color: var(--muted); font-size: .88rem; margin-top: .4rem; }
-  .gate { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: .6rem; }
-  .gate span { font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; color: var(--teal); border: 1px solid rgba(20,241,178,.35); border-radius: 999px; padding: .1rem .6rem; }
-  .sup { display: flex; justify-content: space-between; align-items: center; gap: .8rem; padding: .7rem 0; border-top: 1px solid var(--border); }
+  .ok-text { color: var(--ok); } .bad-text { color: var(--bad); }
+  .budget { height: 12px; border-radius: 999px; background: rgba(34,29,46,.08); overflow: hidden; display: flex; margin: .9rem 0 .4rem; }
+  .budget i { display: block; height: 100%; }
+  .budget .spent { background: var(--grad); } .budget .res { background: rgba(245,158,11,.6); }
+  .legend { display: flex; flex-wrap: wrap; gap: 1rem; color: var(--muted); font-size: .85rem; }
+  .legend span::before { content: ""; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: .4rem; vertical-align: -1px; }
+  .legend .l1::before { background: var(--indigo); } .legend .l2::before { background: rgba(245,158,11,.7); } .legend .l3::before { background: rgba(34,29,46,.12); }
+  .flow { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; }
+  .flow .step { display: inline-flex; align-items: center; gap: .45rem; padding: .35rem .9rem; border-radius: 999px; border: 1px solid var(--line-2); background: #fff; color: var(--ink); font-weight: 500; letter-spacing: .04em; text-transform: uppercase; font-size: .85rem; }
+  .flow .step b { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 6px; background: var(--grad); color: #fff; font-size: .72rem; font-weight: 600; }
+  .flow .arrow { color: var(--muted); }
+  .flow .step.human { border-color: rgba(4,120,87,.35); background: var(--ok-soft); color: var(--ok); }
+  .flow .step.stop { border-color: rgba(185,28,28,.3); background: var(--bad-soft); color: var(--bad); }
+  .actions { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: flex-end; }
+  .err { color: var(--bad); font-size: .85rem; margin-top: .3rem; }
+  .checks { font-size: .85rem; color: var(--muted); }
+  .sup { display: flex; justify-content: space-between; align-items: center; gap: .8rem; padding: .7rem 0; border-top: 1px solid var(--line); }
   .sup:first-child { border-top: 0; }
-  .ok-text { color: var(--teal); } .bad-text { color: var(--red); }
 </style>
 </head>
 <body>
+<div class="aurora"><div class="grid-lines"></div></div>
 <header class="topbar">
   <div class="wrap">
     <span class="brand">
-      <span class="logo"><svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><circle cx="9" cy="16" r="5" fill="none" stroke="#000" stroke-width="3"/><circle cx="23" cy="16" r="5" fill="none" stroke="#fff" stroke-width="3"/><path d="M13.5 16h5" stroke="#000" stroke-width="3" stroke-linecap="round"/></svg></span>
+      <span class="logo"><svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><circle cx="9" cy="16" r="5" fill="none" stroke="#fff" stroke-width="3"/><circle cx="23" cy="16" r="5" fill="none" stroke="#fff" stroke-width="3" opacity=".7"/><path d="M13.5 16h5" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg></span>
       {{APP_NAME}}
     </span>
     <span class="net" id="net">…</span>
-    <span class="chip mute" style="margin-left:auto"><i></i>Local · owner only</span>
+    <div style="margin-left:auto;display:flex;gap:.6rem;align-items:center">
+      <span class="chip" id="agent-state"><i></i>Agent …</span>
+      <button class="btn btn-danger btn-sm" id="pause-btn" type="button">Pause agent</button>
+    </div>
   </div>
 </header>
 
 <main class="wrap">
+  <div class="notice" role="note">
+    <span class="ico" style="margin:0;width:36px;height:36px;font-size:1rem">AI</span>
+    <div><b>You're working with an AI purchasing agent.</b> ProcureBot checks suppliers and your limits and prepares payments, but <b>no money moves until a person presses Release</b>. Every step is recorded in a tamper-evident audit log. You can pause the agent at any time.</div>
+  </div>
+
   <div class="page-head">
     <div>
-      <div class="kicker">Owner dashboard</div>
+      <div class="kicker">Owner dashboard · demo EUR</div>
       <h1>Verified supplier payments</h1>
     </div>
     <nav class="tabs" role="tablist">
       <button class="tab on" data-tab="dash" role="tab">Dashboard</button>
-      <button class="tab" data-tab="owner" role="tab">Pay &amp; policy</button>
+      <button class="tab" data-tab="locks" role="tab">Locks<span class="count hidden" id="await-count"></span></button>
+      <button class="tab" data-tab="policy" role="tab">Policy</button>
+      <button class="tab" data-tab="audit" role="tab">Audit log</button>
     </nav>
   </div>
 
   <!-- DASHBOARD -->
   <div id="tab-dash">
     <div class="grid g4">
-      <div class="card stat"><div class="k">Payments settled</div><div class="v" id="s-pay">–</div><div class="s">finalized on Concordium</div></div>
-      <div class="card stat"><div class="k">Total paid</div><div class="v" id="s-total">–</div><div class="s">network fees sponsored</div></div>
-      <div class="card stat"><div class="k">Spent today</div><div class="v" id="s-today">–</div><div class="s" id="s-limit">daily limit –</div></div>
-      <div class="card stat"><div class="k">Receipt chain</div><div class="v" id="s-chain">–</div><div class="s" id="s-chain-sub">–</div></div>
+      <div class="card stat"><div class="k">Released</div><div class="v" id="s-released">–</div><div class="s" id="s-released-sub">–</div></div>
+      <div class="card stat"><div class="k">Awaiting release</div><div class="v" id="s-await">–</div><div class="s">need a human decision</div></div>
+      <div class="card stat"><div class="k">Today's budget</div><div class="v" id="s-today">–</div><div class="s" id="s-limit">–</div></div>
+      <div class="card stat"><div class="k">Records</div><div class="v" id="s-chain">–</div><div class="s" id="s-chain-sub">–</div></div>
     </div>
 
     <h2 class="h">Services</h2>
@@ -72,15 +97,35 @@
     <h2 class="h">Payments <small>one row per on-chain payment, linked to CCDExplorer</small></h2>
     <div class="card stack" style="padding:1rem 1rem .4rem">
       <table>
-        <thead><tr><th>When</th><th>What</th><th>From → To</th><th class="r">Amount</th><th>Transaction</th><th>Receipts</th></tr></thead>
+        <thead><tr><th>When</th><th>What</th><th>From → To</th><th class="r">Settled</th><th>Transaction</th><th>Receipts</th></tr></thead>
         <tbody id="payments"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
       </table>
     </div>
   </div>
 
-  <!-- OWNER -->
-  <div id="tab-owner" class="hidden">
-    <h2 class="h" style="margin-top:0">Supplier invoices <small>the agent checks every rule below before it signs anything</small></h2>
+  <!-- LOCKS -->
+  <div id="tab-locks" class="hidden">
+    <div class="card">
+      <div class="flow">
+        <span class="step"><b>1</b>Create</span><span class="arrow">→</span>
+        <span class="step"><b>2</b>Fund</span><span class="arrow">→</span>
+        <span class="step"><b>3</b>Send · agent checks</span><span class="arrow">→</span>
+        <span class="step human"><b>4</b>Release · you approve</span>
+        <span class="arrow">or</span><span class="step stop"><b>5</b>Cancel</span>
+      </div>
+      <div class="budget" id="budget"></div>
+      <div class="legend" id="budget-legend"></div>
+    </div>
+
+    <h2 class="h">Payment locks <small>money moves only on Release, as a sponsored payment on Concordium</small></h2>
+    <div class="card stack" style="padding:1rem 1rem .4rem">
+      <table>
+        <thead><tr><th>Lock</th><th>Supplier</th><th class="r">Amount</th><th>Status</th><th>Agent checks</th><th class="r">Actions</th></tr></thead>
+        <tbody id="locks"><tr><td colspan="6" class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+
+    <h2 class="h">Supplier invoices <small>open a lock to start paying one</small></h2>
     <div class="card stack" style="padding:1rem 1rem .4rem">
       <table>
         <thead><tr><th>Invoice</th><th>Supplier</th><th>Due</th><th class="r">Amount</th><th class="r">Settles as</th><th>Status</th><th></th></tr></thead>
@@ -88,18 +133,22 @@
       </table>
     </div>
     <div class="hint" id="inv-hint"></div>
+  </div>
 
-    <div class="grid g2" style="margin-top:2rem">
+  <!-- POLICY -->
+  <div id="tab-policy" class="hidden">
+    <div class="grid g2">
       <div class="card">
         <h3>Spending policy</h3>
         <form id="policy">
           <div class="row">
-            <div><label class="f" for="p-max">Max per payment (CCD)</label><input id="p-max" type="number" step="0.000001" min="0" /></div>
-            <div><label class="f" for="p-daily">Daily limit (CCD, 0 = none)</label><input id="p-daily" type="number" step="0.000001" min="0" /></div>
+            <div><label class="f" for="p-max">Max per lock (€)</label><input id="p-max" type="number" step="0.01" min="0" /></div>
+            <div><label class="f" for="p-daily">Daily limit (€, 0 = none)</label><input id="p-daily" type="number" step="0.01" min="0" /></div>
           </div>
-          <label class="f" for="p-assets">Allowed assets (comma separated)</label>
+          <label class="f" for="p-assets">Allowed settlement assets (comma separated)</label>
           <input id="p-assets" type="text" />
           <label class="check"><input id="p-badge" type="checkbox" /> Only pay suppliers that are Verified by Concordium</label>
+          <label class="check"><input id="p-human" type="checkbox" /> A person must release every invoice payment (recommended)</label>
           <label class="check muted"><input id="p-onlyapproved" type="checkbox" disabled /> Only pay approved suppliers (on when the list has entries)</label>
           <div class="row" style="margin-top:1.3rem"><button class="btn btn-primary" type="submit" style="flex:0 0 auto">Save policy</button><span class="hint" id="p-saved" style="margin:0"></span></div>
         </form>
@@ -115,6 +164,18 @@
         <div class="row" style="margin-top:.7rem"><button class="btn btn-outline btn-sm" id="s-add" type="button" style="flex:0 0 auto">Add</button><span class="hint" style="margin:0">Changes apply when you press Save policy.</span></div>
       </div>
     </div>
+    <div class="hint" id="rate-hint" style="margin-top:1rem"></div>
+  </div>
+
+  <!-- AUDIT -->
+  <div id="tab-audit" class="hidden">
+    <div class="card" id="audit-head"></div>
+    <div class="card stack" style="padding:1rem 1rem .4rem;margin-top:1rem">
+      <table>
+        <thead><tr><th>#</th><th>When</th><th>Who</th><th>Operation</th><th>Outcome</th><th>Detail</th><th>Hash</th></tr></thead>
+        <tbody id="audit"><tr><td colspan="7" class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
   </div>
 </main>
 
@@ -123,21 +184,14 @@
 <script>
 const $ = (s) => document.querySelector(s);
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const DEC = 6;
-const fmtAmt = (atomic, asset = "CCD") => {
-  if (atomic == null) return "–";
-  const n = BigInt(atomic), d = 10n ** BigInt(DEC), whole = n / d, frac = (n % d).toString().padStart(DEC, "0").replace(/0+$/, "");
-  return `${whole.toLocaleString()}${frac ? "." + frac : ""} ${asset}`.trim();
-};
-const toAtomic = (v) => { const [w, f = ""] = String(v || "0").split("."); return (BigInt(w || "0") * 10n ** BigInt(DEC) + BigInt((f + "000000").slice(0, DEC))).toString(); };
-const toDecimal = (a) => fmtAmt(a, "").replace(/,/g, "");
+const eur = (n) => "€" + Number(n || 0).toLocaleString("en-IE", { maximumFractionDigits: 2 });
+const ccd = (atomic, asset = "CCD") => { if (atomic == null) return "–"; const n = BigInt(atomic), d = 1000000n, f = (n % d).toString().padStart(6, "0").replace(/0+$/, ""); return `${(n / d).toLocaleString()}${f ? "." + f : ""} ${asset}`; };
 const short = (a) => a ? `${a.slice(0, 6)}…${a.slice(-5)}` : "–";
-const ugx = (n) => "UGX " + Number(n).toLocaleString();
 const when = (ts) => new Date(ts).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 const chip = (cls, text) => `<span class="chip ${cls}"><i></i>${esc(text)}</span>`;
 const badgeChip = (b) => !b ? chip("mute", "No badge check") : b.verified ? chip("ok", `Verified · ${b.agents} agent${b.agents === 1 ? "" : "s"}`) : chip("warn", "Not verified");
-let names = {};
-let policy = null;
+const STATUS = { created: ["info", "Created"], funded: ["info", "Funded"], sent: ["warn", "Awaiting release"], released: ["ok", "Released"], cancelled: ["mute", "Cancelled"] };
+let names = {}, policy = null, overview = null, locks = [];
 
 function toast(html, kind = "") {
   const t = $("#toast"); t.className = "toast " + kind; t.innerHTML = html; t.style.display = "block";
@@ -148,49 +202,72 @@ async function api(path, opts) {
   if (!r.ok) throw Object.assign(new Error(body.error || `HTTP ${r.status}`), { body });
   return body;
 }
+const post = (path, body = {}) => api(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
-document.querySelectorAll(".tab").forEach((b) => b.onclick = () => {
-  document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("on", x === b));
-  $("#tab-dash").classList.toggle("hidden", b.dataset.tab !== "dash");
-  $("#tab-owner").classList.toggle("hidden", b.dataset.tab !== "owner");
-  if (b.dataset.tab === "owner") loadOwner();
-});
+function showTab(name) {
+  document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("on", x.dataset.tab === name));
+  for (const t of ["dash", "locks", "policy", "audit"]) $("#tab-" + t).classList.toggle("hidden", t !== name);
+  if (name === "locks") loadLocksTab();
+  if (name === "policy") loadPolicy();
+  if (name === "audit") loadAudit();
+}
+document.querySelectorAll(".tab").forEach((b) => b.onclick = () => showTab(b.dataset.tab));
+
+function renderAgentState() {
+  const paused = overview?.policy?.paused;
+  $("#agent-state").outerHTML = `<span class="chip ${paused ? "bad" : "ok"}" id="agent-state"><i></i>${paused ? "Agent paused" : "Agent active"}</span>`;
+  const b = $("#pause-btn");
+  b.textContent = paused ? "Resume agent" : "Pause agent";
+  b.className = paused ? "btn btn-primary btn-sm" : "btn btn-danger btn-sm";
+}
+$("#pause-btn").onclick = async () => {
+  const paused = overview?.policy?.paused;
+  if (!paused && !confirm("Pause the agent? It will refuse every payment, including releases, until you resume it.")) return;
+  try { await post(`/api/agent/${paused ? "resume" : "pause"}`); toast(`<b>Agent ${paused ? "resumed" : "paused"}</b>${paused ? "Payments can be released again." : "All payments are refused until you resume."}`, "ok"); }
+  catch (e) { toast(`<b>Could not change</b>${esc(e.message)}`, "bad"); }
+  await loadOverview();
+};
 
 async function loadOverview() {
-  const o = await api("/api/overview");
-  names = { [o.accounts.buyer]: "Buyer", [o.accounts.seller]: "Seller", [o.accounts.facilitator]: "Facilitator" };
+  const o = overview = await api("/api/overview");
+  names = { [o.accounts.buyer]: "ProcureBot", [o.accounts.seller]: "TenderScout", [o.accounts.facilitator]: "Facilitator" };
   $("#net").textContent = o.testnet ? "TESTNET" : o.network;
-  $("#s-pay").textContent = o.totals.payments;
-  $("#s-total").textContent = fmtAmt(o.totals.paid);
-  $("#s-today").textContent = fmtAmt(o.totals.spentToday);
-  $("#s-limit").textContent = o.totals.dailyLimit === "0" ? "no daily limit" : `daily limit ${fmtAmt(o.totals.dailyLimit)}`;
-  $("#s-chain").innerHTML = o.chain.ok ? `<span class="ok-text">Intact</span>` : `<span class="bad-text">Broken</span>`;
-  $("#s-chain-sub").textContent = o.chain.ok ? `${o.receiptCount} hash-chained receipts` : `tampering detected at receipt #${o.chain.brokenAt}`;
+  renderAgentState();
+  const t = o.totals;
+  $("#s-released").textContent = eur(t.releasedEur);
+  $("#s-released-sub").textContent = `${t.payments} on-chain payment${t.payments === 1 ? "" : "s"} · fees sponsored`;
+  $("#s-await").textContent = t.awaitingRelease;
+  const ac = $("#await-count"); ac.textContent = t.awaitingRelease; ac.classList.toggle("hidden", !t.awaitingRelease);
+  $("#s-today").textContent = eur(t.spentTodayEur + t.reservedEur);
+  $("#s-limit").textContent = t.dailyLimitEur ? `of ${eur(t.dailyLimitEur)} daily limit (${eur(t.reservedEur)} set aside)` : "no daily limit";
+  const ok = o.chain.ok && o.audit.ok;
+  $("#s-chain").innerHTML = ok ? `<span class="ok-text">Intact</span>` : `<span class="bad-text">Broken</span>`;
+  $("#s-chain-sub").textContent = `${o.receiptCount} receipts · ${o.audit.count} audit entries`;
 
   const svc = (name, s, extra) => `<div class="card"><div class="acct-top"><div><div class="acct-role">${name}</div><div class="muted mono" style="font-size:.85rem">${esc(s.url)}</div></div>${s.up ? chip("ok", "Running") : chip("bad", "Not reachable")}</div><div class="hint">${extra}</div></div>`;
   const fi = o.services.facilitator.info || {}, si = o.services.seller.info || {};
   $("#services").innerHTML =
     svc("Facilitator", o.services.facilitator, o.services.facilitator.up ? `Sponsors fees from <span class="mono">${esc(short(fi.sponsor))}</span>` : "Start it with npm run facilitator") +
-    svc("Seller agent", o.services.seller, o.services.seller.up ? `Paid to <span class="mono">${esc(short(si.payTo))}</span> · buyer badge ${si.requireBuyerBadge ? "required" : "not required"}` : "Start it with npm run seller") +
-    `<div class="card"><div class="acct-role">Trust gate</div><div class="gate"><span>1 · badges</span><span>2 · limits</span><span>3 · approved payee</span><span>4 · sponsored tx</span><span>5 · receipt</span></div><div class="hint">Every payment passes these steps before and after signing.</div></div>`;
+    svc("Supplier agent", o.services.seller, o.services.seller.up ? `Paid to <span class="mono">${esc(short(si.payTo))}</span> · buyer badge ${si.requireBuyerBadge ? "required" : "not required"}` : "Start it with npm run seller") +
+    `<div class="card"><div class="acct-role">Human oversight</div><div class="hint" style="margin-top:.6rem">${o.policy.requireHumanRelease ? chip("ok", "Release needs a person") : chip("warn", "Auto-release on")} ${o.policy.paused ? chip("bad", "Paused") : chip("ok", "Active")}</div><div class="hint">Limits: ${eur(t.maxPerLockEur)} per lock · ${t.dailyLimitEur ? eur(t.dailyLimitEur) + " per day" : "no daily limit"}</div></div>`;
 
   const rows = o.payments;
   $("#payments").innerHTML = rows.length ? rows.map((p) => `<tr>
       <td>${esc(when(p.ts))}</td>
       <td>${esc(p.purpose || "")}<small class="mono">${esc(p.resource)}</small></td>
       <td>${esc(names[p.buyerAccount] || short(p.buyerAccount))} → ${esc(names[p.sellerAccount] || short(p.sellerAccount))}</td>
-      <td class="r">${fmtAmt(p.amount, p.asset)}</td>
+      <td class="r">${ccd(p.amount, p.asset)}</td>
       <td>${p.explorerUrl ? `<a class="mono" href="${esc(p.explorerUrl)}" target="_blank" rel="noopener">${esc(short(p.txHash))} ↗</a>` : p.txHash ? `<span class="mono">${esc(short(p.txHash))}</span>` : chip("mute", "no tx")}</td>
       <td>${p.receipts.map((r) => `<small class="mono" title="${esc(r.hash)}">#${r.seq} ${esc(r.role)} · ${esc(r.hash.slice(0, 10))}</small>`).join("")}</td>
-    </tr>`).join("") : `<tr><td colspan="6" class="empty">No payments yet. Pay an invoice on the Pay &amp; policy tab, or run npm run buyer -- tenders hospitality.</td></tr>`;
+    </tr>`).join("") : `<tr><td colspan="6" class="empty">No payments yet. Open a lock on the Locks tab and release it.</td></tr>`;
 }
 
 async function loadAccounts() {
   try {
     const { accounts } = await api("/api/accounts");
     $("#accounts").innerHTML = accounts.map((a) => `<div class="card">
-      <div class="acct-top"><div class="acct-role">${esc(a.role)}</div>${a.role === "facilitator" ? chip("mute", "Pays fees") : badgeChip(a.badge)}</div>
-      <div class="bal">${a.missing ? "not set" : a.balance != null ? fmtAmt(a.balance) : "–"}</div>
+      <div class="acct-top"><div class="acct-role">${esc({ buyer: "ProcureBot · buyer", seller: "TenderScout · supplier", facilitator: "Facilitator" }[a.role] || a.role)}</div>${a.role === "facilitator" ? chip("mute", "Pays fees") : badgeChip(a.badge)}</div>
+      <div class="bal">${a.missing ? "not set" : a.balance != null ? ccd(a.balance) : "–"}</div>
       <div class="muted mono" style="font-size:.85rem">${esc(a.address || "add it to .env")}</div>
       ${a.balanceError ? `<div class="hint">${esc(a.balanceError)}</div>` : ""}
       ${a.badge && !a.badge.verified ? `<div class="hint">${esc(a.badge.issues.join("; "))}</div>` : ""}
@@ -198,85 +275,162 @@ async function loadAccounts() {
   } catch (e) { $("#accounts").innerHTML = `<div class="card empty">Could not load accounts: ${esc(e.message)}</div>`; }
 }
 
-async function loadOwner() { await Promise.all([loadPolicy(), loadInvoices()]); }
+// ---------------- locks ----------------
+async function loadLocksTab() { await loadLocks(); await loadInvoices(); }
+
+function renderBudget() {
+  const t = overview?.totals; if (!t) return;
+  const limit = t.dailyLimitEur || Math.max(t.spentTodayEur + t.reservedEur, 1);
+  const pct = (v) => Math.min(100, (v / limit) * 100) + "%";
+  $("#budget").innerHTML = `<i class="spent" style="width:${pct(t.spentTodayEur)}"></i><i class="res" style="width:${pct(t.reservedEur)}"></i>`;
+  const left = Math.max(0, (t.dailyLimitEur || 0) - t.spentTodayEur - t.reservedEur);
+  $("#budget-legend").innerHTML = `<span class="l1">Released today ${eur(t.spentTodayEur)}</span><span class="l2">Set aside ${eur(t.reservedEur)}</span><span class="l3">${t.dailyLimitEur ? `Left ${eur(left)} of ${eur(t.dailyLimitEur)}` : "No daily limit"}</span>`;
+}
+
+async function loadLocks() {
+  try {
+    const r = await api("/api/locks"); locks = r.locks;
+    renderBudget();
+    $("#locks").innerHTML = locks.length ? locks.map((l) => {
+      const [cls, label] = STATUS[l.status];
+      const c = l.checks;
+      const checks = c ? `${c.badgeVerified ? chip("ok", "Payee verified") : chip("warn", "Payee not verified")} ${c.policy ? chip("bad", "Over a limit") : chip("ok", "Within limits")}` : `<span class="checks">Not checked yet</span>`;
+      const btn = (op, text, style = "btn-outline") => `<button class="btn ${style} btn-sm" data-op="${op}" data-id="${esc(l.id)}">${text}</button>`;
+      const actions = {
+        created: btn("fund", "Fund") + btn("cancel", "Cancel", "btn-danger"),
+        funded: btn("send", "Send to agent") + btn("cancel", "Cancel", "btn-danger"),
+        sent: btn("release", "Release", "btn-primary") + btn("cancel", "Cancel", "btn-danger"),
+        released: l.explorerUrl ? `<a class="mono" href="${esc(l.explorerUrl)}" target="_blank" rel="noopener">View tx ↗</a>` : "",
+        cancelled: "",
+      }[l.status];
+      return `<tr>
+        <td>${esc(l.id)}<small>${esc(l.invoiceId)} · ${esc(when(l.createdAt))}</small></td>
+        <td>${esc(l.supplier)}<small>${esc(l.category)}</small></td>
+        <td class="r">${eur(l.amountEur)}<small>${ccd(l.amount, l.asset)} on testnet</small></td>
+        <td>${chip(cls, label)}</td>
+        <td>${checks}${l.lastError ? `<div class="err">${esc(l.lastError)}</div>` : ""}</td>
+        <td><div class="actions">${actions}</div></td>
+      </tr>`;
+    }).join("") : `<tr><td colspan="6" class="empty">No locks yet. Open one from an invoice below.</td></tr>`;
+    document.querySelectorAll("[data-op]").forEach((b) => b.onclick = () => lockOp(b));
+  } catch (e) { $("#locks").innerHTML = `<tr><td colspan="6" class="empty">${esc(e.message)}</td></tr>`; }
+}
+
+const OP_TEXT = {
+  fund: (l) => `Set aside ${eur(l.amountEur)} for ${l.supplier}?`,
+  send: (l) => `Send lock ${l.id} to the agent? It will check the supplier's badge and your limits. Nothing is paid yet.`,
+  release: (l) => `RELEASE PAYMENT\n\nYou are approving a payment prepared by an AI agent:\n${eur(l.amountEur)} to ${l.supplier} (${l.invoiceId}).\n\nThis signs and settles it on Concordium. It can't be undone.`,
+  cancel: (l) => `Cancel lock ${l.id}? Any amount set aside goes back to today's budget.`,
+};
+async function lockOp(btn) {
+  const l = locks.find((x) => x.id === btn.dataset.id); const op = btn.dataset.op;
+  if (!confirm(OP_TEXT[op](l))) return;
+  btn.disabled = true; btn.textContent = op === "release" ? "Releasing…" : op === "send" ? "Checking…" : "…";
+  try {
+    const r = await post(`/api/locks/${encodeURIComponent(l.id)}/${op}`);
+    const L = r.lock;
+    const msg = {
+      fund: `${eur(L.amountEur)} set aside.`,
+      send: L.status === "released" ? "Checks passed and auto-released." : "Checks passed. Waiting for your release.",
+      release: `${eur(L.amountEur)} paid to ${esc(L.supplier)}, fee sponsored. ${L.explorerUrl ? `<a href="${esc(L.explorerUrl)}" target="_blank" rel="noopener">View on CCDExplorer ↗</a>` : ""}`,
+      cancel: "Lock cancelled.",
+    }[op];
+    toast(`<b>${esc(op)} · ${esc(L.id)}</b>${msg}`, "ok");
+  } catch (e) {
+    toast(`<b>${e.body?.refused ? "Refused" : "Failed"} · ${esc(op)}</b>${esc(e.message)}`, "bad");
+  }
+  await loadOverview().catch(() => {});
+  await loadLocksTab();
+  loadAccounts();
+}
 
 async function loadInvoices() {
   try {
     const inv = await api("/api/invoices");
-    $("#inv-hint").innerHTML = `Payee <span class="mono">${esc(short(inv.payTo))}</span> ${badgeChip(inv.payeeBadge)} · on testnet each invoice settles as a small ${esc(inv.asset)} amount; production would use a stablecoin at full value.`;
-    $("#invoices").innerHTML = inv.items.map((i) => `<tr>
+    const open = new Map(locks.filter((l) => l.status !== "cancelled").map((l) => [l.invoiceId, l]));
+    $("#inv-hint").innerHTML = `Payee <span class="mono">${esc(short(inv.payTo))}</span> ${badgeChip(inv.payeeBadge)} · amounts are demo EUR; on testnet each settles as a small ${esc(inv.asset)} amount. In production: a euro stablecoin at full value.`;
+    $("#invoices").innerHTML = inv.items.map((i) => {
+      const l = open.get(i.id);
+      const status = i.status === "paid" ? chip("ok", "Paid") : l ? chip(STATUS[l.status][0], `${l.id} · ${STATUS[l.status][1]}`) : chip("mute", "Open");
+      const action = i.status === "paid" || l ? "" : `<button class="btn btn-outline btn-sm" data-create="${esc(i.id)}">Create lock</button>`;
+      return `<tr>
         <td>${esc(i.id)}<small>${esc(i.description)}</small></td>
         <td>${esc(i.supplier)}<small>${esc(i.category)}</small></td>
         <td>${esc(i.due)}</td>
-        <td class="r">${ugx(i.amountUgx)}</td>
-        <td class="r">${fmtAmt(i.amount, i.asset)}</td>
-        <td>${i.status === "paid" ? chip("ok", "Paid") : chip("warn", "Open")}</td>
-        <td>${i.status === "paid"
-          ? (i.paidExplorerUrl ? `<a class="mono" href="${esc(i.paidExplorerUrl)}" target="_blank" rel="noopener">tx ↗</a>` : "")
-          : `<button class="btn btn-primary btn-sm" data-pay="${esc(i.id)}" data-supplier="${esc(i.supplier)}">Pay</button>`}</td>
-      </tr>`).join("");
-    document.querySelectorAll("[data-pay]").forEach((b) => b.onclick = () => payInvoice(b));
+        <td class="r">${eur(i.amountEur)}</td>
+        <td class="r">${ccd(i.amount, i.asset)}</td>
+        <td>${status}</td>
+        <td class="r">${action}</td>
+      </tr>`;
+    }).join("");
+    document.querySelectorAll("[data-create]").forEach((b) => b.onclick = async () => {
+      b.disabled = true;
+      try { const r = await post("/api/locks", { invoiceId: b.dataset.create }); toast(`<b>Lock ${esc(r.lock.id)} created</b>Next: fund it.`, "ok"); }
+      catch (e) { toast(`<b>Could not create lock</b>${esc(e.message)}`, "bad"); }
+      await loadLocksTab(); loadOverview().catch(() => {});
+    });
   } catch (e) {
     $("#invoices").innerHTML = `<tr><td colspan="7" class="empty">${esc(e.message)}. Is the seller running (npm run seller)?</td></tr>`;
   }
 }
 
-async function payInvoice(btn) {
-  const id = btn.dataset.pay;
-  if (!confirm(`Pay invoice ${id} to ${btn.dataset.supplier}?\nThe agent checks the supplier's badge and your limits before signing.`)) return;
-  btn.disabled = true; btn.textContent = "Paying…";
-  try {
-    const r = await api(`/api/invoices/${encodeURIComponent(id)}/pay`, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ purpose: `Pay ${id} (${btn.dataset.supplier})` }) });
-    const link = r.receipt?.explorerUrl ? `<a href="${esc(r.receipt.explorerUrl)}" target="_blank" rel="noopener">View on CCDExplorer ↗</a>` : "";
-    toast(`<b>Paid ${esc(id)}</b>${r.receipt ? `${fmtAmt(r.receipt.amount, r.receipt.asset)}, fee sponsored. Receipt #${r.receipt.seq}. ${link}` : "Settled."}`, "ok");
-  } catch (e) {
-    toast(`<b>${e.body?.refused ? "Refused by policy" : "Payment failed"}</b>${esc(e.message)}`, "bad");
-  }
-  await Promise.all([loadInvoices(), loadOverview().catch(() => {})]);
-  loadAccounts();
-}
-
+// ---------------- policy ----------------
 function renderSuppliers() {
   const list = policy.approvedSuppliers;
   $("#p-onlyapproved").checked = list.length > 0;
-  $("#suppliers").innerHTML = list.length ? list.map((s, i) => `<div class="sup"><div><div style="color:var(--text-h)">${esc(s.name || "Unnamed")}</div><div class="muted mono" style="font-size:.85rem">${esc(s.account)}</div></div><button class="btn btn-outline btn-sm" data-rm="${i}" type="button">Remove</button></div>`).join("")
+  $("#suppliers").innerHTML = list.length ? list.map((s, i) => `<div class="sup"><div><div style="color:var(--ink)">${esc(s.name || "Unnamed")}</div><div class="muted mono" style="font-size:.85rem">${esc(s.account)}</div></div><button class="btn btn-danger btn-sm" data-rm="${i}" type="button">Remove</button></div>`).join("")
     : `<div class="muted">No list yet: the agent may pay any payee that passes the other rules.</div>`;
   document.querySelectorAll("[data-rm]").forEach((b) => b.onclick = () => { policy.approvedSuppliers.splice(Number(b.dataset.rm), 1); renderSuppliers(); });
 }
-
 async function loadPolicy() {
   policy = await api("/api/policy");
-  $("#p-max").value = toDecimal(policy.maxPayment);
-  $("#p-daily").value = toDecimal(policy.dailyLimit);
+  $("#p-max").value = policy.maxPerLockEur;
+  $("#p-daily").value = policy.dailyLimitEur;
   $("#p-assets").value = policy.allowedAssets.join(", ");
   $("#p-badge").checked = policy.requireSellerBadge;
-  $("#p-saved").textContent = policy.updatedAt ? `Last saved ${when(policy.updatedAt)}` : "Using defaults from .env";
+  $("#p-human").checked = policy.requireHumanRelease;
+  $("#p-saved").textContent = policy.updatedAt ? `Last saved ${when(policy.updatedAt)}` : "Using defaults (€10,000 per lock, €10,000 per day)";
+  if (overview) $("#rate-hint").textContent = `Demo rate: €1,000 settles as ${(Number(overview.demoRate.atomicPerEur) * 1000 / 1e6).toLocaleString()} CCD on testnet. In production, invoices would be paid in a euro stablecoin at full value.`;
   renderSuppliers();
 }
-
 $("#s-add").onclick = () => {
   const account = $("#s-acct").value.trim(), name = $("#s-name").value.trim();
   if (account.length < 40) return toast("<b>Check the address</b>Enter a full Concordium account address.", "bad");
   if (policy.approvedSuppliers.some((s) => s.account === account)) return toast("<b>Already listed</b>That supplier is already on the list.", "bad");
   policy.approvedSuppliers.push({ account, name }); $("#s-acct").value = ""; $("#s-name").value = ""; renderSuppliers();
 };
-
 $("#policy").onsubmit = async (e) => {
   e.preventDefault();
   try {
     policy = await api("/api/policy", { method: "PUT", headers: { "content-type": "application/json" }, body: JSON.stringify({
-      maxPayment: toAtomic($("#p-max").value), dailyLimit: toAtomic($("#p-daily").value),
+      ...policy,
+      maxPerLockEur: Number($("#p-max").value || 0), dailyLimitEur: Number($("#p-daily").value || 0),
       allowedAssets: $("#p-assets").value.split(",").map((s) => s.trim()).filter(Boolean),
-      requireSellerBadge: $("#p-badge").checked, approvedSuppliers: policy.approvedSuppliers,
+      requireSellerBadge: $("#p-badge").checked, requireHumanRelease: $("#p-human").checked,
     }) });
-    $("#p-saved").textContent = `Saved ${when(policy.updatedAt)}`; toast("<b>Policy saved</b>The agent uses it from the next payment.", "ok");
+    $("#p-saved").textContent = `Saved ${when(policy.updatedAt)}`; toast("<b>Policy saved</b>Recorded in the audit log. The agent uses it from the next step.", "ok");
     loadOverview().catch(() => {});
   } catch (err) { toast(`<b>Could not save</b>${esc(err.message)}`, "bad"); }
 };
 
+// ---------------- audit ----------------
+async function loadAudit() {
+  try {
+    const a = await api("/api/audit");
+    $("#audit-head").innerHTML = `<div class="acct-top"><div><div class="acct-role">Audit log</div><div class="hint">Every lock operation, refusal, policy change and pause is recorded here and hash-chained, so editing or deleting an entry is detectable. Keep these records for at least six months.</div></div>${a.chain.ok ? chip("ok", `Chain intact · ${a.chain.count} entries`) : chip("bad", `Broken at #${a.chain.brokenAt}`)}</div>`;
+    const who = (x) => chip(x === "owner" ? "ok" : x === "agent" ? "info" : "mute", x === "owner" ? "Owner" : x === "agent" ? "AI agent" : "System");
+    const out = (x) => chip(x === "ok" ? "ok" : x === "refused" ? "warn" : "bad", x);
+    $("#audit").innerHTML = a.entries.length ? a.entries.map((e) => `<tr>
+      <td>${e.seq}</td><td>${esc(when(e.ts))}</td><td>${who(e.actor)}</td>
+      <td style="text-transform:uppercase;letter-spacing:.06em">${esc(e.op)}${e.lockId ? `<small>${esc(e.lockId)}</small>` : ""}</td>
+      <td>${out(e.outcome)}</td><td>${esc(e.detail)}</td><td class="mono" title="${esc(e.hash)}"><small>${esc(e.hash.slice(0, 12))}</small></td>
+    </tr>`).join("") : `<tr><td colspan="7" class="empty">No entries yet.</td></tr>`;
+  } catch (e) { $("#audit").innerHTML = `<tr><td colspan="7" class="empty">${esc(e.message)}</td></tr>`; }
+}
+
 loadOverview().catch((e) => toast(`<b>Could not load dashboard</b>${esc(e.message)}`, "bad"));
 loadAccounts();
-setInterval(() => loadOverview().catch(() => {}), 15000);
+setInterval(() => loadOverview().then(() => { if (!$("#tab-locks").classList.contains("hidden")) renderBudget(); }).catch(() => {}), 15000);
 </script>
 </body>
 </html>

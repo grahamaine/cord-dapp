@@ -157,7 +157,7 @@ app.get("/tenders", (req, res) => {
 
 app.get("/invoices/:id/pay", (req, res) => {
   const inv = findInvoice(req.params.id)!;
-  res.json({ invoice: inv.id, supplier: inv.supplier, status: "paid", amountUgx: inv.amountUgx, settled: { amount: inv.amount, asset: config.seller.asset } });
+  res.json({ invoice: inv.id, supplier: inv.supplier, status: "paid", amountEur: inv.amountEur, settled: { amount: inv.amount, asset: config.seller.asset } });
 });
 
 app.get("/price-benchmark", (req, res) => {

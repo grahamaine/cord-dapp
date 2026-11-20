@@ -1,3 +1,5 @@
+import { eurToAtomic } from "../lib/eur.js";
+
 /**
  * SAMPLE DATA for the demo. Replace with a real source (e.g. a scraper over the Uganda
  * Government Procurement Portal, PPDA notices, or your own supplier quote history).
@@ -17,9 +19,9 @@ export const benchmarks: Record<string, { unit: string; low: number; median: num
 };
 
 /**
- * SAMPLE supplier invoices for the owner page (lead example: a hotel's recurring service providers). Amounts are shown in UGX; on testnet each is
- * settled with a small CCD amount (atomic units, 6 decimals) so demos don't drain test funds.
- * In production the invoice would be priced in a PLT stablecoin (e.g. USDR) at the real value.
+ * SAMPLE supplier invoices for the owner page (lead example: a hotel's recurring service providers).
+ * Amounts are in demo EUR; `amount` is what settles on-chain (see src/lib/eur.ts for the demo rate).
+ * In production the invoice would be priced in a euro stablecoin at full value.
  */
 export interface Invoice {
   id: string;
@@ -28,14 +30,16 @@ export interface Invoice {
   description: string;
   issued: string;
   due: string;
-  amountUgx: number;
-  amount: string; // atomic units of PRICE_ASSET charged on-chain
+  amountEur: number;
+  amount: string; // atomic units of PRICE_ASSET charged on-chain (demo rate)
 }
+const inv = (i: Omit<Invoice, "amount">): Invoice => ({ ...i, amount: eurToAtomic(i.amountEur) });
 export const invoices: Invoice[] = [
-  { id: "INV-LAU-1107", supplier: "Lakeside Laundry Services", category: "Laundry", description: "Linen & towel laundry, 1–15 Nov", issued: "2026-11-15", due: "2026-11-29", amountUgx: 1_850_000, amount: "300000" },
-  { id: "INV-PRO-2231", supplier: "Entebbe Fresh Produce", category: "Food supply", description: "Vegetables & fruit, week 46", issued: "2026-11-16", due: "2026-11-23", amountUgx: 2_420_000, amount: "400000" },
-  { id: "INV-TRN-0418", supplier: "Kitooro Airport Transfers", category: "Transport", description: "Guest airport transfers, 14 trips", issued: "2026-11-17", due: "2026-12-01", amountUgx: 980_000, amount: "150000" },
-  { id: "INV-MNT-0092", supplier: "Wakiso Plumbing & Repairs", category: "Maintenance", description: "Kitchen drainage repair", issued: "2026-11-18", due: "2026-12-02", amountUgx: 640_000, amount: "100000" },
-  { id: "INV-SEC-1130", supplier: "Lakeside Guard Services", category: "Security", description: "Site security, November (4 guards)", issued: "2026-11-18", due: "2026-11-30", amountUgx: 3_200_000, amount: "450000" },
-  { id: "INV-NET-5521", supplier: "Entebbe Fibre Internet", category: "Internet & telecoms", description: "Business fibre 100 Mbps, December", issued: "2026-11-19", due: "2026-12-01", amountUgx: 1_150_000, amount: "200000" },
+  inv({ id: "INV-LAU-1107", supplier: "Lakeside Laundry Services", category: "Laundry", description: "Linen & towel laundry, 1–15 Nov", issued: "2026-11-15", due: "2026-11-29", amountEur: 1850 }),
+  inv({ id: "INV-PRO-2231", supplier: "Entebbe Fresh Produce", category: "Food supply", description: "Vegetables & fruit, week 46", issued: "2026-11-16", due: "2026-11-23", amountEur: 2420 }),
+  inv({ id: "INV-TRN-0418", supplier: "Kitooro Airport Transfers", category: "Transport", description: "Guest airport transfers, 14 trips", issued: "2026-11-17", due: "2026-12-01", amountEur: 980 }),
+  inv({ id: "INV-MNT-0092", supplier: "Wakiso Plumbing & Repairs", category: "Maintenance", description: "Kitchen drainage repair", issued: "2026-11-18", due: "2026-12-02", amountEur: 640 }),
+  inv({ id: "INV-SEC-1130", supplier: "Lakeside Guard Services", category: "Security", description: "Site security, November (4 guards)", issued: "2026-11-18", due: "2026-11-30", amountEur: 3200 }),
+  inv({ id: "INV-NET-5521", supplier: "Entebbe Fibre Internet", category: "Internet & telecoms", description: "Business fibre 100 Mbps, December", issued: "2026-11-19", due: "2026-12-01", amountEur: 1150 }),
+  inv({ id: "INV-CON-0007", supplier: "Victoria Builders Ltd", category: "Construction", description: "Kitchen refurbishment, phase 1 (over the €10,000 cap)", issued: "2026-11-19", due: "2026-12-15", amountEur: 12500 }),
 ];
