@@ -6,16 +6,27 @@ written to a **tamper-evident receipt trail**.
 
 Built for the Concordium **"Make your Agents Accountable"** hackathon (Encode).
 
-**Live proof on Concordium testnet (20 Nov 2026):**
-- **First payment**: the €1,850 laundry invoice prepared by the AI agent, released with the owner's
-  wallet signature and paid as a sponsored transaction (ProcureBot paid no fee):
-  [26f8ab55…cf3fe0f](https://ccdexplorer.io/testnet/transaction/26f8ab55d0697e8dd1f4d01fe9fe40d4728b92a0ce6ce26abeb713830cf3fe0f)
-- **Audit anchor**: the audit log (entries 1–19) and receipts (1–2) fingerprinted on-chain as
-  `cord:audit:v1|a=19:…|r=2:…`:
-  [12650e36…0614799c](https://ccdexplorer.io/testnet/transaction/12650e367d5ffb94482a9c4b87a8c08c3b5ec418e8e78a54b28888110614799c)
-- Both agents **Verified by Concordium** (see [Live on testnet](#live-on-testnet)).
-- Public site: https://cord-dapp.vercel.app · **Judge view: https://cord-dapp.vercel.app/judge**, the real
-  records, re-checked in your browser against Concordium
+**Links**
+- 🌐 Public site: https://cord-dapp.vercel.app (agents verified live, payments and account balances read from the chain)
+- ✅ **Judge view: https://cord-dapp.vercel.app/judge**: the real records, re-checked against Concordium
+- 🖥️ Owner dashboard: http://localhost:4030 (runs on the owner's computer only; it holds ProcureBot's key, see [Run it](#run-it-testnet))
+
+**Live proof on Concordium testnet (20 Nov 2026).** The judge view's live check passes: audit log (37 entries) and
+receipts (8) chains intact, all 3 anchors match their on-chain data, all 4 payments finalized.
+
+| What happened | Amount | Who did it | Transaction |
+|---|---|---|---|
+| Laundry invoice paid | €1,850 | agent prepared, owner signed Release | [26f8ab55…](https://ccdexplorer.io/testnet/transaction/26f8ab55d0697e8dd1f4d01fe9fe40d4728b92a0ce6ce26abeb713830cf3fe0f) |
+| Hospitality tender list bought | 0.1 CCD | agent, within the owner's limits | [4854b184…](https://ccdexplorer.io/testnet/transaction/4854b184bd49c8cbb8618a7e60b31176ed100c2d8e0685abafc948851a0746e6) |
+| Airport transfers invoice paid | €980 | agent prepared, owner signed Release | [76d81e79…](https://ccdexplorer.io/testnet/transaction/76d81e795a083ee6fb03e78873aed1c8f8ae8e78ed281bc8c50e9ce6431f5226) |
+| Plumbing invoice paid | €640 | owner, signed Release | [a3f1f201…](https://ccdexplorer.io/testnet/transaction/a3f1f201786f31265008b6a090dbc03265233aee2a486362bcd5603a7d3c1586) |
+| Construction invoice **refused** | €12,500 | agent: over the €10,000 per-payment cap, nothing paid | in the audit log |
+| Audit anchor: entries 1–19, receipts 1–2 | | owner | [12650e36…](https://ccdexplorer.io/testnet/transaction/12650e367d5ffb94482a9c4b87a8c08c3b5ec418e8e78a54b28888110614799c) |
+| Audit anchor: entries 1–35, receipts 1–8 | | owner | [c5c36694…](https://ccdexplorer.io/testnet/transaction/c5c36694428de46b6d49d29d00399827ddf4eb347c54b6ab0911ec4b8b79ddca) |
+| Audit anchor: entries 1–36, receipts 1–8 | | owner | [fb3325d2…](https://ccdexplorer.io/testnet/transaction/fb3325d2e26412b6bc1422857c45fb28d32d120aea9e0fa8de52261b4c398af2) |
+
+Every payment was a sponsored transaction (the Cord facilitator paid the fee) to a supplier agent that is
+**Verified by Concordium**. Both agents are verified (see [Live on testnet](#live-on-testnet)).
 
 **Who it's for:** any Ugandan organisation that regularly pays service providers and suppliers —
 hotels and hospitality, hospitals and clinics, schools and universities, NGOs and project offices,
@@ -223,8 +234,10 @@ partner (planned, not built).
 - [x] Five-operation payment locks with demo-EUR limits (€10,000 per payment and per day), pause, approved suppliers
 - [x] ProcureBot chat in the dashboard (free built-in assistant; Claude optional) that prepares but never releases
 - [x] Owner wallet-signed Release (browser extension and mobile WalletConnect), switching between owner accounts
-- [x] Sponsored x402 payment settled on testnet, [tx 26f8ab55…](https://ccdexplorer.io/testnet/transaction/26f8ab55d0697e8dd1f4d01fe9fe40d4728b92a0ce6ce26abeb713830cf3fe0f)
-- [x] Hash-chained audit log + per-payment trail, anchored on Concordium, [tx 12650e36…](https://ccdexplorer.io/testnet/transaction/12650e367d5ffb94482a9c4b87a8c08c3b5ec418e8e78a54b28888110614799c)
+- [x] 4 sponsored x402 payments settled on testnet, plus a refused over-cap invoice (table at the top)
+- [x] Hash-chained audit log + per-payment trail, anchored on Concordium 3 times
+- [x] Public judge view that re-verifies the records against Concordium, online without the owner's PC
+- [x] Owner login and a private phone link (`npm run remote`), phone-friendly dashboard
 - [x] Cross-chain supplier verification via CIS-8 (Base, Ethereum, Solana)
 - [x] `npm run doctor` and `npm run audit:verify` checks
 
