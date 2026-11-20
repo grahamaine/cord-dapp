@@ -14,6 +14,7 @@ import { config } from "../lib/config.js";
 import { checkBadge } from "../lib/badge.js";
 import { appendReceipt, readReceipts } from "../lib/receipts.js";
 import { benchmarks, invoices, tenders } from "./data.js";
+import { publicRouter } from "../public/routes.js";
 
 const payTo = config.seller.payTo();
 const resourceServer = new x402ResourceServer(new HTTPFacilitatorClient({ url: config.facilitator.url })).register(
@@ -41,6 +42,9 @@ const route = (amount: string | ((ctx: { path: string }) => { amount: string; as
 });
 
 export const app = express();
+
+// Public read-only site (HTML for browsers) + /api/public/overview. Agents requesting JSON fall through.
+app.use(publicRouter());
 
 app.get("/", (_req, res) =>
   res.json({

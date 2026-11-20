@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>{{APP_NAME}} · Verified supplier payments on Concordium</title>
+<meta name="description" content="AI agents that pay supplier invoices only to identity-verified agents, within owner-set limits, with sponsored fees and an auditable receipt trail. Built on Concordium." />
+<style>
+  :root {
+    --navy: #0f1e3a; --navy-2: #172a4d; --navy-3: #22385f; --ink: #18202e; --muted: #5d6779; --line: #e3e7ee;
+    --bg: #f5f6f9; --card: #fff; --gold: #d9a521; --gold-soft: #fbf3dc; --ok: #17804d; --ok-soft: #e4f4ec;
+    --bad: #b42d2d; --bad-soft: #fbe9e9; --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font: 16px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--ink); background: var(--bg); }
+  a { color: #1d4fb8; text-decoration: none; } a:hover { text-decoration: underline; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 22px; }
+  .mono { font-family: var(--mono); font-size: 13px; word-break: break-all; }
+  .muted { color: var(--muted); }
+
+  /* header + hero */
+  header { background: var(--navy); color: #fff; }
+  .nav { display: flex; align-items: center; gap: 18px; padding: 16px 0; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 20px; letter-spacing: .2px; }
+  .nav nav { margin-left: auto; display: flex; gap: 20px; font-size: 14px; }
+  .nav nav a { color: #c9d2e3; }
+  .net { font-size: 11px; font-weight: 800; padding: 3px 9px; border-radius: 999px; background: var(--gold); color: var(--navy); letter-spacing: .6px; }
+  .hero { padding: 56px 0 72px; display: grid; grid-template-columns: 1.25fr 1fr; gap: 44px; align-items: center; }
+  .hero h1 { font-size: 44px; line-height: 1.12; margin: 0 0 18px; letter-spacing: -.5px; }
+  .hero h1 em { font-style: normal; color: var(--gold); }
+  .hero p.lead { font-size: 18px; color: #c9d2e3; margin: 0 0 26px; max-width: 560px; }
+  .cta { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn { display: inline-block; padding: 11px 18px; border-radius: 10px; font-weight: 700; font-size: 15px; }
+  .btn.gold { background: var(--gold); color: var(--navy); } .btn.line { border: 1px solid #3b5180; color: #fff; }
+  .btn:hover { text-decoration: none; filter: brightness(1.05); }
+  .proof { background: var(--navy-2); border: 1px solid var(--navy-3); border-radius: 16px; padding: 20px; }
+  .proof h3 { margin: 0 0 12px; font-size: 13px; text-transform: uppercase; letter-spacing: .8px; color: #aab6cc; }
+  .proof .row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-top: 1px solid var(--navy-3); gap: 10px; }
+  .proof .row:first-of-type { border-top: 0; }
+  .proof .n { font-weight: 700; } .proof .s { font-size: 13px; color: #aab6cc; }
+
+  /* sections */
+  section { padding: 64px 0; }
+  section.alt { background: #fff; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .kicker { font-size: 12px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; color: #9a7310; margin-bottom: 8px; }
+  h2 { font-size: 30px; margin: 0 0 14px; letter-spacing: -.3px; }
+  .sub { color: var(--muted); max-width: 720px; margin: 0 0 32px; }
+  .grid { display: grid; gap: 16px; }
+  .g3 { grid-template-columns: repeat(3, 1fr); } .g2 { grid-template-columns: repeat(2, 1fr); } .g5 { grid-template-columns: repeat(5, 1fr); }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 20px; }
+  .card h4 { margin: 8px 0 6px; font-size: 17px; }
+  .card p { margin: 0; color: var(--muted); font-size: 15px; }
+  .ico { width: 36px; height: 36px; border-radius: 10px; background: var(--gold-soft); color: #8a6508; display: grid; place-items: center; font-weight: 800; }
+  .step { position: relative; }
+  .step .num { width: 30px; height: 30px; border-radius: 50%; background: var(--navy); color: #fff; display: grid; place-items: center; font-weight: 800; font-size: 14px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 10px; }
+  .chip { background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 8px 14px; font-size: 14px; font-weight: 600; }
+  .chip.lead { background: var(--navy); color: #fff; border-color: var(--navy); }
+
+  /* live */
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+  .pill.ok { background: var(--ok-soft); color: var(--ok); } .pill.bad { background: var(--bad-soft); color: var(--bad); } .pill.mute { background: #eef0f4; color: var(--muted); }
+  .dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  .agent { display: flex; flex-direction: column; gap: 12px; }
+  .agent .top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .agent .name { font-size: 20px; font-weight: 800; }
+  .agent dl { display: grid; grid-template-columns: 110px 1fr; gap: 6px 12px; margin: 0; font-size: 14px; }
+  .agent dt { color: var(--muted); }
+  .agent dd { margin: 0; }
+  .links { display: flex; gap: 14px; flex-wrap: wrap; font-size: 14px; font-weight: 600; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; color: var(--muted); font-size: 12px; font-weight: 700; padding: 10px; border-bottom: 1px solid var(--line); }
+  td { padding: 12px 10px; border-bottom: 1px solid var(--line); }
+  tr:last-child td { border-bottom: 0; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .empty { padding: 28px; text-align: center; color: var(--muted); }
+  .stats { display: flex; gap: 28px; flex-wrap: wrap; margin-bottom: 16px; }
+  .stats div b { display: block; font-size: 26px; }
+  .stats div span { color: var(--muted); font-size: 13px; }
+  .updated { font-size: 13px; color: var(--muted); margin-top: 10px; }
+
+  footer { background: var(--navy); color: #aab6cc; padding: 34px 0; font-size: 14px; }
+  footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space-between; }
+  footer a { color: #fff; }
+
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; padding: 36px 0 48px; } .hero h1 { font-size: 34px; }
+    .g3, .g2, .g5 { grid-template-columns: 1fr; } .nav nav { display: none; }
+    .agent dl { grid-template-columns: 1fr; } .tbl { overflow-x: auto; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="nav">
+      <div class="brand">
+        <svg width="30" height="30" viewBox="0 0 32 32" aria-hidden="true"><circle cx="8" cy="16" r="5" fill="none" stroke="#d9a521" stroke-width="3"/><circle cx="24" cy="16" r="5" fill="none" stroke="#fff" stroke-width="3"/><path d="M12.5 16h7" stroke="#d9a521" stroke-width="3" stroke-linecap="round"/></svg>
+        {{APP_NAME}}
+      </div>
+      <span class="net" id="net">TESTNET</span>
+      <nav><a href="#how">How it works</a><a href="#who">Who it's for</a><a href="#live">Live agents</a><a href="https://github.com/grahamaine/cord-dapp">GitHub</a></nav>
+    </div>
+    <div class="hero">
+      <div>
+        <h1>Pay suppliers through AI agents, <em>only when you know who you're paying.</em></h1>
+        <p class="lead">{{APP_NAME}} lets an organisation's purchasing agent settle supplier and service-provider invoices on Concordium — only to identity-verified agents, only within the owner's limits, with network fees sponsored and every payment on a tamper-evident receipt trail.</p>
+        <div class="cta">
+          <a class="btn gold" href="#live">See the live agents</a>
+          <a class="btn line" href="https://github.com/grahamaine/cord-dapp">View the code</a>
+        </div>
+      </div>
+      <div class="proof" aria-live="polite">
+        <h3>Live on Concordium testnet</h3>
+        <div class="row"><div><div class="n">TenderScout</div><div class="s">Supplier agent</div></div><span id="h-seller" class="pill mute"><span class="dot"></span>checking…</span></div>
+        <div class="row"><div><div class="n">ProcureBot</div><div class="s">Purchasing agent</div></div><span id="h-buyer" class="pill mute"><span class="dot"></span>checking…</span></div>
+        <div class="row"><div><div class="n" id="h-pay">–</div><div class="s">verified payments settled</div></div><span class="pill mute">fees sponsored</span></div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">The problem</div>
+    <h2>Paying many suppliers is where money leaks</h2>
+    <p class="sub">Organisations in Uganda pay many service providers, large and small. The same three problems keep coming up, and they get worse once AI agents start making payments, because an agent can't tell who is really behind a payee.</p>
+    <div class="grid g3">
+      <div class="card"><div class="ico">?</div><h4>Ghost or duplicate suppliers</h4><p>Money sent to a payee nobody can identify, or to the same supplier twice.</p></div>
+      <div class="card"><div class="ico">!</div><h4>Unauthorised payments</h4><p>Amounts above what was approved, or spending that runs past the budget.</p></div>
+      <div class="card"><div class="ico">§</div><h4>Gaps at audit time</h4><p>Payments with no clear record of who approved them, who received them, and why.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="how">
+  <div class="wrap">
+    <div class="kicker">How it works</div>
+    <h2>Five checks on every payment</h2>
+    <p class="sub">Each step runs before or as the payment happens. If any rule fails, the agent refuses <b>before a signature exists</b> and says why.</p>
+    <div class="grid g5">
+      <div class="card step"><div class="num">1</div><h4>Buyer verified</h4><p>The supplier agent only serves buyers with a Verified by Concordium badge.</p></div>
+      <div class="card step"><div class="num">2</div><h4>Payee verified</h4><p>Before paying, the buyer checks the payee owns an active, badged agent tied to a real identity.</p></div>
+      <div class="card step"><div class="num">3</div><h4>Owner's limits</h4><p>Per-payment cap, daily limit, allowed assets and an approved-supplier list.</p></div>
+      <div class="card step"><div class="num">4</div><h4>Sponsored payment</h4><p>Paid over x402 on Concordium. Cord's facilitator covers the network fee.</p></div>
+      <div class="card step"><div class="num">5</div><h4>Receipt trail</h4><p>Both sides add a hash-chained receipt linking the payment to two verified owners.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="who">
+  <div class="wrap">
+    <div class="kicker">Who it's for</div>
+    <h2>Any organisation that pays service providers</h2>
+    <p class="sub">The lead example is a hotel in Entebbe paying its laundry, fresh produce, airport transfer and maintenance providers. The same flow covers recurring service bills across sectors.</p>
+    <div class="chips" style="margin-bottom:18px">
+      <span class="chip lead">Hotels &amp; hospitality</span><span class="chip">Hospitals &amp; clinics</span><span class="chip">Schools &amp; universities</span>
+      <span class="chip">NGOs &amp; project offices</span><span class="chip">Construction &amp; facilities</span><span class="chip">Logistics &amp; transport</span><span class="chip">Public procurement</span>
+    </div>
+    <div class="chips">
+      <span class="chip">Security</span><span class="chip">Cleaning &amp; laundry</span><span class="chip">Internet &amp; telecoms</span><span class="chip">Utilities</span>
+      <span class="chip">Fuel</span><span class="chip">Food supply &amp; catering</span><span class="chip">Maintenance &amp; repairs</span><span class="chip">Equipment servicing</span>
+    </div>
+  </div>
+</section>
+
+<section class="alt" id="live">
+  <div class="wrap">
+    <div class="kicker">Live, read-only</div>
+    <h2>The agents, checked right now</h2>
+    <p class="sub">Badge status comes straight from the Concordium Agent Registry; payments come from the supplier account's on-chain history. Nothing on this page can move money.</p>
+    <div class="grid g2" id="agents"><div class="card empty">Checking the Agent Registry…</div></div>
+
+    <h2 style="margin-top:44px;font-size:22px">Verified payments</h2>
+    <div class="stats"><div><b id="p-count">–</b><span>payments from ProcureBot to TenderScout</span></div><div><b id="p-total">–</b><span>settled, fees sponsored</span></div></div>
+    <div class="card tbl" style="padding:4px 10px">
+      <table>
+        <thead><tr><th>When</th><th>From → To</th><th class="num">Amount</th><th>Transaction</th></tr></thead>
+        <tbody id="payments"><tr><td colspan="4" class="empty">Loading on-chain history…</td></tr></tbody>
+      </table>
+    </div>
+    <div class="updated" id="updated"></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="kicker">Built on Concordium</div>
+    <h2>What's under the hood</h2>
+    <div class="grid g3">
+      <div class="card"><h4>Agent Registry (CIS-8004)</h4><p>Each agent is an on-chain record pointing to its Agent Card, pinned by a SHA-256 hash.</p></div>
+      <div class="card"><h4>Verified by Concordium badge</h4><p>Ties every agent to an identity-verified owner account. Checked by both sides.</p></div>
+      <div class="card"><h4>x402 payments</h4><p>The supplier answers with "402 Payment Required"; the buyer pays and retries in one flow.</p></div>
+      <div class="card"><h4>Sponsored transactions</h4><p>Cord's facilitator pays network fees, so small invoices stay cheap.</p></div>
+      <div class="card"><h4>Stablecoins (PLT)</h4><p>Invoices priced in a stablecoin such as USDR at full value. On testnet, small CCD amounts.</p></div>
+      <div class="card"><h4>MCP</h4><p>An owner can instruct the purchasing agent through Claude or any MCP client.</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <div><b style="color:#fff">{{APP_NAME}}</b> · Concordium "Make your Agents Accountable" hackathon · Testnet demo, sample invoices.</div>
+    <div><a href="https://github.com/grahamaine/cord-dapp">GitHub</a> · <a href="/.well-known/agent-card.json">TenderScout card</a> · <a href="/procurebot/.well-known/agent-card.json">ProcureBot card</a></div>
+  </div>
+</footer>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const ccd = (a) => { const n = BigInt(a || 0), d = 1000000n, f = (n % d).toString().padStart(6, "0").replace(/0+$/, ""); return `${(n / d).toLocaleString()}${f ? "." + f : ""} CCD`; };
+const short = (a) => a ? `${a.slice(0, 6)}…${a.slice(-5)}` : "–";
+const when = (t) => new Date(t).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+const pill = (ok, yes, no) => `<span class="pill ${ok ? "ok" : "bad"}"><span class="dot"></span>${esc(ok ? yes : no)}</span>`;
+
+async function load() {
+  let o;
+  try { o = await fetch("/api/public/overview").then((r) => r.json()); }
+  catch (e) { $("#agents").innerHTML = `<div class="card empty">Could not load live data. Try again shortly.</div>`; return; }
+  $("#net").textContent = o.testnet ? "TESTNET" : "MAINNET";
+  const names = {};
+  for (const a of o.agents) {
+    if (a.owner) names[a.owner] = a.name;
+    const el = $(a.key === "seller" ? "#h-seller" : "#h-buyer");
+    if (el) el.outerHTML = pill(a.valid, "Verified", "Not verified").replace("<span", `<span id="${a.key === "seller" ? "h-seller" : "h-buyer"}"`);
+  }
+  $("#agents").innerHTML = o.agents.map((a) => `
+    <div class="card agent">
+      <div class="top"><div><div class="name">${esc(a.name)}</div><div class="muted">${esc(a.role)}</div></div>${pill(a.valid, "Verified by Concordium", "Not verified")}</div>
+      <p class="muted" style="margin:0">${esc(a.blurb)}</p>
+      <dl>
+        <dt>Agent</dt><dd>#${esc(a.tokenId ?? "–")} · ${esc(a.status || "unknown")}</dd>
+        <dt>Badge</dt><dd class="mono">${esc(a.badge)}</dd>
+        <dt>Owner</dt><dd class="mono">${esc(a.owner || "–")}</dd>
+        <dt>Card hash</dt><dd class="mono">${esc(a.cardSha256 ? a.cardSha256.slice(0, 24) + "…" : "–")}</dd>
+      </dl>
+      ${a.valid ? "" : `<div class="muted" style="font-size:13px">${esc(a.issues.join("; "))}</div>`}
+      <div class="links"><a href="${esc(a.card)}">Agent Card</a><a href="${esc(a.verifyUrl)}" target="_blank" rel="noopener">Registry badge check ↗</a></div>
+    </div>`).join("");
+
+  $("#h-pay").textContent = o.totals.count;
+  $("#p-count").textContent = o.totals.count;
+  $("#p-total").textContent = ccd(o.totals.amount);
+  $("#payments").innerHTML = o.payments.length
+    ? o.payments.map((p) => `<tr><td>${esc(when(p.time))}</td><td>${esc(names[p.from] || short(p.from))} → ${esc(names[p.to] || "TenderScout")}</td><td class="num">${ccd(p.amount)}</td><td><a class="mono" href="${esc(p.explorerUrl)}" target="_blank" rel="noopener">${esc(short(p.txHash))} ↗</a></td></tr>`).join("")
+    : `<tr><td colspan="4" class="empty">${esc(o.paymentsError || "No verified payments yet. The first one will appear here within a minute of settling.")}</td></tr>`;
+  $("#updated").textContent = `Updated ${when(o.updatedAt)} · refreshes every 30 seconds`;
+}
+load();
+setInterval(load, 30000);
+</script>
+</body>
+</html>
