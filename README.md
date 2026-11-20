@@ -147,7 +147,19 @@ obligations for stand-alone systems apply from 2 December 2027. This describes C
   and the connection is restored on reload without a new prompt. Only an owner account can sign a Release.
 - **Pause agent** (top right): stops all payments until resumed.
 
-The web server holds the buyer's signing key, so it listens on localhost only. Don't expose it without authentication.
+The web server holds the buyer's signing key, so it listens on localhost only.
+
+### Use the agent from your phone (`npm run remote`)
+1. Set `DASHBOARD_PASSWORD` (12+ characters) in `.env` and restart `npm run web`. The dashboard now asks for the
+   password; 5 wrong tries lock that address out for 15 minutes, and every sign-in is in the audit log.
+2. Install cloudflared once (Windows: `winget install --id Cloudflare.cloudflared`).
+3. `npm run remote` opens a free Cloudflare quick tunnel to the dashboard and prints a private HTTPS link and a
+   QR code. Scan it, sign in, and use the Agent, Locks and Release on your phone. The dashboard and keys stay on
+   your computer; the link changes each time and closes with Ctrl+C.
+4. On the same phone, **Connect wallet → Mobile wallet → Open Concordium Wallet** opens the testnet Concordium
+   Wallet app (the separate testnet build, not the app-store one) to approve; Release signing works the same way.
+
+Without `DASHBOARD_PASSWORD`, any request arriving through a tunnel is refused, so the dashboard can't be exposed by accident.
 
 ## Run it (testnet)
 Requires Node.js 20+. On Windows PowerShell, use `npm.cmd` in place of `npm`, or run

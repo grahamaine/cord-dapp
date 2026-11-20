@@ -29,6 +29,7 @@ import { anchorNow, anchorData, checkAnchors } from "../lib/anchor.js";
 import { buy, PaymentRefused } from "../buyer/procurebot.js";
 import { mountAssets } from "../ui/assets.js";
 import { builtinReply } from "../agent/builtin.js";
+import { mountAuth, authEnabled } from "./auth.js";
 import { claudeEnabled, claudeReply } from "../agent/claude.js";
 
 const APP_NAME = process.env.APP_NAME || "Cord";
@@ -86,6 +87,7 @@ function payments(receipts: Receipt[]) {
 
 const app = express();
 app.use(express.json({ limit: "100kb" }));
+mountAuth(app, APP_NAME);
 mountAssets(app);
 
 const page = () => readFileSync(new URL("./index.html", import.meta.url), "utf8").replaceAll("{{APP_NAME}}", APP_NAME);
@@ -171,6 +173,8 @@ app.post("/api/agent/:action(pause|resume)", (req, res) => {
 });
 
 // Wallet connect settings for the owner page (no secrets here: the project id is public).
+app.get("/api/session", (_req, res) => res.json({ auth: authEnabled() }));
+
 // ---- ProcureBot chat: built-in assistant (free) or Claude if ANTHROPIC_API_KEY is set. Never releases.
 app.get("/api/agent/info", (_req, res) => res.json({ mode: claudeEnabled() ? "claude" : "builtin", name: "ProcureBot" }));
 app.post("/api/agent/chat", async (req, res) => {
@@ -303,4 +307,7 @@ app.post("/api/locks/:id/release", lockRoute((req) =>
 ));
 app.post("/api/locks/:id/cancel", lockRoute((req) => cancelLock(req.params.id, "owner", String(req.body?.note || ""))));
 
-app.listen(PORT, HOST, () => console.log(`${APP_NAME} dashboard on http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`));
+app.listen(PORT, HOST, () => {
+  console.log(`${APP_NAME} dashboard on http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`);
+  console.log(authEnabled() ? "Owner login: on (DASHBOARD_PASSWORD set). Phone access: npm run remote" : "Owner login: off (local only). Set DASHBOARD_PASSWORD in .env to enable sign-in and phone access.");
+});

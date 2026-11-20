@@ -19,7 +19,8 @@
     "web": "tsx src/web/server.ts",
     "typecheck": "tsc --noEmit",
     "doctor": "tsx src/scripts/doctor.ts",
-    "publish:judge": "tsx src/scripts/publish-judge.ts"
+    "publish:judge": "tsx src/scripts/publish-judge.ts",
+    "remote": "tsx src/scripts/remote.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.11.0",
@@ -29,12 +30,14 @@
     "@noble/curves": "^1.9.7",
     "@noble/hashes": "^1.8.0",
     "@scure/base": "^1.2.6",
+    "@types/qrcode": "^1.5.6",
     "@x402/concordium": "~2.31.0",
     "@x402/core": "~2.31.0",
     "@x402/express": "~2.31.0",
     "@x402/fetch": "~2.31.0",
     "dotenv": "^16.4.5",
     "express": "^4.21.2",
+    "qrcode": "^1.5.4",
     "zod": "^3.24.1"
   },
   "devDependencies": {

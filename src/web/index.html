@@ -74,10 +74,11 @@
       {{APP_NAME}}
     </span>
     <span class="net" id="net">…</span>
-    <div style="margin-left:auto;display:flex;gap:.6rem;align-items:center">
+    <div class="top-actions">
       <button class="btn btn-outline btn-sm" id="wallet-btn" type="button">Connect wallet</button>
       <span class="chip" id="agent-state"><i></i>Agent …</span>
       <button class="btn btn-danger btn-sm" id="pause-btn" type="button">Pause agent</button>
+      <button class="btn btn-outline btn-sm" id="logout-btn" type="button" title="Sign out of the dashboard">Sign out</button>
     </div>
   </div>
 </header>
@@ -315,13 +316,14 @@ function toast(html, kind = "") {
 }
 async function api(path, opts) {
   const r = await fetch(path, opts); const body = await r.json().catch(() => ({}));
+  if (r.status === 401 && body.login) { location.href = "/login"; throw new Error("Signed out"); }
   if (!r.ok) throw Object.assign(new Error(body.error || `HTTP ${r.status}`), { body });
   return body;
 }
 const post = (path, body = {}) => api(path, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
 
 function showTab(name) {
-  document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("on", x.dataset.tab === name));
+  document.querySelectorAll(".tab").forEach((x) => { x.classList.toggle("on", x.dataset.tab === name); if (x.dataset.tab === name) x.scrollIntoView?.({ inline: "center", block: "nearest", behavior: "smooth" }); });
   for (const t of ["dash", "agent", "locks", "policy", "audit"]) $("#tab-" + t).classList.toggle("hidden", t !== name);
   if (name === "locks") loadLocksTab();
   if (name === "agent") initChat();
@@ -329,6 +331,9 @@ function showTab(name) {
   if (name === "audit") loadAudit();
 }
 document.querySelectorAll(".tab").forEach((b) => b.onclick = () => showTab(b.dataset.tab));
+
+$("#logout-btn").onclick = async () => { await fetch("/api/logout", { method: "POST" }).catch(() => {}); location.href = "/login"; };
+api("/api/session").then((s) => { if (!s.auth) $("#logout-btn").classList.add("hidden"); }).catch(() => {});
 
 // ---- ProcureBot chat
 const chat = { history: [], started: false, busy: false };
@@ -765,13 +770,26 @@ $("#wm-mobile").onclick = async () => {
     wallet.client ??= await SignClient.init({ projectId: cfg.walletConnectProjectId, metadata: { name: "Cord", description: "Verified supplier payments", url: location.origin, icons: [] } });
     const { uri, approval } = await wallet.client.connect({ requiredNamespaces: { ccd: { methods: ["sign_message", "sign_and_send_transaction"], chains: [cfg.chainId], events: ["accounts_changed", "chain_changed"] } } });
     const QR = (await import("https://esm.sh/qrcode@1.5.4")).default;
-    $("#wm-qr").innerHTML = `<img alt="WalletConnect QR code" src="${await QR.toDataURL(uri, { margin: 1, width: 480 })}"><div class="hint">Open Concordium Wallet on your phone → scan.</div>`;
+    wallet.wcUri = uri;
+    const deep = walletDeepLink(uri);
+    $("#wm-qr").innerHTML = (onPhone()
+      ? `<a class="btn btn-primary" style="width:100%;margin-bottom:.8rem" href="${esc(deep)}">Open Concordium Wallet${isTestnetChain(cfg.chainId) ? " (testnet)" : ""}</a><div class="hint" style="margin-bottom:.8rem">Approve the connection in the wallet, then come back to this page.${isTestnetChain(cfg.chainId) ? " Use the <b>testnet</b> Concordium Wallet app." : ""}</div>`
+      : "") +
+      `<img alt="WalletConnect QR code" src="${await QR.toDataURL(uri, { margin: 1, width: 480 })}"><div class="hint">${onPhone() ? "Or scan this from another phone." : "Open Concordium Wallet on your phone → scan."}</div>`;
     const session = await approval();
     wallet.session = session; await walletCfg();
     const list = [...new Set(session.namespaces.ccd.accounts.map((x) => x.split(":").pop()))];
     await connected("mobile", pickAccount(list));
   } catch (e) { $("#wm-qr").innerHTML = ""; toast(`<b>Couldn't connect</b>${esc(e.message)}`, "bad"); }
 };
+// Same-phone WalletConnect: the Concordium Wallet opens via its own URL scheme (cryptox-wc-testnet: on testnet).
+const onPhone = () => matchMedia("(pointer: coarse)").matches && /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
+const isTestnetChain = (id) => /testnet/.test(String(id || ""));
+function walletDeepLink(uri) {
+  const scheme = isTestnetChain(wallet.cfg?.chainId) ? "cryptox-wc-testnet" : "cryptox-wc";
+  return uri ? `${scheme}://wc?uri=${encodeURIComponent(uri)}` : `${scheme}://wc`;
+}
+
 // The Concordium wallet allows one open prompt at a time: never send a second request while one is open.
 async function walletSign(message) {
   if (wallet.busy) throw new Error("A signing request is already open in your wallet. Approve or reject it there first.");
@@ -786,6 +804,7 @@ async function walletSignOnce(message) {
   if (wallet.kind === "browser") return wallet.provider.signMessage(wallet.account, message);
   if (wallet.kind === "mobile") {
     const cfg = await walletCfg();
+    if (onPhone()) toast(`<b>Sign in your wallet</b><a href="${esc(walletDeepLink())}">Open Concordium Wallet →</a> approve the request, then come back here.`, "");
     return wallet.client.request({ topic: wallet.session.topic, chainId: cfg.chainId, request: { method: "sign_message", params: { message } } });
   }
   throw new Error("No wallet connected");

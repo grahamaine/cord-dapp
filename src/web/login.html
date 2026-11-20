@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#faf7f1" />
+<meta name="robots" content="noindex, nofollow" />
+<title>{{APP_NAME}} — Owner sign-in</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&display=swap" />
+<link rel="stylesheet" href="/assets/cord.css" />
+<style>
+  .center { min-height: 100vh; display: grid; place-items: center; padding: 1.2rem; }
+  .login { width: min(420px, 100%); }
+  .login h1 { font-size: 1.8rem; margin: 1rem 0 .3rem; }
+  .login input { width: 100%; font: inherit; padding: .85rem 1rem; border: 1px solid var(--line-2); border-radius: 12px; background: #fff; color: var(--ink); margin-top: 1rem; font-size: 1.05rem; }
+  .login input:focus { outline: 2px solid var(--indigo-soft); border-color: var(--indigo); }
+  .login button { width: 100%; margin-top: 1rem; }
+  .err { color: var(--bad); margin-top: .8rem; min-height: 1.4em; }
+</style>
+</head>
+<body>
+<div class="aurora"><div class="grid-lines"></div></div>
+<div class="center">
+  <form class="card login" id="f">
+    <a class="brand" href="#"><span class="logo"><svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><circle cx="9" cy="16" r="5" fill="none" stroke="#fff" stroke-width="3"/><circle cx="23" cy="16" r="5" fill="none" stroke="#fff" stroke-width="3" opacity=".7"/><path d="M13.5 16h5" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg></span>{{APP_NAME}}</a>
+    <h1>Owner sign-in</h1>
+    <p class="muted" style="margin:0">ProcureBot's owner dashboard. Releasing a payment still needs your wallet signature.</p>
+    <input id="pw" type="password" autocomplete="current-password" placeholder="Dashboard password" required autofocus />
+    <button class="btn btn-primary" type="submit">Sign in</button>
+    <div class="err" id="err" role="alert"></div>
+  </form>
+</div>
+<script>
+document.getElementById("f").onsubmit = async (e) => {
+  e.preventDefault();
+  const err = document.getElementById("err"); err.textContent = "";
+  try {
+    const r = await fetch("/api/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: document.getElementById("pw").value }) });
+    const b = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(b.error || "Sign-in failed");
+    location.href = "/";
+  } catch (x) { err.textContent = x.message; document.getElementById("pw").select(); }
+};
+</script>
+</body>
+</html>

@@ -183,3 +183,21 @@ input:focus { outline: 2px solid var(--indigo); border-color: transparent; }
 .ai-tag { font-size: .8rem; background: var(--info-soft); color: var(--info); border-radius: 999px; padding: .2rem .7rem; white-space: nowrap; }
 
 .acct-opt.on { border-color: var(--indigo); background: var(--indigo-soft); }
+
+/* ---------- phones ---------- */
+html, body { overflow-x: clip; }
+.top-actions { margin-left: auto; display: flex; gap: .6rem; align-items: center; }
+.chat-form input { min-width: 0; }
+.chat-form .btn { flex: 0 0 auto; }
+@media (max-width: 680px) {
+  .topbar .wrap { height: auto; flex-wrap: wrap; row-gap: .5rem; padding-top: .6rem; padding-bottom: .6rem; }
+  .top-actions { margin-left: 0; width: 100%; flex-wrap: wrap; gap: .4rem; }
+  .top-actions .btn, .top-actions .chip { font-size: .78rem; padding: .3rem .7rem; }
+  .tabs { display: flex !important; flex-wrap: nowrap !important; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; border-radius: 999px !important; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs .tab { flex: 0 0 auto; white-space: nowrap; }
+  .chat-log { height: 58vh; }
+  .msg { max-width: 92%; }
+  .chat-form .btn { padding-left: 1rem; padding-right: 1rem; }
+  .modal .box { width: 100% !important; max-height: 92vh; overflow: auto; }
+}
