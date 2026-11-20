@@ -42,6 +42,7 @@ export interface Lock {
   txHash?: string;
   explorerUrl?: string;
   receiptSeq?: number;
+  approval?: { account: string; at: string; nonce: string; message: string; signature: unknown };
   lastError?: string;
   history: LockEvent[];
 }
@@ -149,12 +150,22 @@ export async function releaseLock(
   id: string,
   actor: Actor,
   pay: (lock: Lock, reservedOtherEur: number) => Promise<{ txHash?: string; explorerUrl?: string; receiptSeq?: number }>,
+  approve?: (lock: Lock) => Promise<Lock["approval"]>,
 ): Promise<Lock> {
   const lock = getLock(id);
   requireStatus(lock, "release", ["sent"]);
   const policy = loadPolicy();
   if (policy.paused) refuse(lock, "release", actor, "the agent is paused by the owner");
   if (policy.requireHumanRelease && actor !== "owner") refuse(lock, "release", actor, "policy requires a human to release payments");
+  if (actor === "owner" && policy.requireOwnerSignature) {
+    if (!approve) refuse(lock, "release", actor, "policy requires the owner's wallet signature; connect your wallet and sign the approval");
+    try {
+      lock.approval = await approve!(lock);
+      record(lock, "approve", "owner", "ok", `Release signed by owner wallet ${lock.approval!.account}`, { account: lock.approval!.account });
+    } catch (e) {
+      refuse(lock, "release", actor, `wallet approval failed: ${(e as Error).message}`);
+    }
+  }
   try {
     const r = await pay(lock, reservedEur(lock.id));
     lock.status = "released";

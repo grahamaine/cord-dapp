@@ -69,9 +69,27 @@ limits are **€10,000 per lock and €10,000 per day**.
 | 4. **Release** | **a person** | Approves; only now is the payment signed and settled on Concordium (fee sponsored) |
 | 5. **Cancel** | owner | Stops the lock at any point before release; frees the budget |
 
+**Owner wallet approval:** by default Release must also be **signed by the owner's Concordium wallet**.
+Connect it from the owner page (top right): the Concordium browser extension, or the phone wallet by
+scanning a WalletConnect QR code (needs a free `WALLETCONNECT_PROJECT_ID`). Cord issues a one-time
+challenge naming the lock, invoice, supplier and amount; the wallet signs it; the server checks the
+signature against the account's on-chain keys and that the account is an authorised owner
+(`OWNER_ACCOUNTS`, default the buyer agent's owner). The signed approval is stored on the lock and in
+the audit log.
+
 "Fund" reserves budget in Cord's records; it does not move money into an on-chain escrow. Money moves once,
 on release. On testnet each EUR amount settles as a small CCD amount at a fixed demo rate
 (`DEMO_ATOMIC_PER_EUR`, default €1,000 = 0.1 CCD); in production invoices would be paid in a euro stablecoin.
+
+## Suppliers on other blockchains
+Agents on Ethereum, Base, Solana, Fetch.ai and other chains can link their key to a Concordium agent
+through the **CIS-8 external key registry** (testnet contract `12801.0`). On the owner page
+(Policy → *Suppliers on other blockchains*), pick the chain and paste the supplier's Solana address
+or EVM public key, or let the supplier sign once with MetaMask so Cord can recover the key. Cord calls
+the registry's `owner_of_key` and `agent_by_external_reference` tools, then runs the normal
+Verified by Concordium badge check on the linked agent. A verified supplier can be added to the
+approved list; payment still settles on Concordium to its verified owner account. Settling on the other
+chain (x402 on Base or Solana) is planned. How to link a key: see `docs/cross-chain.md`.
 
 ## EU AI Act alignment
 Cord prepares business-to-business supplier payments, which is not on the AI Act's high-risk list, but it
@@ -79,7 +97,7 @@ applies the Act's core safeguards by design:
 
 | AI Act | How Cord does it |
 |---|---|
-| Art. 14 human oversight | Release needs a person; the owner can cancel any lock or **pause the agent** (every payment refused while paused) |
+| Art. 14 human oversight | Release needs a person who **signs with the owner's wallet**; the owner can cancel any lock or **pause the agent** (every payment refused while paused) |
 | Art. 12 record-keeping | Hash-chained audit log of every operation, refusal and policy change (`data/audit.jsonl`) plus payment receipts |
 | Art. 13 / 50 transparency | The owner page tells users they're working with an AI agent and shows its checks and reasons before release |
 | Art. 9 / 15 risk controls | Per-lock and daily limits, verified-supplier checks, refusal before any signature |

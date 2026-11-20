@@ -23,6 +23,8 @@ import { loadPolicy, savePolicy, spentTodayEur } from "../lib/policy.js";
 import { audit, readAudit, verifyAudit } from "../lib/audit.js";
 import { createLock, fundLock, sendLock, releaseLock, cancelLock, readLocks, lockTotals, LockError, type Lock } from "../lib/locks.js";
 import { atomicToEur, ATOMIC_PER_EUR } from "../lib/eur.js";
+import { createChallenge, ownerAccounts, verifyApproval } from "../lib/approval.js";
+import { CHAINS, verifyCrossChain } from "../lib/xchain.js";
 import { buy, PaymentRefused } from "../buyer/procurebot.js";
 import { mountAssets } from "../ui/assets.js";
 
@@ -165,6 +167,29 @@ app.post("/api/agent/:action(pause|resume)", (req, res) => {
   res.json(saved);
 });
 
+// Wallet connect settings for the owner page (no secrets here: the project id is public).
+app.get("/api/wallet/config", (_req, res) =>
+  res.json({
+    network: config.registry.network,
+    chainId: `ccd:${config.registry.network}`,
+    walletConnectProjectId: process.env.WALLETCONNECT_PROJECT_ID || null,
+    ownerAccounts: ownerAccounts(),
+    requireOwnerSignature: loadPolicy().requireOwnerSignature,
+  }),
+);
+
+// Cross-chain suppliers: verify an agent from another blockchain via its CIS-8 link to Concordium.
+app.get("/api/xchain/chains", (_req, res) => res.json({ chains: CHAINS }));
+app.post("/api/xchain/verify", async (req, res) => {
+  try {
+    const r = await verifyCrossChain(req.body ?? {});
+    audit({ actor: "owner", op: "xchain-check", outcome: r.verified ? "ok" : "refused", detail: `${r.chain} ${r.address}: ${r.summary}`, data: { namespace: r.namespace, owner: r.concordiumOwner, agent: r.agent?.tokenId } });
+    res.json(r);
+  } catch (e) {
+    res.status(400).json({ error: (e as Error).message });
+  }
+});
+
 app.get("/api/audit", (_req, res) => res.json({ chain: verifyAudit(), entries: readAudit().slice(-200).reverse() }));
 
 app.get("/api/invoices", async (_req, res) => {
@@ -205,7 +230,16 @@ app.get("/api/locks", (_req, res) => res.json({ locks: readLocks().map(withExplo
 app.post("/api/locks", lockRoute(async (req) => createLock(await invoiceRef(String(req.body?.invoiceId || "")), "owner")));
 app.post("/api/locks/:id/fund", lockRoute((req) => fundLock(req.params.id, "owner")));
 app.post("/api/locks/:id/send", lockRoute((req) => sendLock(req.params.id, (l) => releaseLock(l.id, "agent", payLock))));
-app.post("/api/locks/:id/release", lockRoute((req) => releaseLock(req.params.id, "owner", payLock)));
+// Owner wallet approval: get a one-time challenge, sign it in the wallet, then release with the signature.
+app.post("/api/locks/:id/release-challenge", lockRoute((req) => {
+  const l = readLocks().find((x) => x.id === req.params.id);
+  if (!l) throw new LockError(`unknown lock ${req.params.id}`);
+  if (l.status !== "sent") throw new LockError(`lock is ${l.status}, not awaiting release`);
+  return createChallenge(l);
+}));
+app.post("/api/locks/:id/release", lockRoute((req) =>
+  releaseLock(req.params.id, "owner", payLock, () => verifyApproval(req.params.id, req.body ?? {})),
+));
 app.post("/api/locks/:id/cancel", lockRoute((req) => cancelLock(req.params.id, "owner", String(req.body?.note || ""))));
 
 app.listen(PORT, HOST, () => console.log(`${APP_NAME} dashboard on http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`));

@@ -42,6 +42,19 @@
   .checks { font-size: .85rem; color: var(--muted); }
   .sup { display: flex; justify-content: space-between; align-items: center; gap: .8rem; padding: .7rem 0; border-top: 1px solid var(--line); }
   .sup:first-child { border-top: 0; }
+  .modal { position: fixed; inset: 0; z-index: 60; display: none; place-items: center; background: rgba(34,29,46,.35); backdrop-filter: blur(4px); padding: 1rem; }
+  .modal.open { display: grid; }
+  .modal .box { width: min(460px, 100%); background: #fff; border: 1px solid var(--line); border-radius: 22px; padding: 1.5rem; box-shadow: 0 30px 80px rgba(34,29,46,.25); }
+  .modal h3 { font-size: 1.3rem; text-transform: uppercase; letter-spacing: .04em; }
+  .opt { display: flex; align-items: center; gap: .9rem; width: 100%; margin-top: .8rem; padding: .9rem 1rem; border-radius: 14px; border: 1px solid var(--line-2); background: #fff; color: var(--ink); font: 500 1rem var(--font); text-align: left; cursor: pointer; }
+  .opt:hover { border-color: var(--indigo); background: var(--indigo-soft); }
+  .opt small { display: block; color: var(--muted); font-weight: 400; font-size: .85rem; }
+  .qr { display: grid; place-items: center; margin-top: 1rem; }
+  .qr img { width: 240px; height: 240px; border-radius: 12px; border: 1px solid var(--line); }
+  .xres { margin-top: 1rem; padding: 1rem; border-radius: 14px; border: 1px solid var(--line); background: #fff; }
+  .xres dl { display: grid; grid-template-columns: 140px 1fr; gap: .3rem .8rem; margin: .6rem 0 0; font-size: .92rem; }
+  .xres dt { color: var(--muted); } .xres dd { margin: 0; word-break: break-all; }
+  select { width: 100%; padding: .65rem .9rem; border-radius: 12px; border: 1px solid var(--line-2); background: #fff; color: var(--ink); font: 400 1rem var(--font); }
 </style>
 </head>
 <body>
@@ -54,6 +67,7 @@
     </span>
     <span class="net" id="net">…</span>
     <div style="margin-left:auto;display:flex;gap:.6rem;align-items:center">
+      <button class="btn btn-outline btn-sm" id="wallet-btn" type="button">Connect wallet</button>
       <span class="chip" id="agent-state"><i></i>Agent …</span>
       <button class="btn btn-danger btn-sm" id="pause-btn" type="button">Pause agent</button>
     </div>
@@ -149,6 +163,7 @@
           <input id="p-assets" type="text" />
           <label class="check"><input id="p-badge" type="checkbox" /> Only pay suppliers that are Verified by Concordium</label>
           <label class="check"><input id="p-human" type="checkbox" /> A person must release every invoice payment (recommended)</label>
+          <label class="check"><input id="p-sig" type="checkbox" /> That person must sign the release with the owner's Concordium wallet</label>
           <label class="check muted"><input id="p-onlyapproved" type="checkbox" disabled /> Only pay approved suppliers (on when the list has entries)</label>
           <div class="row" style="margin-top:1.3rem"><button class="btn btn-primary" type="submit" style="flex:0 0 auto">Save policy</button><span class="hint" id="p-saved" style="margin:0"></span></div>
         </form>
@@ -165,6 +180,21 @@
       </div>
     </div>
     <div class="hint" id="rate-hint" style="margin-top:1rem"></div>
+
+    <h2 class="h">Suppliers on other blockchains <small>verify an Ethereum, Base or Solana agent through its link to Concordium</small></h2>
+    <div class="card">
+      <p class="muted" style="margin:0 0 .4rem">A supplier agent on another chain can link its key to a Concordium agent (CIS-8). Cord looks the key up, finds the linked agent and its identity-verified owner, and runs the same badge check. Payment still settles on Concordium, to that verified owner.</p>
+      <div class="row" style="align-items:flex-end">
+        <div style="flex:0 0 220px"><label class="f" for="x-chain">Chain</label><select id="x-chain"></select></div>
+        <div style="flex:2"><label class="f" for="x-id" id="x-id-label">Address or public key</label><input id="x-id" type="text" placeholder="0x… public key, or Solana address" /></div>
+      </div>
+      <div class="row" style="margin-top:.8rem;flex-wrap:wrap">
+        <button class="btn btn-primary btn-sm" id="x-verify" type="button" style="flex:0 0 auto">Verify</button>
+        <button class="btn btn-outline btn-sm" id="x-metamask" type="button" style="flex:0 0 auto">Sign with MetaMask</button>
+        <span class="hint" style="margin:0">EVM addresses don't reveal their key: paste the public key, or let the supplier sign once with MetaMask.</span>
+      </div>
+      <div id="x-result"></div>
+    </div>
   </div>
 
   <!-- AUDIT -->
@@ -178,6 +208,18 @@
     </div>
   </div>
 </main>
+
+<div class="modal" id="wallet-modal" role="dialog" aria-modal="true" aria-labelledby="wm-title">
+  <div class="box">
+    <div class="acct-top"><h3 id="wm-title">Connect owner wallet</h3><button class="btn btn-outline btn-sm" id="wm-close" type="button">Close</button></div>
+    <p class="muted" style="margin:.5rem 0 0">Use the Concordium account that owns ProcureBot. Its signature is required to release payments.</p>
+    <div id="wm-body">
+      <button class="opt" id="wm-browser" type="button"><span class="ico" style="margin:0;width:40px;height:40px">⌘</span><span>Browser wallet<small>Concordium Wallet for Web (Chrome extension)</small></span></button>
+      <button class="opt" id="wm-mobile" type="button"><span class="ico" style="margin:0;width:40px;height:40px">▣</span><span>Mobile wallet<small>Scan a QR code with Concordium Wallet (WalletConnect)</small></span></button>
+    </div>
+    <div class="qr" id="wm-qr"></div>
+  </div>
+</div>
 
 <div class="toast" id="toast"></div>
 
@@ -327,12 +369,20 @@ async function lockOp(btn) {
   if (!confirm(OP_TEXT[op](l))) return;
   btn.disabled = true; btn.textContent = op === "release" ? "Releasing…" : op === "send" ? "Checking…" : "…";
   try {
-    const r = await post(`/api/locks/${encodeURIComponent(l.id)}/${op}`);
+    let body = {};
+    if (op === "release" && policy?.requireOwnerSignature !== false && (await walletCfg()).requireOwnerSignature) {
+      if (!wallet.account) { await openWallet(); if (!wallet.account) throw Object.assign(new Error("Connect the owner's wallet to sign the release."), { body: { refused: true } }); }
+      const ch = (await post(`/api/locks/${encodeURIComponent(l.id)}/release-challenge`)).lock;
+      toast("<b>Check your wallet</b>Sign the approval to release this payment.", "");
+      const signature = await walletSign(ch.message);
+      body = { nonce: ch.nonce, account: wallet.account, signature };
+    }
+    const r = await post(`/api/locks/${encodeURIComponent(l.id)}/${op}`, body);
     const L = r.lock;
     const msg = {
       fund: `${eur(L.amountEur)} set aside.`,
       send: L.status === "released" ? "Checks passed and auto-released." : "Checks passed. Waiting for your release.",
-      release: `${eur(L.amountEur)} paid to ${esc(L.supplier)}, fee sponsored. ${L.explorerUrl ? `<a href="${esc(L.explorerUrl)}" target="_blank" rel="noopener">View on CCDExplorer ↗</a>` : ""}`,
+      release: `${eur(L.amountEur)} paid to ${esc(L.supplier)}, fee sponsored.${L.approval ? ` Signed by ${esc(short(L.approval.account))}.` : ""} ${L.explorerUrl ? `<a href="${esc(L.explorerUrl)}" target="_blank" rel="noopener">View on CCDExplorer ↗</a>` : ""}`,
       cancel: "Lock cancelled.",
     }[op];
     toast(`<b>${esc(op)} · ${esc(L.id)}</b>${msg}`, "ok");
@@ -389,6 +439,8 @@ async function loadPolicy() {
   $("#p-assets").value = policy.allowedAssets.join(", ");
   $("#p-badge").checked = policy.requireSellerBadge;
   $("#p-human").checked = policy.requireHumanRelease;
+  $("#p-sig").checked = policy.requireOwnerSignature !== false;
+  loadChains();
   $("#p-saved").textContent = policy.updatedAt ? `Last saved ${when(policy.updatedAt)}` : "Using defaults (€10,000 per lock, €10,000 per day)";
   if (overview) $("#rate-hint").textContent = `Demo rate: €1,000 settles as ${(Number(overview.demoRate.atomicPerEur) * 1000 / 1e6).toLocaleString()} CCD on testnet. In production, invoices would be paid in a euro stablecoin at full value.`;
   renderSuppliers();
@@ -406,8 +458,9 @@ $("#policy").onsubmit = async (e) => {
       ...policy,
       maxPerLockEur: Number($("#p-max").value || 0), dailyLimitEur: Number($("#p-daily").value || 0),
       allowedAssets: $("#p-assets").value.split(",").map((s) => s.trim()).filter(Boolean),
-      requireSellerBadge: $("#p-badge").checked, requireHumanRelease: $("#p-human").checked,
+      requireSellerBadge: $("#p-badge").checked, requireHumanRelease: $("#p-human").checked, requireOwnerSignature: $("#p-sig").checked,
     }) });
+    wallet.cfg = null;
     $("#p-saved").textContent = `Saved ${when(policy.updatedAt)}`; toast("<b>Policy saved</b>Recorded in the audit log. The agent uses it from the next step.", "ok");
     loadOverview().catch(() => {});
   } catch (err) { toast(`<b>Could not save</b>${esc(err.message)}`, "bad"); }
@@ -428,6 +481,116 @@ async function loadAudit() {
   } catch (e) { $("#audit").innerHTML = `<tr><td colspan="7" class="empty">${esc(e.message)}</td></tr>`; }
 }
 
+
+// ---------------- wallet connect (browser extension + mobile via WalletConnect) ----------------
+const wallet = { kind: null, account: null, provider: null, client: null, session: null, cfg: null };
+async function walletCfg() { return (wallet.cfg ??= await api("/api/wallet/config")); }
+function renderWallet() {
+  const b = $("#wallet-btn");
+  if (wallet.account) {
+    const owner = (wallet.cfg?.ownerAccounts || []).includes(wallet.account);
+    b.innerHTML = `${owner ? "✓ " : "⚠ "}${esc(short(wallet.account))}`;
+    b.title = owner ? "Connected: authorised owner" : "Connected, but this account is not an authorised owner";
+    b.className = owner ? "btn btn-outline btn-sm" : "btn btn-danger btn-sm";
+  } else { b.textContent = "Connect wallet"; b.className = "btn btn-outline btn-sm"; b.title = ""; }
+}
+let walletResolve = null;
+function openWallet() {
+  $("#wm-qr").innerHTML = ""; $("#wallet-modal").classList.add("open");
+  return new Promise((res) => (walletResolve = res));
+}
+function closeWallet() { $("#wallet-modal").classList.remove("open"); walletResolve?.(); walletResolve = null; }
+$("#wm-close").onclick = closeWallet;
+$("#wallet-btn").onclick = async () => {
+  if (wallet.account && confirm(`Disconnect ${wallet.account}?`)) {
+    try { if (wallet.kind === "mobile") await wallet.client.disconnect({ topic: wallet.session.topic, reason: { code: 6000, message: "User disconnected" } }); } catch {}
+    Object.assign(wallet, { kind: null, account: null, provider: null, session: null }); renderWallet(); return;
+  }
+  if (!wallet.account) openWallet();
+};
+async function connected(kind, account) {
+  wallet.kind = kind; wallet.account = account; await walletCfg(); renderWallet(); closeWallet();
+  const owner = wallet.cfg.ownerAccounts.includes(account);
+  toast(owner ? `<b>Wallet connected</b>${esc(short(account))} is an authorised owner of this agent.` : `<b>Not an owner</b>${esc(short(account))} can't approve releases. Switch to the account that owns ProcureBot.`, owner ? "ok" : "bad");
+}
+$("#wm-browser").onclick = async () => {
+  try {
+    const { detectConcordiumProvider } = await import("https://esm.sh/@concordium/browser-wallet-api-helpers@3.3.0");
+    const provider = await detectConcordiumProvider(3000).catch(() => null);
+    if (!provider) throw new Error("Concordium Wallet for Web wasn't found in this browser. Install it, or use the mobile wallet.");
+    const account = await provider.connect();
+    if (!account) throw new Error("No account was shared.");
+    wallet.provider = provider; await connected("browser", String(account));
+  } catch (e) { toast(`<b>Couldn't connect</b>${esc(e.message)}`, "bad"); }
+};
+$("#wm-mobile").onclick = async () => {
+  try {
+    const cfg = await walletCfg();
+    if (!cfg.walletConnectProjectId) throw new Error("Add WALLETCONNECT_PROJECT_ID to .env (free at cloud.reown.com), then restart npm run web.");
+    $("#wm-qr").innerHTML = `<div class="muted">Starting WalletConnect…</div>`;
+    const { default: SignClient } = await import("https://esm.sh/@walletconnect/sign-client@2.26.0");
+    wallet.client ??= await SignClient.init({ projectId: cfg.walletConnectProjectId, metadata: { name: "Cord", description: "Verified supplier payments", url: location.origin, icons: [] } });
+    const { uri, approval } = await wallet.client.connect({ requiredNamespaces: { ccd: { methods: ["sign_message", "sign_and_send_transaction"], chains: [cfg.chainId], events: ["accounts_changed", "chain_changed"] } } });
+    const QR = (await import("https://esm.sh/qrcode@1.5.4")).default;
+    $("#wm-qr").innerHTML = `<img alt="WalletConnect QR code" src="${await QR.toDataURL(uri, { margin: 1, width: 480 })}"><div class="hint">Open Concordium Wallet on your phone → scan.</div>`;
+    const session = await approval();
+    const account = session.namespaces.ccd.accounts[0].split(":").pop();
+    wallet.session = session; await connected("mobile", account);
+  } catch (e) { $("#wm-qr").innerHTML = ""; toast(`<b>Couldn't connect</b>${esc(e.message)}`, "bad"); }
+};
+async function walletSign(message) {
+  if (wallet.kind === "browser") return wallet.provider.signMessage(wallet.account, message);
+  if (wallet.kind === "mobile") {
+    const cfg = await walletCfg();
+    return wallet.client.request({ topic: wallet.session.topic, chainId: cfg.chainId, request: { method: "sign_message", params: { message } } });
+  }
+  throw new Error("No wallet connected");
+}
+
+// ---------------- cross-chain suppliers ----------------
+let chains = [], lastX = null;
+async function loadChains() {
+  if (chains.length) return;
+  chains = (await api("/api/xchain/chains")).chains;
+  $("#x-chain").innerHTML = chains.map((c) => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("");
+  const sync = () => { const evm = chains.find((c) => c.id === $("#x-chain").value)?.family === "evm"; $("#x-metamask").classList.toggle("hidden", !evm); $("#x-id").placeholder = evm ? "0x… public key (or use Sign with MetaMask)" : "Solana address"; };
+  $("#x-chain").onchange = sync; sync();
+}
+async function xVerify(body) {
+  $("#x-result").innerHTML = `<div class="xres muted">Checking the Concordium registry…</div>`;
+  try {
+    const r = lastX = await post("/api/xchain/verify", body);
+    $("#x-result").innerHTML = `<div class="xres">
+      <div class="acct-top"><b style="color:var(--ink)">${esc(r.summary)}</b>${r.verified ? chip("ok", "Verified by Concordium") : r.linked ? chip("warn", "Linked, not verified") : chip("bad", "Not linked")}</div>
+      <dl><dt>Chain</dt><dd>${esc(r.chain)}</dd><dt>Address</dt><dd>${esc(r.address)}</dd><dt>Key</dt><dd>${esc(r.keyType)} · ${esc(r.publicKeyHex.slice(0, 22))}…</dd>
+      <dt>Concordium owner</dt><dd>${esc(r.concordiumOwner || "–")}</dd><dt>Agent</dt><dd>${r.agent ? `#${esc(r.agent.tokenId)} · ${esc(r.agent.status)}` : "–"}</dd>
+      ${r.proofScheme ? `<dt>Key proof</dt><dd>${esc(r.proofScheme)}</dd>` : ""}</dl>
+      ${r.verified ? `<div class="row" style="margin-top:.8rem"><button class="btn btn-outline btn-sm" id="x-approve" type="button" style="flex:0 0 auto">Add to approved suppliers</button><span class="hint" style="margin:0">Payments go to the verified Concordium owner account.</span></div>` : ""}
+    </div>`;
+    const a = $("#x-approve");
+    if (a) a.onclick = () => {
+      if (policy.approvedSuppliers.some((s) => s.account === r.concordiumOwner)) return toast("<b>Already listed</b>That owner is already approved.", "bad");
+      policy.approvedSuppliers.push({ account: r.concordiumOwner, name: `${r.chain} agent #${r.agent.tokenId} (${short(r.address)})` });
+      renderSuppliers(); toast("<b>Added</b>Press Save policy to apply.", "ok");
+    };
+  } catch (e) { $("#x-result").innerHTML = `<div class="xres"><span class="bad-text">${esc(e.message)}</span></div>`; }
+}
+$("#x-verify").onclick = () => {
+  const v = $("#x-id").value.trim(), ns = $("#x-chain").value, evm = ns.startsWith("eip155:");
+  if (!v) return toast("<b>Missing</b>Enter an address or public key.", "bad");
+  xVerify(evm ? { namespace: ns, publicKeyHex: v } : { namespace: ns, address: v });
+};
+$("#x-metamask").onclick = async () => {
+  try {
+    if (!window.ethereum) throw new Error("MetaMask (or another EVM wallet) wasn't found in this browser.");
+    const [address] = await window.ethereum.request({ method: "eth_requestAccounts" });
+    const message = `Cord supplier check\nAddress: ${address}\nTime: ${new Date().toISOString()}`;
+    const signature = await window.ethereum.request({ method: "personal_sign", params: [message, address] });
+    xVerify({ namespace: $("#x-chain").value, address, signature, message });
+  } catch (e) { toast(`<b>MetaMask</b>${esc(e.message)}`, "bad"); }
+};
+
+walletCfg().then(renderWallet).catch(() => {});
 loadOverview().catch((e) => toast(`<b>Could not load dashboard</b>${esc(e.message)}`, "bad"));
 loadAccounts();
 setInterval(() => loadOverview().then(() => { if (!$("#tab-locks").classList.contains("hidden")) renderBudget(); }).catch(() => {}), 15000);

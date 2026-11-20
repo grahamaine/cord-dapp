@@ -40,7 +40,7 @@ export async function checkBadge(id: string): Promise<BadgeVerdict> {
     v = { verified: false, subject: id, agents: 0, issues: [`registry returned HTTP ${status}`, body?.error].filter(Boolean), raw: body };
   } else if (typeof body.badge_valid === "boolean") {
     // single-badge form
-    v = { verified: body.badge_valid, subject: id, agents: body.badge_valid ? 1 : 0, issues: body.issues ?? [], raw: body };
+    v = { verified: body.badge_valid, subject: id, agents: body.badge_valid ? 1 : 0, issues: (body.issues ?? []).map((i: any) => (typeof i === "string" ? i : i?.message ?? JSON.stringify(i))), raw: body };
   } else {
     // account form: { agent_count, summary: { valid, invalid }, agents }
     const valid = Number(body?.summary?.valid ?? 0);

@@ -9,6 +9,7 @@
  *   requireSellerBadge payee must own an Active, Verified by Concordium agent
  *   approvedSuppliers  if non-empty, the agent may only pay these accounts
  *   requireHumanRelease invoice payments need a human to press Release (EU AI Act Art. 14)
+ *   requireOwnerSignature  that release must be signed by the agent owner's Concordium wallet
  *   paused             stop switch: the agent refuses every payment while paused (Art. 14(4)(e))
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
@@ -27,6 +28,7 @@ export const PolicySchema = z.object({
   requireSellerBadge: z.boolean(),
   approvedSuppliers: z.array(z.object({ account: z.string().min(40), name: z.string().default("") })),
   requireHumanRelease: z.boolean().default(true),
+  requireOwnerSignature: z.boolean().default(true),
   paused: z.boolean().default(false),
   updatedAt: z.string().optional(),
   updatedBy: z.string().optional(),
@@ -43,6 +45,7 @@ export function defaultPolicy(): Policy {
     requireSellerBadge: config.buyer.requireSellerBadge,
     approvedSuppliers: [],
     requireHumanRelease: true,
+    requireOwnerSignature: process.env.REQUIRE_OWNER_SIGNATURE !== "false",
     paused: false,
   };
 }

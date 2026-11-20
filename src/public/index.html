@@ -112,7 +112,7 @@
       <div class="card"><div class="num">1</div><h3>Create</h3><p>The owner opens a lock for one supplier invoice.</p><span class="tag">Owner</span></div>
       <div class="card"><div class="num">2</div><h3>Fund</h3><p>The amount is set aside against the day's budget. Over €10,000? Refused.</p><span class="tag">Owner</span></div>
       <div class="card"><div class="num">3</div><h3>Send</h3><p>The AI agent checks the supplier's badge and every limit, and explains the result.</p><span class="tag">AI agent</span></div>
-      <div class="card human"><div class="num">4</div><h3>Release</h3><p>A person approves. Only now is the payment signed and settled on-chain.</p><span class="tag">Human</span></div>
+      <div class="card human"><div class="num">4</div><h3>Release</h3><p>A person approves by signing with the owner's wallet. Only now is the payment settled on-chain.</p><span class="tag">Human</span></div>
       <div class="card stop"><div class="num">5</div><h3>Cancel</h3><p>Stop the lock at any point before release; the budget is freed.</p><span class="tag">Owner</span></div>
     </div>
   </section>
@@ -122,7 +122,7 @@
     <h2>Built around human oversight and records</h2>
     <p class="sub">Cord prepares business-to-business supplier payments. That use isn't on the AI Act's high-risk list, but Cord applies the Act's core safeguards anyway, so organisations can deploy it with confidence.</p>
     <div class="grid g2">
-      <div class="card"><div class="act"><span class="art">Art. 14</span><div><h3>Human oversight</h3><p>Release needs a person. The owner can cancel any lock or pause the agent instantly; while paused, every payment is refused.</p></div></div></div>
+      <div class="card"><div class="act"><span class="art">Art. 14</span><div><h3>Human oversight</h3><p>Release needs a person, who signs it with the owner's own Concordium wallet (browser or phone). The owner can cancel any lock or pause the agent instantly.</p></div></div></div>
       <div class="card"><div class="act"><span class="art">Art. 12</span><div><h3>Record-keeping</h3><p>Every operation, refusal and policy change is logged automatically in a hash-chained audit log, alongside on-chain payment receipts.</p></div></div></div>
       <div class="card"><div class="act"><span class="art">Art. 13 · 50</span><div><h3>Transparency</h3><p>Users are told they are working with an AI agent, and see its checks and reasons before they decide.</p></div></div></div>
       <div class="card"><div class="act"><span class="art">Art. 9 · 15</span><div><h3>Risk controls</h3><p>Per-lock and daily limits (€10,000 in the demo), verified-supplier checks and refusal before signing keep errors from turning into payments.</p></div></div></div>
@@ -130,6 +130,18 @@
       <div class="card"><div class="act"><span class="art">Identity</span><div><h3>Accountable agents</h3><p>Both agents carry a Verified by Concordium badge, so every payment links to two identity-verified owners.</p></div></div></div>
     </div>
     <p class="note">Timing: the AI Act's transparency duties (Art. 50) apply from 2 August 2026; after the 2026 Digital Omnibus, high-risk obligations for stand-alone systems apply from 2 December 2027. This page describes how Cord is designed; it is not legal advice.</p>
+  </section>
+
+  <section class="section" id="chains">
+    <div class="kicker">Beyond Concordium</div>
+    <h2>Suppliers on other blockchains welcome</h2>
+    <p class="sub">A supplier's agent doesn't have to live on Concordium. Agents on Ethereum, Base, Solana and other chains can link their key to a Concordium agent through the CIS-8 external key registry. Cord looks that link up and runs the same Verified by Concordium check before anyone is paid.</p>
+    <div class="grid g3">
+      <div class="card hover"><div class="num">1</div><h3>Link the key</h3><p>The supplier proves it controls its Ethereum or Solana key and links it to a Concordium agent owned by an identity-verified account.</p></div>
+      <div class="card hover"><div class="num">2</div><h3>Cord checks it</h3><p>Paste the supplier's Solana address or EVM public key — or let them sign once with MetaMask — and Cord finds the linked agent and badge.</p></div>
+      <div class="card hover"><div class="num">3</div><h3>Pay with confidence</h3><p>Approve the verified owner as a supplier. Payments still settle on Concordium, under the same limits and human release.</p></div>
+    </div>
+    <div class="chips" style="margin-top:1rem"><span class="chip"><i></i>Ethereum</span><span class="chip"><i></i>Base</span><span class="chip"><i></i>Solana</span><span class="chip"><i></i>Fetch.ai</span><span class="chip mute"><i></i>Payment on other chains: planned</span></div>
   </section>
 
   <section class="section" id="who">
