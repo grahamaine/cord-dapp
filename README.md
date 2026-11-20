@@ -98,7 +98,7 @@ applies the Act's core safeguards by design:
 | AI Act | How Cord does it |
 |---|---|
 | Art. 14 human oversight | Release needs a person who **signs with the owner's wallet**; the owner can cancel any lock or **pause the agent** (every payment refused while paused) |
-| Art. 12 record-keeping | Hash-chained audit log of every operation, refusal and policy change (`data/audit.jsonl`) plus payment receipts |
+| Art. 12 record-keeping | Hash-chained audit log of every operation, refusal and policy change (`data/audit.jsonl`) plus payment receipts, anchored on Concordium for an external timestamp |
 | Art. 13 / 50 transparency | The owner page tells users they're working with an AI agent and shows its checks and reasons before release |
 | Art. 9 / 15 risk controls | Per-lock and daily limits, verified-supplier checks, refusal before any signature |
 | Art. 26 deployer duties | Keep logs at least six months; assign named people to oversight |
@@ -112,7 +112,12 @@ obligations for stand-alone systems apply from 2 December 2027. This describes C
 - **Locks**: supplier invoices, the five lock operations, and today's budget (released + set aside vs limit).
 - **Policy**: per-lock and daily limits in EUR, allowed assets, "only pay Verified by Concordium suppliers",
   "a person must release every payment", and an approved-supplier list (saved to `data/policy.json`).
-- **Audit log**: every operation with who did it (owner or AI agent), the outcome and the reason.
+- **Audit log**: the audit trail. Every operation with who did it (owner or AI agent), the outcome and the
+  reason; filters by date, operation, who and outcome, plus free-text search. **Anchor now** writes the latest
+  audit and receipt hashes into a Concordium `RegisterData` transaction (sent from the ProcureBot owner
+  account), so anyone can prove on CCDExplorer that the records weren't changed afterwards.
+- **Trail** (on each lock): the full story of one payment: created → funded → agent checks → owner's signed
+  approval → on-chain payment → buyer and seller receipts → which anchor covers it.
 - **Pause agent** (top right): stops all payments until resumed.
 
 The web server holds the buyer's signing key, so it listens on localhost only. Don't expose it without authentication.
@@ -142,7 +147,8 @@ Requires Node.js 20+. On Windows PowerShell, use `npm.cmd` in place of `npm`, or
    ```
 5. **Pay.** Open http://localhost:4030 → Locks → Create lock → Fund → Send to agent → Release. Or use the CLI:
    `npm run buyer -- tenders hospitality`.
-6. **Audit.** `npm run audit:verify` checks the receipt hash chain. `npm run badge -- <account or badge>` checks a badge.
+6. **Audit.** `npm run audit:verify` re-checks the receipt chain, the audit log chain and every Concordium
+   anchor (exit code 1 if anything was altered). `npm run badge -- <account or badge>` checks a badge.
 
 ## Registering an agent (what worked)
 The registry website can't edit an agent after registering it, and its form pins its own hash. Cord uses the

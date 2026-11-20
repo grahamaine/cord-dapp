@@ -25,6 +25,7 @@ import { createLock, fundLock, sendLock, releaseLock, cancelLock, readLocks, loc
 import { atomicToEur, ATOMIC_PER_EUR } from "../lib/eur.js";
 import { createChallenge, ownerAccounts, verifyApproval } from "../lib/approval.js";
 import { CHAINS, verifyCrossChain } from "../lib/xchain.js";
+import { anchorNow, anchorData, checkAnchors } from "../lib/anchor.js";
 import { buy, PaymentRefused } from "../buyer/procurebot.js";
 import { mountAssets } from "../ui/assets.js";
 
@@ -190,7 +191,43 @@ app.post("/api/xchain/verify", async (req, res) => {
   }
 });
 
-app.get("/api/audit", (_req, res) => res.json({ chain: verifyAudit(), entries: readAudit().slice(-200).reverse() }));
+app.get("/api/audit", (req, res) => {
+  const limit = Math.min(Number(req.query.limit) || 2000, 10_000);
+  const anchors = checkAnchors();
+  const last = anchors.at(-1);
+  const head = anchorData();
+  res.json({
+    chain: verifyAudit(),
+    receipts: verifyChain(),
+    entries: readAudit().slice(-limit).reverse(),
+    anchors: anchors.reverse(),
+    head: { auditSeq: head.auditSeq, receiptSeq: head.receiptSeq },
+    unanchored: head.auditSeq - (last?.auditSeq ?? 0),
+  });
+});
+
+// Anchor the audit trail on Concordium (RegisterData tx from the agent owner's account).
+app.post("/api/audit/anchor", async (_req, res) => {
+  try {
+    res.json({ ok: true, anchor: await anchorNow() });
+  } catch (e) {
+    audit({ actor: "owner", op: "anchor", outcome: "error", detail: (e as Error).message });
+    res.status(409).json({ ok: false, error: (e as Error).message });
+  }
+});
+
+// Full trail for one payment lock: its events, the agent's checks, the signed approval, the
+// on-chain payment and both receipts.
+app.get("/api/locks/:id/trail", (req, res) => {
+  const lock = readLocks().find((l) => l.id === req.params.id);
+  if (!lock) return res.status(404).json({ error: `unknown lock ${req.params.id}` });
+  const events = readAudit().filter((e) => e.lockId === lock.id);
+  const payPath = `/invoices/${lock.invoiceId}/pay`;
+  const receipts = readReceipts().filter((r) => (lock.txHash && r.txHash === lock.txHash) || r.resource.split("?")[0].endsWith(payPath));
+  const lastSeq = Math.max(0, ...events.map((e) => e.seq));
+  const anchoredBy = lastSeq ? checkAnchors().find((a) => a.auditSeq >= lastSeq) ?? null : null;
+  res.json({ lock: withExplorer(lock), events, receipts, anchoredBy });
+});
 
 app.get("/api/invoices", async (_req, res) => {
   const r = await getJson(`${config.seller.url}/invoices`);

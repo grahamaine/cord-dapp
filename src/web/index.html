@@ -54,6 +54,14 @@
   .xres { margin-top: 1rem; padding: 1rem; border-radius: 14px; border: 1px solid var(--line); background: #fff; }
   .xres dl { display: grid; grid-template-columns: 140px 1fr; gap: .3rem .8rem; margin: .6rem 0 0; font-size: .92rem; }
   .xres dt { color: var(--muted); } .xres dd { margin: 0; word-break: break-all; }
+  input[type=date] { width: 100%; padding: .6rem .8rem; border-radius: 12px; border: 1px solid var(--line-2); background: #fff; color: var(--ink); font: 400 1rem var(--font); }
+  .tl { list-style: none; margin: 0; padding: 0; position: relative; }
+  .tl::before { content: ""; position: absolute; left: 13px; top: 6px; bottom: 6px; width: 2px; background: var(--line-2); }
+  .tl li { position: relative; padding: 0 0 1rem 2.4rem; }
+  .tl li .dot { position: absolute; left: 4px; top: 3px; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: .7rem; color: #fff; background: var(--indigo); }
+  .tl li .dot.ok { background: var(--ok); } .tl li .dot.refused { background: var(--warn); } .tl li .dot.error { background: var(--bad); }
+  .tl b { color: var(--ink); text-transform: uppercase; letter-spacing: .05em; }
+  .tl small { display: block; color: var(--muted); }
   select { width: 100%; padding: .65rem .9rem; border-radius: 12px; border: 1px solid var(--line-2); background: #fff; color: var(--ink); font: 400 1rem var(--font); }
 </style>
 </head>
@@ -199,11 +207,38 @@
 
   <!-- AUDIT -->
   <div id="tab-audit" class="hidden">
-    <div class="card" id="audit-head"></div>
+    <div class="grid g3">
+      <div class="card"><div class="acct-role">Integrity</div><div id="a-integrity" class="hint" style="margin-top:.6rem">…</div></div>
+      <div class="card"><div class="acct-role">Anchored on Concordium</div><div id="a-anchor" class="hint" style="margin-top:.6rem">…</div>
+        <div class="row" style="margin-top:.8rem"><button class="btn btn-primary btn-sm" id="a-anchor-btn" type="button" style="flex:0 0 auto">Anchor now</button><span class="hint" style="margin:0">Writes the latest hashes into a Concordium transaction.</span></div></div>
+      <div class="card"><div class="acct-role">Retention</div><div class="hint" style="margin-top:.6rem">Keep these records for at least six months (EU AI Act Art. 26(6)). Every entry is hash-chained; anchors let anyone prove the log wasn't changed afterwards.</div></div>
+    </div>
+
+    <div class="card" style="margin-top:1rem">
+      <div class="row" style="flex-wrap:wrap;align-items:flex-end">
+        <div style="flex:2 1 220px"><label class="f" for="f-q">Search</label><input id="f-q" type="text" placeholder="Lock, invoice, supplier, account, reason…" /></div>
+        <div style="flex:1 1 140px"><label class="f" for="f-op">Operation</label><select id="f-op"><option value="">All</option></select></div>
+        <div style="flex:1 1 130px"><label class="f" for="f-actor">Who</label><select id="f-actor"><option value="">All</option><option value="owner">Owner</option><option value="agent">AI agent</option><option value="system">System</option></select></div>
+        <div style="flex:1 1 130px"><label class="f" for="f-out">Outcome</label><select id="f-out"><option value="">All</option><option value="ok">OK</option><option value="refused">Refused</option><option value="error">Error</option></select></div>
+        <div style="flex:1 1 150px"><label class="f" for="f-from">From</label><input id="f-from" type="date" /></div>
+        <div style="flex:1 1 150px"><label class="f" for="f-to">To</label><input id="f-to" type="date" /></div>
+        <div style="flex:0 0 auto"><button class="btn btn-outline btn-sm" id="f-clear" type="button">Clear</button></div>
+      </div>
+      <div class="hint" id="f-count"></div>
+    </div>
+
     <div class="card stack" style="padding:1rem 1rem .4rem;margin-top:1rem">
       <table>
         <thead><tr><th>#</th><th>When</th><th>Who</th><th>Operation</th><th>Outcome</th><th>Detail</th><th>Hash</th></tr></thead>
         <tbody id="audit"><tr><td colspan="7" class="empty">Loading…</td></tr></tbody>
+      </table>
+    </div>
+
+    <h2 class="h">Anchors <small>each one is a Concordium transaction holding the log's hash at that moment</small></h2>
+    <div class="card stack" style="padding:1rem 1rem .4rem">
+      <table>
+        <thead><tr><th>When</th><th>Audit entry</th><th>Receipt</th><th>Still matches?</th><th>Transaction</th></tr></thead>
+        <tbody id="anchors"><tr><td colspan="5" class="empty">No anchors yet.</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -218,6 +253,13 @@
       <button class="opt" id="wm-mobile" type="button"><span class="ico" style="margin:0;width:40px;height:40px">▣</span><span>Mobile wallet<small>Scan a QR code with Concordium Wallet (WalletConnect)</small></span></button>
     </div>
     <div class="qr" id="wm-qr"></div>
+  </div>
+</div>
+
+<div class="modal" id="trail-modal" role="dialog" aria-modal="true" aria-labelledby="tm-title">
+  <div class="box" style="width:min(720px,100%);max-height:88vh;overflow:auto">
+    <div class="acct-top"><h3 id="tm-title">Payment trail</h3><button class="btn btn-outline btn-sm" id="tm-close" type="button">Close</button></div>
+    <div id="tm-body" style="margin-top:.8rem"></div>
   </div>
 </div>
 
@@ -351,10 +393,11 @@ async function loadLocks() {
         <td class="r">${eur(l.amountEur)}<small>${ccd(l.amount, l.asset)} on testnet</small></td>
         <td>${chip(cls, label)}</td>
         <td>${checks}${l.lastError ? `<div class="err">${esc(l.lastError)}</div>` : ""}</td>
-        <td><div class="actions">${actions}</div></td>
+        <td><div class="actions">${actions}<button class="btn btn-outline btn-sm" data-trail="${esc(l.id)}">Trail</button></div></td>
       </tr>`;
     }).join("") : `<tr><td colspan="6" class="empty">No locks yet. Open one from an invoice below.</td></tr>`;
     document.querySelectorAll("[data-op]").forEach((b) => b.onclick = () => lockOp(b));
+    document.querySelectorAll("[data-trail]").forEach((b) => b.onclick = () => openTrail(b.dataset.trail));
   } catch (e) { $("#locks").innerHTML = `<tr><td colspan="6" class="empty">${esc(e.message)}</td></tr>`; }
 }
 
@@ -466,21 +509,76 @@ $("#policy").onsubmit = async (e) => {
   } catch (err) { toast(`<b>Could not save</b>${esc(err.message)}`, "bad"); }
 };
 
-// ---------------- audit ----------------
+// ---------------- audit trail ----------------
+let auditData = null;
+const who = (x) => chip(x === "owner" ? "ok" : x === "agent" ? "info" : "mute", x === "owner" ? "Owner" : x === "agent" ? "AI agent" : "System");
+const outc = (x) => chip(x === "ok" ? "ok" : x === "refused" ? "warn" : "bad", x);
 async function loadAudit() {
   try {
-    const a = await api("/api/audit");
-    $("#audit-head").innerHTML = `<div class="acct-top"><div><div class="acct-role">Audit log</div><div class="hint">Every lock operation, refusal, policy change and pause is recorded here and hash-chained, so editing or deleting an entry is detectable. Keep these records for at least six months.</div></div>${a.chain.ok ? chip("ok", `Chain intact · ${a.chain.count} entries`) : chip("bad", `Broken at #${a.chain.brokenAt}`)}</div>`;
-    const who = (x) => chip(x === "owner" ? "ok" : x === "agent" ? "info" : "mute", x === "owner" ? "Owner" : x === "agent" ? "AI agent" : "System");
-    const out = (x) => chip(x === "ok" ? "ok" : x === "refused" ? "warn" : "bad", x);
-    $("#audit").innerHTML = a.entries.length ? a.entries.map((e) => `<tr>
-      <td>${e.seq}</td><td>${esc(when(e.ts))}</td><td>${who(e.actor)}</td>
-      <td style="text-transform:uppercase;letter-spacing:.06em">${esc(e.op)}${e.lockId ? `<small>${esc(e.lockId)}</small>` : ""}</td>
-      <td>${out(e.outcome)}</td><td>${esc(e.detail)}</td><td class="mono" title="${esc(e.hash)}"><small>${esc(e.hash.slice(0, 12))}</small></td>
-    </tr>`).join("") : `<tr><td colspan="7" class="empty">No entries yet.</td></tr>`;
+    const a = auditData = await api("/api/audit");
+    $("#a-integrity").innerHTML = `${a.chain.ok ? chip("ok", `Audit log intact · ${a.chain.count}`) : chip("bad", `Audit log broken at #${a.chain.brokenAt}`)} ${a.receipts.ok ? chip("ok", `Receipts intact · ${a.receipts.count}`) : chip("bad", `Receipts broken at #${a.receipts.brokenAt}`)}`;
+    const last = a.anchors[0];
+    $("#a-anchor").innerHTML = last
+      ? `${last.auditMatches && last.receiptsMatch ? chip("ok", "Matches the log") : chip("bad", "Log changed since anchor")} Last anchor at entry #${last.auditSeq}, ${esc(when(last.at))}. ${a.unanchored > 0 ? `<b>${a.unanchored}</b> newer entr${a.unanchored === 1 ? "y" : "ies"} not yet anchored.` : "Up to date."}`
+      : `Not anchored yet. ${a.head.auditSeq} entries waiting.`;
+    const ops = [...new Set(a.entries.map((e) => e.op))].sort();
+    const cur = $("#f-op").value;
+    $("#f-op").innerHTML = `<option value="">All</option>` + ops.map((o) => `<option ${o === cur ? "selected" : ""}>${esc(o)}</option>`).join("");
+    renderAudit();
+    $("#anchors").innerHTML = a.anchors.length ? a.anchors.map((x) => `<tr>
+      <td>${esc(when(x.at))}</td><td>#${x.auditSeq}<small class="mono">${esc(x.auditHash.slice(0, 16))}…</small></td><td>#${x.receiptSeq}<small class="mono">${esc((x.receiptHash || "–").slice(0, 16))}</small></td>
+      <td>${x.auditMatches && x.receiptsMatch ? chip("ok", "Yes") : chip("bad", "No: records changed")}</td>
+      <td>${x.explorerUrl ? `<a class="mono" href="${esc(x.explorerUrl)}" target="_blank" rel="noopener">${esc(short(x.txHash))} ↗</a>` : esc(short(x.txHash))}</td></tr>`).join("")
+      : `<tr><td colspan="5" class="empty">No anchors yet. Press Anchor now.</td></tr>`;
   } catch (e) { $("#audit").innerHTML = `<tr><td colspan="7" class="empty">${esc(e.message)}</td></tr>`; }
 }
+function renderAudit() {
+  if (!auditData) return;
+  const q = $("#f-q").value.trim().toLowerCase(), op = $("#f-op").value, actor = $("#f-actor").value, out = $("#f-out").value;
+  const from = $("#f-from").value, to = $("#f-to").value;
+  const rows = auditData.entries.filter((e) =>
+    (!op || e.op === op) && (!actor || e.actor === actor) && (!out || e.outcome === out) &&
+    (!from || e.ts.slice(0, 10) >= from) && (!to || e.ts.slice(0, 10) <= to) &&
+    (!q || `${e.seq} ${e.op} ${e.lockId || ""} ${e.detail} ${JSON.stringify(e.data || {})}`.toLowerCase().includes(q)));
+  $("#f-count").textContent = `Showing ${rows.length} of ${auditData.entries.length} entries`;
+  $("#audit").innerHTML = rows.length ? rows.map((e) => `<tr>
+      <td>${e.seq}</td><td>${esc(when(e.ts))}</td><td>${who(e.actor)}</td>
+      <td style="text-transform:uppercase;letter-spacing:.06em">${esc(e.op)}${e.lockId ? `<small><a href="#" data-trail-link="${esc(e.lockId)}">${esc(e.lockId)}</a></small>` : ""}</td>
+      <td>${outc(e.outcome)}</td><td>${esc(e.detail)}</td><td class="mono" title="${esc(e.hash)}"><small>${esc(e.hash.slice(0, 12))}</small></td>
+    </tr>`).join("") : `<tr><td colspan="7" class="empty">No entries match these filters.</td></tr>`;
+  document.querySelectorAll("[data-trail-link]").forEach((a) => a.onclick = (ev) => { ev.preventDefault(); openTrail(a.dataset.trailLink); });
+}
+for (const id of ["#f-q", "#f-op", "#f-actor", "#f-out", "#f-from", "#f-to"]) $(id).addEventListener("input", renderAudit);
+$("#f-clear").onclick = () => { for (const id of ["#f-q", "#f-op", "#f-actor", "#f-out", "#f-from", "#f-to"]) $(id).value = ""; renderAudit(); };
+$("#a-anchor-btn").onclick = async (ev) => {
+  if (!confirm("Anchor the audit trail on Concordium?\n\nThis sends a small data transaction from the ProcureBot owner account containing the latest audit and receipt hashes. It costs a tiny test-CCD fee.")) return;
+  const b = ev.currentTarget; b.disabled = true; b.textContent = "Anchoring…";
+  try { const r = await post("/api/audit/anchor"); toast(`<b>Anchored</b>Audit entry #${r.anchor.auditSeq} is now on Concordium. ${r.anchor.explorerUrl ? `<a href="${esc(r.anchor.explorerUrl)}" target="_blank" rel="noopener">View on CCDExplorer ↗</a>` : ""}`, "ok"); }
+  catch (e) { toast(`<b>Not anchored</b>${esc(e.message)}`, "bad"); }
+  b.disabled = false; b.textContent = "Anchor now"; loadAudit();
+};
 
+// ---------------- per-payment trail ----------------
+$("#tm-close").onclick = () => $("#trail-modal").classList.remove("open");
+async function openTrail(id) {
+  $("#tm-body").innerHTML = `<div class="muted">Loading…</div>`; $("#trail-modal").classList.add("open");
+  try {
+    const t = await api(`/api/locks/${encodeURIComponent(id)}/trail`); const l = t.lock;
+    $("#tm-title").textContent = `Payment trail · ${l.id}`;
+    const items = t.events.map((e) => `<li><span class="dot ${e.outcome}">${e.seq}</span><b>${esc(e.op)}</b> ${who(e.actor)} ${outc(e.outcome)}<div>${esc(e.detail)}</div><small>${esc(when(e.ts))} · hash ${esc(e.hash.slice(0, 14))}…</small></li>`).join("");
+    const rec = t.receipts.map((r) => `<li><span class="dot ok">R</span><b>receipt · ${esc(r.role)}</b> #${r.seq}<div>${ccd(r.amount, r.asset)} ${esc(short(r.buyerAccount))} → ${esc(short(r.sellerAccount))}</div><small>${esc(when(r.ts))} · hash ${esc(r.hash.slice(0, 14))}…</small></li>`).join("");
+    $("#tm-body").innerHTML = `
+      <div class="grid g2">
+        <div><div class="k muted" style="font-size:.78rem;letter-spacing:.14em;text-transform:uppercase">Invoice</div><div style="color:var(--ink)">${esc(l.invoiceId)} · ${esc(l.supplier)}</div><div class="muted">${esc(l.description)}</div></div>
+        <div><div class="k muted" style="font-size:.78rem;letter-spacing:.14em;text-transform:uppercase">Amount</div><div style="color:var(--ink)">${eur(l.amountEur)}</div><div class="muted">${ccd(l.amount, l.asset)} on testnet · ${chip(STATUS[l.status][0], STATUS[l.status][1])}</div></div>
+      </div>
+      ${l.approval ? `<div class="notice" style="margin-top:1rem"><div><b>Signed by the owner's wallet</b> ${esc(l.approval.account)}<br><small class="muted">${esc(when(l.approval.at))} · the signed message named this lock, invoice, supplier and amount</small></div></div>` : ""}
+      ${l.explorerUrl ? `<div class="notice" style="margin-top:.8rem"><div><b>Settled on Concordium</b> <a href="${esc(l.explorerUrl)}" target="_blank" rel="noopener">${esc(short(l.txHash))} ↗</a></div></div>` : ""}
+      ${t.anchoredBy ? `<div class="notice" style="margin-top:.8rem"><div><b>Anchored</b> in audit anchor #${t.anchoredBy.auditSeq} · <a href="${esc(t.anchoredBy.explorerUrl)}" target="_blank" rel="noopener">${esc(short(t.anchoredBy.txHash))} ↗</a></div></div>` : `<div class="hint">Not anchored yet: use Anchor now on the Audit log tab.</div>`}
+      <h2 class="h" style="margin-top:1.4rem">Timeline</h2>
+      <ul class="tl">${items}${rec}</ul>`;
+  } catch (e) { $("#tm-body").innerHTML = `<span class="bad-text">${esc(e.message)}</span>`; }
+}
 
 // ---------------- wallet connect (browser extension + mobile via WalletConnect) ----------------
 const wallet = { kind: null, account: null, provider: null, client: null, session: null, cfg: null };
