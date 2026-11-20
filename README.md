@@ -1,5 +1,7 @@
 <p align="center"><img src="src/ui/brand/kakasa-banner.jpg" alt="Kakasa: Agents. Business. East Africa." width="760"></p>
 
+<p align="center"><a href="https://github.com/grahamaine"><img src=".github/thee-agency/powered-by-thee-agency.svg" alt="Powered by thee AGENCY Consults (UG)"></a></p>
+
 # Kakasa: accountable AI agents for supplier payments
 
 *Agents. Business. East Africa.* (The repository and some file names still say `cord`, the project's working name.)
@@ -247,3 +249,11 @@ partner (planned, not built).
 
 **Next (final, 9 Dec):** euro stablecoin pricing, settlement on Base and Solana, real supplier and tender data,
 demo video. Invoice, tender and price data in `src/seller/data.ts` is still sample data.
+
+---
+
+<p align="center">
+  <a href="https://github.com/grahamaine"><img src=".github/thee-agency/thee-agency-logo-256.png" width="120" alt="thee AGENCY Consults (UG) Limited"></a><br>
+  <b>Powered &amp; rendered by thee AGENCY Consults (UG) Limited</b><br>
+  <sub>Innovation Unleashed · Web Portals · dApps · Websites · Entebbe, Uganda</sub>
+</p>
