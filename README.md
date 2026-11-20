@@ -1,58 +1,110 @@
-# Cord — trust-gated agent commerce on Concordium
+# Cord: verified supplier payments for Ugandan businesses
 
-Verified agents buying and selling procurement intelligence over **x402**, with **sponsored
-fees**, **Verified by Concordium** badge checks on both sides, and a **tamper-evident receipt
-trail**. Built for the Concordium "Make your Agents Accountable" hackathon. See `PLAN.md`.
+AI agents that pay supplier invoices on Concordium, but **only to identity-verified agents**,
+**only within limits the business owner sets**, with **network fees sponsored** and every payment
+written to a **tamper-evident receipt trail**.
 
+Built for the Concordium **"Make your Agents Accountable"** hackathon (Encode). Pilot use case:
+Airport View Hotel, Entebbe, paying its regular suppliers: laundry, fresh produce, airport
+transfers, maintenance.
+
+## The problem
+Ugandan businesses pay many small suppliers. The recurring risks are fake or duplicate suppliers,
+unauthorised or oversized payments, and missing records at audit time. Once AI agents start making
+these payments, the risks grow, because an agent can't tell who is really behind a payee.
+
+Cord makes "who owns this payee, and is this payment allowed?" a precondition of every payment.
+
+## How it works
 ```
- ProcureBot (buyer)            TenderScout (seller)          Cord facilitator          Concordium testnet
-   | GET /tenders + X-Agent-Badge ->|                              |                          |
-   |                    badge check (registry API)                 |                          |
-   |<- 402 PaymentRequirements -----|                              |                          |
-   | badge check payTo + spend cap  |                              |                          |
-   | sign V1 sponsored tx (no gas)  |                              |                          |
-   |-- retry + PAYMENT-SIGNATURE -->|-- verify / settle ---------->| add sponsor sig, submit ->|
-   |                                |<------------- finalized tx --|<-------------------------|
-   |<- 200 data + PAYMENT-RESPONSE -|                              |                          |
- receipt (hash chain)          receipt (hash chain)
+ Owner page / CLI        ProcureBot (buyer)          TenderScout (supplier agent)   Cord facilitator     Concordium
+      | Pay invoice ------>| GET /invoices/:id/pay + X-Agent-Badge ->|                      |                  |
+      |                    |               buyer badge check (registry)                     |                  |
+      |                    |<- 402 price for this invoice -----------|                      |                  |
+      |                    | owner policy: cap, daily limit, assets, approved payee         |                  |
+      |                    | payee badge check (registry)            |                      |                  |
+      |                    | sign sponsored tx (buyer pays no fee)   |                      |                  |
+      |                    |-- retry + PAYMENT-SIGNATURE ----------->|-- verify / settle -->| sponsor + submit>|
+      |                    |<- 200 paid + PAYMENT-RESPONSE ----------|<------ finalized ---|<-----------------|
+      |<- receipt + CCDExplorer link            both sides append a hash-chained receipt
 ```
+Anything that fails a rule is refused **before** a signature exists, with a plain reason
+(for example "daily limit reached" or "payee has no valid Verified by Concordium agent").
 
-## Components used
-| Concordium component | Where |
+## Live on testnet
+| Agent | Role | Agent # | Badge | Card |
+|---|---|---|---|---|
+| TenderScout | supplier agent (gets paid) | 1283 | `JyP9TwhskJ6cKHDzW23Yj` | https://cord-dapp.vercel.app/.well-known/agent-card.json |
+| ProcureBot | hotel purchasing agent (pays) | 1288 | `JyP9U3BHQRbFTuQx4N1Gn` | https://cord-dapp.vercel.app/procurebot/.well-known/agent-card.json |
+
+Both pass the registry badge check (`badge_valid: true`):
+https://agent-registry-mcp.concordium.com/v1/badge-check/JyP9TwhskJ6cKHDzW23Yj ·
+https://agent-registry-mcp.concordium.com/v1/badge-check/JyP9U3BHQRbFTuQx4N1Gn
+
+## Concordium components used
+| Component | Where |
 |---|---|
-| x402 (`@x402/concordium`, exact scheme) | `src/seller/server.ts`, `src/buyer/procurebot.ts` |
-| Sponsored transactions | `src/facilitator/server.ts` (our facilitator pays every fee) |
-| Agent Registry (CIS-8004) + Agent Card | `src/scripts/build-card.ts`, `/.well-known/agent-card.json` |
-| Verified by Concordium badge | `src/lib/badge.ts`, enforced in seller middleware and buyer pre-payment hook |
-| Protocol-Level Tokens | set `PRICE_ASSET=USDR` (or your testnet PLT) |
-| MCP | `src/mcp/server.ts` exposes ProcureBot to Claude/any MCP client |
+| x402 payments (`@x402/concordium`, exact scheme) | `src/seller/server.ts`, `src/buyer/procurebot.ts` |
+| Sponsored transactions | `src/facilitator/server.ts`: Cord's facilitator pays every network fee |
+| Agent Registry (CIS-8004) + Agent Cards | `src/scripts/build-card.ts`, served at `/.well-known/agent-card.json` |
+| Verified by Concordium badge | `src/lib/badge.ts`: checked by the seller (buyer badge) and the buyer (payee badge) |
+| Protocol-Level Tokens | set `PRICE_ASSET` / `ALLOWED_ASSETS` to a PLT such as USDR (planned) |
+| MCP | `src/mcp/server.ts` lets Claude or any MCP client drive ProcureBot |
 
-## Quick start (testnet)
-1. Create 3 testnet accounts in Concordium Wallet for Web (buyer, seller, facilitator); request test CCD for each. Export each account's private key.
-2. `cp .env.example .env` and fill in addresses/keys. For a first run set `REQUIRE_SELLER_BADGE=false` and `REQUIRE_BUYER_BADGE=false`.
-3. `npm install`
-4. Three terminals:
+## Owner dashboard (`npm run web`, http://localhost:4030)
+- **Dashboard**: service status, account balances, badge status, every payment with its
+  CCDExplorer link, and whether the receipt chain is intact.
+- **Owner**: supplier invoices with a **Pay** button, plus the spending policy the agent must obey:
+  max per payment, daily limit, allowed assets, "only pay Verified by Concordium suppliers", and an
+  approved-supplier list (saved to `data/policy.json`). Already-paid invoices are refused before a
+  price is quoted, so nothing is paid twice.
+
+The web server holds the buyer's signing key, so it listens on localhost only. Don't expose it without authentication.
+
+## Run it (testnet)
+Requires Node.js 20+. On Windows PowerShell, use `npm.cmd` in place of `npm`, or run
+`Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once.
+
+1. **Accounts.** Create three testnet accounts in a Concordium wallet: buyer, seller, facilitator.
+   Fund the buyer and facilitator (each account can claim test CCD once, while it has no incoming transfers):
+   ```powershell
+   Invoke-RestMethod -Method Put -Uri "https://wallet-proxy.testnet.concordium.com/v0/testnetGTUDrop/<ACCOUNT_ADDRESS>"
    ```
-   npm run facilitator
-   npm run card -- seller && npm run seller
-   npm run buyer -- tenders hospitality
+2. **Config.** `cp .env.example .env` and fill in:
+   - buyer: `CCD_ADDRESS`, `CCD_PRIVATE_KEY`
+   - seller: `SELLER_PAY_TO` (address only)
+   - facilitator: `CCD_FACILITATOR_ADDRESS`, `CCD_FACILITATOR_PRIVATE_KEY`
+   - badges, once registered: `SELLER_BADGE`, `SELLER_TOKEN_ID`, `BUYER_BADGE`, `BUYER_TOKEN_ID`, `REQUIRE_*_BADGE=true`
+
+   For a first run without badges, set `REQUIRE_BUYER_BADGE=false` and `REQUIRE_SELLER_BADGE=false`.
+3. **Install:** `npm install`
+4. **Start three services**, each in its own terminal, in this order:
    ```
-5. Register both agents at https://agent-registry.concordium.com (testnet), using the card URL + SHA-256 printed by `npm run card`. Put the badges in `.env`, re-run `npm run card -- seller`, update the agent URI/hash, and set the `REQUIRE_*` flags back to `true`.
-6. `npm run audit:verify` checks the receipt chain.
+   npm run facilitator     # :4020, sponsors fees
+   npm run seller          # :4021, supplier agent + invoices
+   npm run web             # :4030, dashboard + owner page
+   ```
+5. **Pay.** Open http://localhost:4030 → Owner → Pay an invoice. Or use the CLI:
+   `npm run buyer -- tenders hospitality`.
+6. **Audit.** `npm run audit:verify` checks the receipt hash chain. `npm run badge -- <account or badge>` checks a badge.
 
-Seller data in `src/seller/data.ts` is sample data.
+## Registering an agent (what worked)
+The registry website can't edit an agent after registering it, and its form pins its own hash. Cord uses the
+registry's developer tools at `https://agent-registry-mcp.concordium.com/mcp` instead:
+1. Host the card publicly (Vercel serves `data/agent-card.*.json`; no private keys are stored there).
+2. `build_register` with the card URL and its SHA-256 → sign with the owner's wallet → note the new token id.
+3. `build_agent_badge` (or `npm run card -- seller|buyer` with the badge env vars) to add the badge block,
+   then deploy the updated card.
+4. `build_set_agent_uri` with the new SHA-256 → sign. The badge check should now report `badge_valid: true`.
 
-## Owner dashboard (`npm run web`)
-With the facilitator and seller running, start the web UI in a fourth terminal and open http://localhost:4030.
+Dry-run each transaction with `invokeContract` first, and let the wallet encode parameters from the
+contract's embedded schema. Testnet contracts: CIS-8004 `12802.0`, CIS-8 `12801.0`.
 
-- **Dashboard**: service status, account balances and Verified by Concordium badges, every payment with its
-  CCDExplorer link, and whether the hash-chained receipt log is intact.
-- **Owner**: supplier invoices (Ugandan hotel suppliers, sample data) with a **Pay** button, plus the spending
-  policy the agent must obey before signing anything: max per payment, daily limit, allowed assets,
-  "only Verified by Concordium payees", and an approved-supplier list. Saved to `data/policy.json`.
+## Path to production
+Mainnet network + registry contract; invoices priced in a stablecoin (USDR) at full value; the facilitator
+run as a paid service; a pilot with real hotel suppliers; receipts mirrored to storage and periodically
+anchored on-chain; per-owner spending policies; and supplier cash-out to mobile money through a licensed
+partner (planned, not built).
 
-Paying an invoice runs the same trust-gated x402 flow as the CLI: the seller quotes the invoice amount (402),
-ProcureBot checks the owner policy and the payee's badge, signs a sponsored transaction, the facilitator settles
-it, and both sides add a receipt. Already-paid invoices are refused before a price is quoted.
-
-The web server holds the buyer's key, so it only listens on localhost. Don't expose it without authentication.
+## Status
+Testnet. Invoice, tender and price data in `src/seller/data.ts` is sample data. Plan and milestones: `PLAN.md`.
