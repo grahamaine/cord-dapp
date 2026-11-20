@@ -4,12 +4,18 @@ AI agents that pay supplier invoices on Concordium, but **only to identity-verif
 **only within limits the business owner sets**, with **network fees sponsored** and every payment
 written to a **tamper-evident receipt trail**.
 
-Built for the Concordium **"Make your Agents Accountable"** hackathon (Encode). Pilot use case:
-Airport View Hotel, Entebbe, paying its regular suppliers: laundry, fresh produce, airport
-transfers, maintenance.
+Built for the Concordium **"Make your Agents Accountable"** hackathon (Encode).
+
+**Who it's for:** any Ugandan organisation that regularly pays service providers and suppliers —
+hotels and hospitality, hospitals and clinics, schools and universities, NGOs and project offices,
+construction and facilities firms, logistics companies, and public bodies running procurement.
+
+**Lead example:** a hotel in Entebbe paying its regular providers — laundry, fresh produce, airport
+transfers, maintenance. The same flow covers other recurring service bills: security, cleaning,
+internet and telecoms, utilities, fuel, catering, transport and equipment servicing.
 
 ## The problem
-Ugandan businesses pay many small suppliers. The recurring risks are fake or duplicate suppliers,
+Ugandan organisations pay many service providers and suppliers, large and small. The recurring risks are fake or duplicate suppliers,
 unauthorised or oversized payments, and missing records at audit time. Once AI agents start making
 these payments, the risks grow, because an agent can't tell who is really behind a payee.
 
@@ -35,7 +41,7 @@ Anything that fails a rule is refused **before** a signature exists, with a plai
 | Agent | Role | Agent # | Badge | Card |
 |---|---|---|---|---|
 | TenderScout | supplier agent (gets paid) | 1283 | `JyP9TwhskJ6cKHDzW23Yj` | https://cord-dapp.vercel.app/.well-known/agent-card.json |
-| ProcureBot | hotel purchasing agent (pays) | 1288 | `JyP9U3BHQRbFTuQx4N1Gn` | https://cord-dapp.vercel.app/procurebot/.well-known/agent-card.json |
+| ProcureBot | purchasing agent (pays; demo configured for a hotel) | 1288 | `JyP9U3BHQRbFTuQx4N1Gn` | https://cord-dapp.vercel.app/procurebot/.well-known/agent-card.json |
 
 Both pass the registry badge check (`badge_valid: true`):
 https://agent-registry-mcp.concordium.com/v1/badge-check/JyP9TwhskJ6cKHDzW23Yj ·
@@ -102,7 +108,9 @@ contract's embedded schema. Testnet contracts: CIS-8004 `12802.0`, CIS-8 `12801.
 
 ## Path to production
 Mainnet network + registry contract; invoices priced in a stablecoin (USDR) at full value; the facilitator
-run as a paid service; a pilot with real hotel suppliers; receipts mirrored to storage and periodically
+run as a paid service; pilots with organisations in several sectors (starting with hospitality, then
+health, education and NGOs), each with its own buyer agent and spending policy; service providers
+registering their own verified supplier agents; receipts mirrored to storage and periodically
 anchored on-chain; per-owner spending policies; and supplier cash-out to mobile money through a licensed
 partner (planned, not built).
 
