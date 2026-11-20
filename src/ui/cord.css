@@ -159,6 +159,13 @@ input:focus { outline: 2px solid var(--indigo); border-color: transparent; }
 /* ---------- footer ---------- */
 .footer { margin-top: 5rem; padding: 2rem 0; border-top: 1px solid var(--line); color: var(--muted); font-size: .9rem; }
 .footer .wrap { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: space-between; align-items: center; }
+/* "Powered by" credit (thee AGENCY Consults (UG) Limited) */
+.agency-credit { display: flex; justify-content: center; padding: 1rem 0 1.4rem; font-size: .85rem; color: var(--muted); }
+.agency-credit a { display: inline-flex; align-items: center; gap: .5rem; color: inherit; text-decoration: none; }
+.agency-credit a:hover { color: var(--text-h, inherit); }
+.agency-credit img { width: 22px; height: 22px; border-radius: 50%; }
+.agency-credit strong { font-weight: 600; }
+.agency-credit .ag { color: #FF5E1A; }
 
 @media (max-width: 760px) { .top-links.collapsible { display: none; } }
 @media (prefers-reduced-motion: reduce) { .marquee-track, .aurora::before, .aurora::after { animation: none; } * { transition: none !important; } }
