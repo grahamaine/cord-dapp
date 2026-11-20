@@ -18,7 +18,8 @@
     "audit:verify": "tsx src/scripts/verify-receipts.ts",
     "web": "tsx src/web/server.ts",
     "typecheck": "tsc --noEmit",
-    "doctor": "tsx src/scripts/doctor.ts"
+    "doctor": "tsx src/scripts/doctor.ts",
+    "publish:judge": "tsx src/scripts/publish-judge.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.11.0",

@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#faf7f1" />
+<title>{{APP_NAME}} — Judge view: verify the records</title>
+<meta name="description" content="Read-only view of Cord's real testnet records: payment locks, payments and the audit trail, each checked against Concordium." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&display=swap" />
+<link rel="stylesheet" href="/assets/cord.css" />
+<style>
+  .intro { padding: clamp(2.5rem, 6vw, 4rem) 0 .5rem; }
+  .intro h1 { font-size: clamp(2.2rem, 5.5vw, 3.6rem); line-height: 1.05; }
+  .intro .lead { font-size: 1.1rem; max-width: 780px; margin: 1rem 0 0; }
+  .verdict { display: flex; gap: 1rem; align-items: center; padding: 1.2rem 1.4rem; border-radius: 20px; margin-top: 1.6rem; border: 1px solid var(--line); background: #fff; }
+  .verdict .big { font-size: 2.2rem; line-height: 1; }
+  .verdict b { color: var(--ink); font-size: 1.25rem; font-weight: 600; display: block; }
+  .verdict.ok { border-color: rgba(4,120,87,.35); background: rgba(16,185,129,.07); }
+  .verdict.bad { border-color: rgba(185,28,28,.3); background: rgba(239,68,68,.06); }
+  .verdict.warn { border-color: rgba(180,83,9,.3); background: rgba(245,158,11,.08); }
+  .checks { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 1rem; margin-top: 1rem; }
+  .ck { display: flex; gap: .8rem; align-items: flex-start; }
+  .ck .i { flex: 0 0 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; color: #fff; background: var(--muted); }
+  .ck.ok .i { background: var(--ok); } .ck.bad .i { background: var(--bad); } .ck.warn .i { background: var(--warn); }
+  .ck h3 { font-size: 1.05rem; margin: 0 0 .2rem; } .ck p { margin: 0; font-size: .92rem; }
+  .tbl { overflow-x: auto; }
+  .who { font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; }
+  .who.agent { color: var(--violet); } .who.owner { color: var(--ok); } .who.system { color: var(--muted); }
+  .flow { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .4rem; }
+  .flow span { font-size: .78rem; border-radius: 999px; padding: .08rem .55rem; background: var(--indigo-soft); color: var(--info); }
+  .flow span.refused { background: var(--bad-soft); color: var(--bad); }
+  .flow span.owner { background: var(--ok-soft); color: var(--ok); }
+  .filters { display: flex; gap: .5rem; flex-wrap: wrap; margin: .8rem 0; }
+  .filters button { font: inherit; font-size: .88rem; border: 1px solid var(--line-2); background: #fff; border-radius: 999px; padding: .25rem .8rem; cursor: pointer; color: var(--ink-2); }
+  .filters button.on { border-color: var(--indigo); background: var(--indigo-soft); color: var(--info); }
+  .how ol { margin: .4rem 0 0; padding-left: 1.2rem; } .how li { margin: .35rem 0; }
+  code { font-family: ui-monospace, Consolas, monospace; font-size: .85em; background: rgba(34,29,46,.06); padding: .05rem .35rem; border-radius: 6px; word-break: break-all; }
+  footer { padding: 4rem 0 3rem; color: var(--muted); font-size: .9rem; }
+</style>
+</head>
+<body>
+<div class="aurora"><div class="grid-lines"></div></div>
+<header class="topbar">
+  <div class="wrap">
+    <a class="brand" href="/">
+      <span class="logo"><svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><circle cx="9" cy="16" r="5" fill="none" stroke="#fff" stroke-width="3"/><circle cx="23" cy="16" r="5" fill="none" stroke="#fff" stroke-width="3" opacity=".7"/><path d="M13.5 16h5" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg></span>
+      {{APP_NAME}}
+    </a>
+    <span class="net">TESTNET · JUDGE VIEW</span>
+    <nav class="top-links collapsible">
+      <a href="#checks">Checks</a><a href="#payments">Payments</a><a href="#locks">Locks</a><a href="#audit">Audit log</a><a href="/">About Cord</a><a href="https://github.com/grahamaine/cord-dapp">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="intro">
+    <div class="kicker">Read-only · real testnet records</div>
+    <h1>Don't trust us. <span class="grad-text">Check the records.</span></h1>
+    <p class="lead muted">These are the real records from Cord's owner dashboard: every payment lock, every agent decision and every owner approval.
+      This page recomputes their hash chains and asks the Concordium node itself whether each anchor and payment is on-chain. It holds no keys and can't move money.</p>
+    <div class="verdict" id="verdict"><span class="big">…</span><div><b>Checking against Concordium…</b><span class="muted">This takes a few seconds.</span></div></div>
+  </section>
+
+  <section class="section" id="checks" style="padding-top:2.5rem">
+    <div class="kicker">Independent checks</div>
+    <h2>What this page verified</h2>
+    <div class="checks" id="checklist"></div>
+    <p class="muted" id="published" style="margin-top:1rem;font-size:.9rem"></p>
+  </section>
+
+  <section class="section" id="payments">
+    <div class="kicker">Money that moved</div>
+    <h2>Payments on Concordium</h2>
+    <div class="card tbl stack" style="margin-top:1rem"><table><thead><tr><th>#</th><th>For</th><th class="r">Amount</th><th>To</th><th>On-chain</th></tr></thead><tbody id="pay"></tbody></table></div>
+  </section>
+
+  <section class="section" id="locks">
+    <div class="kicker">Agent prepares · person releases</div>
+    <h2>Payment locks</h2>
+    <p class="muted">Each lock shows who did each step. The AI agent can create, fund and check; only an owner wallet signature releases.</p>
+    <div class="card tbl stack" style="margin-top:1rem"><table><thead><tr><th>Lock</th><th>Supplier</th><th class="r">Amount</th><th>Status</th><th>Steps</th></tr></thead><tbody id="locktbl"></tbody></table></div>
+  </section>
+
+  <section class="section" id="anchors">
+    <div class="kicker">Tamper evidence</div>
+    <h2>Anchors on Concordium</h2>
+    <p class="muted">Each anchor is a <code>RegisterData</code> transaction holding the latest audit and receipt hashes. If any earlier record were edited, its hash chain would no longer reach the anchored hash.</p>
+    <div class="card tbl stack" style="margin-top:1rem"><table><thead><tr><th>When</th><th>Covers</th><th>Data on-chain</th><th>Result</th></tr></thead><tbody id="anc"></tbody></table></div>
+  </section>
+
+  <section class="section" id="audit">
+    <div class="kicker">EU AI Act Art. 12 · record-keeping</div>
+    <h2>Audit log</h2>
+    <div class="filters" id="filters">
+      <button class="on" data-f="all" type="button">All</button><button data-f="agent" type="button">AI agent</button><button data-f="owner" type="button">Owner</button><button data-f="refused" type="button">Refusals</button>
+    </div>
+    <div class="card tbl stack"><table><thead><tr><th>#</th><th>When</th><th>Who</th><th>What</th><th>Outcome</th></tr></thead><tbody id="aud"></tbody></table></div>
+  </section>
+
+  <section class="section how">
+    <div class="kicker">Do it yourself</div>
+    <h2>Verify without this page</h2>
+    <div class="card" style="margin-top:1rem">
+      <ol>
+        <li>Open the anchor transaction on CCDExplorer. Its registered data reads <code>cord:audit:v1|a=&lt;seq&gt;:&lt;hash&gt;|r=&lt;seq&gt;:&lt;hash&gt;</code>.</li>
+        <li>Download <a href="/api/judge">the records as JSON</a>. Each audit entry's <code>hash</code> is SHA-256 of the entry's JSON without the hash; each <code>prevHash</code> is the previous entry's hash.</li>
+        <li>Recompute the chain up to entry <code>&lt;seq&gt;</code>: it must end in exactly the anchored hash.</li>
+        <li>Or clone the repo and run <code>npm run audit:verify</code> next to the records.</li>
+      </ol>
+    </div>
+  </section>
+</main>
+<footer class="wrap">{{APP_NAME}} · Concordium "Make your Agents Accountable" hackathon · testnet · amounts are demo EUR, settled as small CCD amounts.</footer>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const short = (a) => (a && a.length > 16 ? a.slice(0, 6) + "…" + a.slice(-5) : a || "");
+const when = (t) => new Date(t).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+const eur = (n) => "€" + Number(n || 0).toLocaleString("en-IE", { maximumFractionDigits: 2 });
+const ccd = (atomic) => (Number(atomic) / 1e6).toLocaleString(undefined, { maximumFractionDigits: 6 }) + " CCD";
+const WHO = { agent: "AI agent", owner: "Owner", system: "System" };
+const tri = (v) => (v === true ? "ok" : v === false ? "bad" : "warn");
+const mark = (v) => (v === true ? "✓" : v === false ? "✗" : "?");
+let data;
+
+function check(state, title, text) {
+  return `<div class="card ck ${state}"><div class="i">${state === "ok" ? "✓" : state === "bad" ? "✗" : "!"}</div><div><h3>${title}</h3><p class="muted">${text}</p></div></div>`;
+}
+
+function render() {
+  const c = data.checks;
+  const allOk = c.auditChain.ok && c.receiptChain.ok && c.allAnchorsVerified && c.allPaymentsOnChain;
+  const broken = !c.auditChain.ok || !c.receiptChain.ok || data.anchors.some((a) => a.inSnapshot === false || a.dataOnChainMatches === false || a.onChain === false) || data.payments.some((p) => p.onChain === false);
+  const v = $("#verdict");
+  v.className = "verdict " + (allOk ? "ok" : broken ? "bad" : "warn");
+  v.innerHTML = allOk
+    ? `<span class="big">✓</span><div><b>Records verified against Concordium</b><span class="muted">${c.auditCount} audit entries, ${data.payments.length} payment${data.payments.length === 1 ? "" : "s"}, ${data.anchors.length} anchor${data.anchors.length === 1 ? "" : "s"}. Entries up to #${c.anchoredUpTo} are anchored on-chain.</span></div>`
+    : broken
+      ? `<span class="big">✗</span><div><b>Something doesn't match</b><span class="muted">See the checks below for which record differs from what's on-chain.</span></div>`
+      : `<span class="big">!</span><div><b>Partly verified</b><span class="muted">${c.nodeReachable ? "Some records aren't anchored yet." : "The Concordium node couldn't be reached just now; reload to try again, or use the CCDExplorer links."}</span></div>`;
+
+  const unanchored = c.auditCount - c.anchoredUpTo;
+  $("#checklist").innerHTML = [
+    check(c.auditChain.ok ? "ok" : "bad", "Audit log chain intact", c.auditChain.ok ? `All ${c.auditChain.count} entries link to the one before by SHA-256.` : `Broken at entry #${c.auditChain.brokenAt}.`),
+    check(c.receiptChain.ok ? "ok" : "bad", "Receipt chain intact", c.receiptChain.ok ? `All ${c.receiptChain.count} payment receipts link correctly.` : `Broken at receipt #${c.receiptChain.brokenAt}.`),
+    check(!c.nodeReachable ? "warn" : c.allAnchorsVerified ? "ok" : "bad", "Anchors match Concordium", !data.anchors.length ? "No anchor published yet." : !c.nodeReachable ? "Node not reachable right now." : c.allAnchorsVerified ? `Each anchor transaction is finalized and its data equals these records' hashes.` : "An anchor doesn't match these records."),
+    check(!c.nodeReachable ? "warn" : c.allPaymentsOnChain ? "ok" : "bad", "Payments are on-chain", !data.payments.length ? "No payments yet." : !c.nodeReachable ? "Node not reachable right now." : c.allPaymentsOnChain ? `Every payment receipt points to a finalized, successful Concordium transaction.` : "A receipt's transaction wasn't found or failed."),
+    check(unanchored > 0 ? "warn" : "ok", "Coverage", unanchored > 0 ? `${unanchored} newer entr${unanchored === 1 ? "y is" : "ies are"} after the last anchor (still chain-checked, not yet timestamped on-chain).` : "Every entry is covered by an on-chain anchor."),
+  ].join("");
+  $("#published").textContent = `Snapshot published ${new Date(data.publishedAt).toLocaleString()} from the owner's dashboard · ProcureBot ${short(data.accounts.procurebot)} · limits ${eur(data.policy.maxPerLockEur)} per payment, ${eur(data.policy.dailyLimitEur)} per day · human release ${data.policy.requireHumanRelease ? "required" : "off"}, owner signature ${data.policy.requireOwnerSignature ? "required" : "off"}.`;
+
+  $("#pay").innerHTML = data.payments.length ? data.payments.map((p) => `<tr>
+      <td>${p.seq}</td><td>${esc(p.purpose)}<small>${when(p.ts)}</small></td><td class="r">${ccd(p.amount)}</td>
+      <td class="mono">${esc(short(p.to))}</td>
+      <td><span class="chip ${tri(p.onChain)}"><i></i>${p.onChain === true ? "finalized" : p.onChain === false ? "not found" : "unchecked"}</span> ${p.explorerUrl ? `<a href="${esc(p.explorerUrl)}" target="_blank" rel="noopener">CCDExplorer ↗</a>` : ""}</td></tr>`).join("")
+    : `<tr><td colspan="5" class="empty">No payments yet.</td></tr>`;
+
+  $("#locktbl").innerHTML = data.locks.length ? data.locks.map((l) => `<tr>
+      <td class="mono">${esc(l.id)}<small>${esc(l.invoiceId)}</small></td>
+      <td>${esc(l.supplier)}<small>${esc(l.category)}</small></td>
+      <td class="r">${eur(l.amountEur)}</td>
+      <td><span class="chip ${l.status === "released" ? "ok" : l.status === "cancelled" ? "mute" : "info"}"><i></i>${esc(l.status === "sent" ? "awaiting release" : l.status)}</span>
+        ${l.explorerUrl ? `<small><a href="${esc(l.explorerUrl)}" target="_blank" rel="noopener">payment ↗</a></small>` : ""}</td>
+      <td><div class="flow">${(l.history || []).map((h) => `<span class="${h.outcome !== "ok" ? "refused" : h.actor === "owner" ? "owner" : ""}" title="${esc(h.note)}">${esc(WHO[h.actor] || h.actor)}: ${esc(h.op)}${h.outcome !== "ok" ? " ✗" : ""}</span>`).join("")}</div></td></tr>`).join("")
+    : `<tr><td colspan="5" class="empty">No locks yet.</td></tr>`;
+
+  $("#anc").innerHTML = data.anchors.length ? [...data.anchors].reverse().map((a) => `<tr>
+      <td>${when(a.at)}</td><td>audit #1–${a.auditSeq}<small>receipts #1–${a.receiptSeq}</small></td>
+      <td class="mono" style="max-width:420px;font-size:.82rem">${esc(a.data)}</td>
+      <td><span class="chip ${tri(a.onChain && a.dataOnChainMatches && a.inSnapshot)}"><i></i>${a.onChain == null ? "unchecked" : a.onChain && a.dataOnChainMatches && a.inSnapshot ? "matches" : "mismatch"}</span>
+        <a href="${esc(a.explorerUrl)}" target="_blank" rel="noopener">CCDExplorer ↗</a></td></tr>`).join("")
+    : `<tr><td colspan="4" class="empty">No anchors yet.</td></tr>`;
+  renderAudit("all");
+}
+
+function renderAudit(f) {
+  document.querySelectorAll("#filters button").forEach((b) => b.classList.toggle("on", b.dataset.f === f));
+  const rows = data.audit.filter((e) => f === "all" || (f === "refused" ? e.outcome !== "ok" : e.actor === f));
+  const anchored = data.checks.anchoredUpTo;
+  $("#aud").innerHTML = rows.length ? rows.map((e) => `<tr>
+      <td>${e.seq}${e.seq <= anchored ? ' <span title="covered by an on-chain anchor">⚓</span>' : ""}</td>
+      <td>${when(e.ts)}</td><td><span class="who ${esc(e.actor)}">${esc(WHO[e.actor] || e.actor)}</span></td>
+      <td><b style="font-weight:500">${esc(e.op)}</b>${e.lockId ? ` · <span class="mono">${esc(e.lockId)}</span>` : ""}<small>${esc(e.detail)}</small></td>
+      <td><span class="chip ${e.outcome === "ok" ? "ok" : e.outcome === "refused" ? "warn" : "bad"}"><i></i>${esc(e.outcome)}</span></td></tr>`).join("")
+    : `<tr><td colspan="5" class="empty">Nothing here.</td></tr>`;
+}
+document.querySelectorAll("#filters button").forEach((b) => (b.onclick = () => renderAudit(b.dataset.f)));
+
+fetch("/api/judge").then((r) => r.json()).then((d) => {
+  if (!d.published) { $("#verdict").className = "verdict warn"; $("#verdict").innerHTML = `<span class="big">!</span><div><b>No records published yet</b><span class="muted">The owner publishes them with npm run publish:judge.</span></div>`; return; }
+  if (d.error) throw new Error(d.error);
+  data = d; render();
+}).catch((e) => { $("#verdict").className = "verdict bad"; $("#verdict").innerHTML = `<span class="big">✗</span><div><b>Couldn't load the records</b><span class="muted">${esc(e.message)}</span></div>`; });
+</script>
+</body>
+</html>

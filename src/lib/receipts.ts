@@ -50,7 +50,11 @@ export function appendReceipt(input: ReceiptInput, path = config.receiptsPath): 
 }
 
 export function verifyChain(path = config.receiptsPath): { ok: boolean; count: number; brokenAt?: number } {
-  const all = readReceipts(path);
+  return verifyReceiptEntries(readReceipts(path));
+}
+
+/** Check a list of receipts (e.g. a published snapshot) without touching the file. */
+export function verifyReceiptEntries(all: Receipt[]): { ok: boolean; count: number; brokenAt?: number } {
   let prev = GENESIS;
   for (const r of all) {
     const { hash, ...rest } = r;

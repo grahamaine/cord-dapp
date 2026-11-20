@@ -175,8 +175,8 @@ input:focus { outline: 2px solid var(--indigo); border-color: transparent; }
 .msg .acts { margin-top: .5rem; display: flex; flex-wrap: wrap; gap: .35rem; }
 .msg .acts span { font-size: .78rem; background: var(--indigo-soft); color: var(--info); border-radius: 999px; padding: .1rem .55rem; }
 .chat-chips { display: flex; flex-wrap: wrap; gap: .45rem; }
-.chip { font: inherit; font-size: .88rem; border: 1px solid var(--line-2); background: var(--card-solid); color: var(--ink); border-radius: 999px; padding: .3rem .8rem; cursor: pointer; }
-.chip:hover { border-color: var(--indigo); color: var(--indigo); }
+.qchip { font: inherit; font-size: .88rem; border: 1px solid var(--line-2); background: var(--card-solid); color: var(--ink); border-radius: 999px; padding: .3rem .8rem; cursor: pointer; }
+.qchip:hover { border-color: var(--indigo); color: var(--indigo); }
 .chat-form { display: flex; gap: .6rem; }
 .chat-form input { flex: 1; font: inherit; padding: .7rem 1rem; border: 1px solid var(--line-2); border-radius: 12px; background: #fff; color: var(--ink); }
 .chat-form input:focus { outline: 2px solid var(--indigo-soft); border-color: var(--indigo); }

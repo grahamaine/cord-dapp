@@ -14,7 +14,8 @@ Built for the Concordium **"Make your Agents Accountable"** hackathon (Encode).
   `cord:audit:v1|a=19:…|r=2:…`:
   [12650e36…0614799c](https://ccdexplorer.io/testnet/transaction/12650e367d5ffb94482a9c4b87a8c08c3b5ec418e8e78a54b28888110614799c)
 - Both agents **Verified by Concordium** (see [Live on testnet](#live-on-testnet)).
-- Public site: https://cord-dapp.vercel.app
+- Public site: https://cord-dapp.vercel.app · **Judge view: https://cord-dapp.vercel.app/judge**, the real
+  records, re-checked in your browser against Concordium
 
 **Who it's for:** any Ugandan organisation that regularly pays service providers and suppliers —
 hotels and hospitality, hospitals and clinics, schools and universities, NGOs and project offices,
@@ -177,7 +178,11 @@ Requires Node.js 20+. On Windows PowerShell, use `npm.cmd` in place of `npm`, or
    "pay the plumbing invoice", or go to Locks → Create lock → Fund → Send to agent. Press **Release** and sign in
    your wallet, then **Anchor now** in the Audit log. Or use the CLI:
    `npm run buyer -- tenders hospitality`.
-6. **Audit.** `npm run audit:verify` re-checks the receipt chain, the audit log chain and every Concordium
+6. **Publish for judges.** `npm run publish:judge` copies the records (no keys) into `judge/snapshot.json`, commits
+   and pushes it; Vercel then serves https://cord-dapp.vercel.app/judge. That page recomputes the audit and receipt
+   hash chains and asks the Concordium node whether each anchor and payment is finalized with matching data,
+   so an edited snapshot shows as broken. Press **Anchor now** before publishing so every entry is covered.
+7. **Audit.** `npm run audit:verify` re-checks the receipt chain, the audit log chain and every Concordium
    anchor (exit code 1 if anything was altered). `npm run badge -- <account or badge>` checks a badge.
 
 ## Registering an agent (what worked)

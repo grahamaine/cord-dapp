@@ -347,7 +347,7 @@ function chatAdd(role, text, actions = []) {
 }
 function chatChips(list) {
   $("#chat-chips").innerHTML = "";
-  for (const s of list || []) { const b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = s; b.onclick = () => chatSend(s); $("#chat-chips").appendChild(b); }
+  for (const s of list || []) { const b = document.createElement("button"); b.type = "button"; b.className = "qchip"; b.textContent = s; b.onclick = () => chatSend(s); $("#chat-chips").appendChild(b); }
 }
 async function chatSend(text) {
   text = String(text || "").trim(); if (!text || chat.busy) return;

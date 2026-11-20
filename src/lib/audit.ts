@@ -46,7 +46,11 @@ export function audit(input: AuditInput): AuditEntry {
 }
 
 export function verifyAudit(): { ok: boolean; count: number; brokenAt?: number } {
-  const all = readAudit();
+  return verifyAuditEntries(readAudit());
+}
+
+/** Check a list of audit entries (e.g. a published snapshot) without touching the file. */
+export function verifyAuditEntries(all: AuditEntry[]): { ok: boolean; count: number; brokenAt?: number } {
   let prev = GENESIS;
   for (const e of all) {
     const { hash, ...rest } = e;
