@@ -253,7 +253,7 @@ demo video. Invoice, tender and price data in `src/seller/data.ts` is still samp
 ---
 
 <p align="center">
-  <a href="https://github.com/grahamaine"><img src=".github/thee-agency/thee-agency-logo-256.png" width="120" alt="thee AGENCY Consults (UG) Limited"></a><br>
+  <a href="https://github.com/grahamaine"><img src=".github/thee-agency/thee-agency-card-1280x640.png" width="520" alt="thee AGENCY Consults (UG) Limited: Innovation Unleashed"></a><br>
   <b>Powered &amp; rendered by thee AGENCY Consults (UG) Limited</b><br>
   <sub>Innovation Unleashed · Web Portals · dApps · Websites · Entebbe, Uganda</sub>
 </p>
