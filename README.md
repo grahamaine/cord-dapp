@@ -6,6 +6,16 @@ written to a **tamper-evident receipt trail**.
 
 Built for the Concordium **"Make your Agents Accountable"** hackathon (Encode).
 
+**Live proof on Concordium testnet (20 Nov 2026):**
+- **First payment**: the €1,850 laundry invoice prepared by the AI agent, released with the owner's
+  wallet signature and paid as a sponsored transaction (ProcureBot paid no fee):
+  [26f8ab55…cf3fe0f](https://ccdexplorer.io/testnet/transaction/26f8ab55d0697e8dd1f4d01fe9fe40d4728b92a0ce6ce26abeb713830cf3fe0f)
+- **Audit anchor**: the audit log (entries 1–19) and receipts (1–2) fingerprinted on-chain as
+  `cord:audit:v1|a=19:…|r=2:…`:
+  [12650e36…0614799c](https://ccdexplorer.io/testnet/transaction/12650e367d5ffb94482a9c4b87a8c08c3b5ec418e8e78a54b28888110614799c)
+- Both agents **Verified by Concordium** (see [Live on testnet](#live-on-testnet)).
+- Public site: https://cord-dapp.vercel.app
+
 **Who it's for:** any Ugandan organisation that regularly pays service providers and suppliers —
 hotels and hospitality, hospitals and clinics, schools and universities, NGOs and project offices,
 construction and facilities firms, logistics companies, and public bodies running procurement.
@@ -22,6 +32,8 @@ these payments, the risks grow, because an agent can't tell who is really behind
 Cord makes "who owns this payee, and is this payment allowed?" a precondition of every payment.
 
 ## How it works
+In the owner dashboard you can simply ask ProcureBot: *"pay the laundry invoice"*. It creates and funds a
+payment lock and runs its checks; you then press **Release** and sign with your Concordium wallet. Under the hood:
 ```
  Owner page / CLI        ProcureBot (buyer)          TenderScout (supplier agent)   Cord facilitator     Concordium
       | Pay invoice ------>| GET /invoices/:id/pay + X-Agent-Badge ->|                      |                  |
@@ -56,6 +68,9 @@ https://agent-registry-mcp.concordium.com/v1/badge-check/JyP9U3BHQRbFTuQx4N1Gn
 | Verified by Concordium badge | `src/lib/badge.ts`: checked by the seller (buyer badge) and the buyer (payee badge) |
 | Protocol-Level Tokens | set `PRICE_ASSET` / `ALLOWED_ASSETS` to a PLT such as USDR (planned) |
 | MCP | `src/mcp/server.ts` lets Claude or any MCP client drive ProcureBot |
+| Wallet signatures (browser + WalletConnect) | `src/lib/approval.ts`: every Release is signed by an owner account and verified on-chain |
+| CIS-8 external keys | `src/lib/xchain.ts`: verify suppliers on Base, Ethereum or Solana through their Concordium link |
+| RegisterData anchoring | `src/lib/anchor.ts`: audit log + receipt hashes written on-chain |
 
 ## Payment locks: five operations, one human decision
 Every invoice payment goes through a lock (`src/lib/locks.ts`). Amounts are in **demo EUR**; the default
@@ -149,14 +164,18 @@ Requires Node.js 20+. On Windows PowerShell, use `npm.cmd` in place of `npm`, or
    - badges, once registered: `SELLER_BADGE`, `SELLER_TOKEN_ID`, `BUYER_BADGE`, `BUYER_TOKEN_ID`, `REQUIRE_*_BADGE=true`
 
    For a first run without badges, set `REQUIRE_BUYER_BADGE=false` and `REQUIRE_SELLER_BADGE=false`.
-3. **Install:** `npm install`
+3. **Install:** `npm install`, then `npm run doctor`. It checks that each private key belongs to its account and
+   that the accounts hold enough CCD, without printing any key. A facilitator key from the wrong account makes
+   payments fail with `submission_failed: Verification failed`.
 4. **Start three services**, each in its own terminal, in this order:
    ```
    npm run facilitator     # :4020, sponsors fees
    npm run seller          # :4021, supplier agent + invoices
    npm run web             # :4030, dashboard + owner page
    ```
-5. **Pay.** Open http://localhost:4030 → Locks → Create lock → Fund → Send to agent → Release. Or use the CLI:
+5. **Pay.** Open http://localhost:4030, **Connect wallet** (an owner account), then either ask the **Agent** tab
+   "pay the plumbing invoice", or go to Locks → Create lock → Fund → Send to agent. Press **Release** and sign in
+   your wallet, then **Anchor now** in the Audit log. Or use the CLI:
    `npm run buyer -- tenders hospitality`.
 6. **Audit.** `npm run audit:verify` re-checks the receipt chain, the audit log chain and every Concordium
    anchor (exit code 1 if anything was altered). `npm run badge -- <account or badge>` checks a badge.
@@ -182,4 +201,15 @@ anchored on-chain; per-owner spending policies; and supplier cash-out to mobile 
 partner (planned, not built).
 
 ## Status
-Testnet. Invoice, tender and price data in `src/seller/data.ts` is sample data. Plan and milestones: `PLAN.md`.
+**Checkpoint 1 (22 Nov 2026): done on testnet.**
+- [x] Both agents registered with valid Verified by Concordium badges (#1283, #1288)
+- [x] Five-operation payment locks with demo-EUR limits (€10,000 per payment and per day), pause, approved suppliers
+- [x] ProcureBot chat in the dashboard (free built-in assistant; Claude optional) that prepares but never releases
+- [x] Owner wallet-signed Release (browser extension and mobile WalletConnect), switching between owner accounts
+- [x] Sponsored x402 payment settled on testnet, [tx 26f8ab55…](https://ccdexplorer.io/testnet/transaction/26f8ab55d0697e8dd1f4d01fe9fe40d4728b92a0ce6ce26abeb713830cf3fe0f)
+- [x] Hash-chained audit log + per-payment trail, anchored on Concordium, [tx 12650e36…](https://ccdexplorer.io/testnet/transaction/12650e367d5ffb94482a9c4b87a8c08c3b5ec418e8e78a54b28888110614799c)
+- [x] Cross-chain supplier verification via CIS-8 (Base, Ethereum, Solana)
+- [x] `npm run doctor` and `npm run audit:verify` checks
+
+**Next (final, 9 Dec):** euro stablecoin pricing, settlement on Base and Solana, real supplier and tender data,
+demo video. Invoice, tender and price data in `src/seller/data.ts` is still sample data.
