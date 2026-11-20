@@ -17,7 +17,8 @@
     "badge": "tsx src/scripts/check-badge.ts",
     "audit:verify": "tsx src/scripts/verify-receipts.ts",
     "web": "tsx src/web/server.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "doctor": "tsx src/scripts/doctor.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.11.0",
