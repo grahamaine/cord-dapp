@@ -125,6 +125,10 @@ obligations for stand-alone systems apply from 2 December 2027. This describes C
   account), so anyone can prove on CCDExplorer that the records weren't changed afterwards.
 - **Trail** (on each lock): the full story of one payment: created → funded → agent checks → owner's signed
   approval → on-chain payment → buyer and seller receipts → which anchor covers it.
+- **Wallet / switch account** (top right): connect the browser or mobile wallet, then click the account button to
+  switch between the accounts you've connected (each marked owner or not), add more accounts from the wallet,
+  change wallet, or disconnect. Switching account inside the Concordium wallet extension also switches it in Cord,
+  and the connection is restored on reload without a new prompt. Only an owner account can sign a Release.
 - **Pause agent** (top right): stops all payments until resumed.
 
 The web server holds the buyer's signing key, so it listens on localhost only. Don't expose it without authentication.

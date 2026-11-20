@@ -181,3 +181,5 @@ input:focus { outline: 2px solid var(--indigo); border-color: transparent; }
 .chat-form input { flex: 1; font: inherit; padding: .7rem 1rem; border: 1px solid var(--line-2); border-radius: 12px; background: #fff; color: var(--ink); }
 .chat-form input:focus { outline: 2px solid var(--indigo-soft); border-color: var(--indigo); }
 .ai-tag { font-size: .8rem; background: var(--info-soft); color: var(--info); border-radius: 999px; padding: .2rem .7rem; white-space: nowrap; }
+
+.acct-opt.on { border-color: var(--indigo); background: var(--indigo-soft); }

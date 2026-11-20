@@ -274,6 +274,20 @@
   </div>
 </div>
 
+<div class="modal" id="acct-modal" role="dialog" aria-modal="true" aria-labelledby="am-title">
+  <div class="box">
+    <div class="acct-top"><h3 id="am-title">Wallet accounts</h3><button class="btn btn-outline btn-sm" id="am-close" type="button">Close</button></div>
+    <p class="muted" style="margin:.5rem 0 .8rem" id="am-sub">Choose which account Cord uses. Only an owner account can sign releases.</p>
+    <div id="am-list"></div>
+    <div class="row" style="margin-top:1rem;gap:.5rem;flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm" id="am-more" type="button" style="flex:0 0 auto">Add accounts from wallet</button>
+      <button class="btn btn-outline btn-sm" id="am-switch" type="button" style="flex:0 0 auto">Use a different wallet</button>
+      <button class="btn btn-danger btn-sm" id="am-disc" type="button" style="flex:0 0 auto">Disconnect</button>
+    </div>
+    <p class="hint" id="am-hint" style="margin:.8rem 0 0"></p>
+  </div>
+</div>
+
 <div class="modal" id="trail-modal" role="dialog" aria-modal="true" aria-labelledby="tm-title">
   <div class="box" style="width:min(720px,100%);max-height:88vh;overflow:auto">
     <div class="acct-top"><h3 id="tm-title">Payment trail</h3><button class="btn btn-outline btn-sm" id="tm-close" type="button">Close</button></div>
@@ -650,7 +664,7 @@ function renderWallet() {
   if (wallet.account) {
     const owner = (wallet.cfg?.ownerAccounts || []).includes(wallet.account);
     b.innerHTML = `${owner ? "✓ " : "⚠ "}${esc(short(wallet.account))}`;
-    b.title = owner ? "Connected: authorised owner" : "Connected, but this account is not an authorised owner";
+    b.title = (owner ? "Connected: authorised owner" : "Connected, but this account is not an authorised owner") + " · click to switch account";
     b.className = owner ? "btn btn-outline btn-sm" : "btn btn-danger btn-sm";
   } else { b.textContent = "Connect wallet"; b.className = "btn btn-outline btn-sm"; b.title = ""; }
 }
@@ -661,15 +675,67 @@ function openWallet() {
 }
 function closeWallet() { $("#wallet-modal").classList.remove("open"); walletResolve?.(); walletResolve = null; }
 $("#wm-close").onclick = closeWallet;
-$("#wallet-btn").onclick = async () => {
-  if (wallet.account && confirm(`Disconnect ${wallet.account}?`)) {
-    try { if (wallet.kind === "mobile") await wallet.client.disconnect({ topic: wallet.session.topic, reason: { code: 6000, message: "User disconnected" } }); } catch {}
-    Object.assign(wallet, { kind: null, account: null, provider: null, session: null }); renderWallet(); return;
-  }
-  if (!wallet.account) openWallet();
+$("#wallet-btn").onclick = () => (wallet.account ? openAccounts() : openWallet());
+
+// ---- account switching
+const isOwner = (a) => (wallet.cfg?.ownerAccounts || []).includes(a);
+function remember(a) { try { localStorage.setItem("cord.account", a); } catch {} }
+function remembered() { try { return localStorage.getItem("cord.account"); } catch { return null; } }
+async function walletAccounts() {
+  if (wallet.kind === "mobile") return [...new Set((wallet.session?.namespaces?.ccd?.accounts || []).map((x) => x.split(":").pop()))];
+  return wallet.accounts?.length ? wallet.accounts : [wallet.account];
+}
+async function openAccounts() {
+  await walletCfg();
+  const list = await walletAccounts();
+  $("#am-more").classList.toggle("hidden", wallet.kind !== "browser");
+  $("#am-hint").textContent = wallet.kind === "browser"
+    ? "Tip: switching account inside the Concordium wallet extension also switches it here."
+    : "To use another account from your phone, choose “Use a different wallet” and scan again, sharing that account.";
+  $("#am-list").innerHTML = list.map((a) => `<button class="opt acct-opt${a === wallet.account ? " on" : ""}" data-acct="${esc(a)}" type="button">
+      <span class="ico" style="margin:0;width:40px;height:40px">${a === wallet.account ? "✓" : "○"}</span>
+      <span><span class="mono">${esc(short(a))}</span><small>${isOwner(a) ? "Owner · can sign releases" : "Not an owner of ProcureBot"}${a === wallet.account ? " · in use" : ""}</small></span></button>`).join("");
+  document.querySelectorAll("#am-list [data-acct]").forEach((b) => (b.onclick = () => { selectAccount(b.dataset.acct); closeAccounts(); }));
+  $("#acct-modal").classList.add("open");
+}
+function closeAccounts() { $("#acct-modal").classList.remove("open"); }
+$("#am-close").onclick = closeAccounts;
+function selectAccount(a, quiet = false) {
+  if (!a || a === wallet.account) return;
+  wallet.account = a; remember(a); renderWallet();
+  if (!quiet) toast(isOwner(a) ? `<b>Switched account</b>${esc(short(a))} · owner, can sign releases.` : `<b>Switched account</b>${esc(short(a))} is not an owner and can't sign releases.`, isOwner(a) ? "ok" : "bad");
+}
+$("#am-more").onclick = async () => {
+  if (wallet.busy) return toast("<b>Wallet busy</b>Finish the open request in your wallet first.", "bad");
+  wallet.busy = true;
+  try { wallet.accounts = await wallet.provider.requestAccounts(); closeAccounts(); openAccounts(); }
+  catch (e) { toast(`<b>Couldn't load accounts</b>${esc(e.message)}`, "bad"); }
+  finally { wallet.busy = false; }
 };
+async function disconnectWallet() {
+  try { if (wallet.kind === "mobile") await wallet.client.disconnect({ topic: wallet.session.topic, reason: { code: 6000, message: "User disconnected" } }); } catch {}
+  try { wallet.provider?.removeAllListeners?.(); } catch {}
+  Object.assign(wallet, { kind: null, account: null, accounts: [], provider: null, session: null }); renderWallet();
+}
+$("#am-disc").onclick = async () => { await disconnectWallet(); closeAccounts(); toast("<b>Disconnected</b>Connect again to sign releases.", ""); };
+$("#am-switch").onclick = async () => { await disconnectWallet(); closeAccounts(); openWallet(); };
+function watchBrowserWallet(provider) {
+  try { provider.removeAllListeners?.(); } catch {}
+  provider.on("accountChanged", (a) => { if (!a) return; if (!wallet.accounts?.includes(a)) wallet.accounts = [...(wallet.accounts || []), a]; selectAccount(String(a)); });
+  provider.on("accountDisconnected", (a) => {
+    wallet.accounts = (wallet.accounts || []).filter((x) => x !== a);
+    if (a === wallet.account) {
+      const next = wallet.accounts[0];
+      if (next) selectAccount(next); else { Object.assign(wallet, { kind: null, account: null, provider: null }); renderWallet(); toast("<b>Wallet disconnected</b>The account was disconnected in the wallet.", "bad"); }
+    }
+  });
+}
+function pickAccount(list, preferred) {
+  // the account you chose last time, else an owner (can sign releases), else the wallet's selected one
+  return [remembered()].find((a) => a && list.includes(a)) || list.find(isOwner) || (preferred && list.includes(preferred) ? preferred : list[0]);
+}
 async function connected(kind, account) {
-  wallet.kind = kind; wallet.account = account; await walletCfg(); renderWallet(); closeWallet();
+  wallet.kind = kind; wallet.account = account; remember(account); await walletCfg(); renderWallet(); closeWallet();
   const owner = wallet.cfg.ownerAccounts.includes(account);
   toast(owner ? `<b>Wallet connected</b>${esc(short(account))} is an authorised owner of this agent.` : `<b>Not an owner</b>${esc(short(account))} can't approve releases. Switch to the account that owns ProcureBot.`, owner ? "ok" : "bad");
 }
@@ -680,10 +746,14 @@ $("#wm-browser").onclick = async () => {
     if (!provider) throw new Error("Concordium Wallet for Web wasn't found in this browser. Install it, or use the mobile wallet.");
     if (wallet.busy) throw new Error("A wallet request is already open. Finish it in the wallet first.");
     wallet.busy = true;
-    let account;
-    try { account = await provider.connect(); } finally { wallet.busy = false; }
-    if (!account) throw new Error("No account was shared.");
-    wallet.provider = provider; await connected("browser", String(account));
+    let accounts;
+    try { accounts = provider.requestAccounts ? await provider.requestAccounts() : [await provider.connect()]; } finally { wallet.busy = false; }
+    accounts = (accounts || []).filter(Boolean).map(String);
+    if (!accounts.length) throw new Error("No account was shared.");
+    await walletCfg();
+    const recent = await provider.getMostRecentlySelectedAccount?.().catch(() => null);
+    wallet.provider = provider; wallet.accounts = accounts; watchBrowserWallet(provider);
+    await connected("browser", pickAccount(accounts, recent));
   } catch (e) { toast(`<b>Couldn't connect</b>${esc(e.message)}`, "bad"); }
 };
 $("#wm-mobile").onclick = async () => {
@@ -697,8 +767,9 @@ $("#wm-mobile").onclick = async () => {
     const QR = (await import("https://esm.sh/qrcode@1.5.4")).default;
     $("#wm-qr").innerHTML = `<img alt="WalletConnect QR code" src="${await QR.toDataURL(uri, { margin: 1, width: 480 })}"><div class="hint">Open Concordium Wallet on your phone → scan.</div>`;
     const session = await approval();
-    const account = session.namespaces.ccd.accounts[0].split(":").pop();
-    wallet.session = session; await connected("mobile", account);
+    wallet.session = session; await walletCfg();
+    const list = [...new Set(session.namespaces.ccd.accounts.map((x) => x.split(":").pop()))];
+    await connected("mobile", pickAccount(list));
   } catch (e) { $("#wm-qr").innerHTML = ""; toast(`<b>Couldn't connect</b>${esc(e.message)}`, "bad"); }
 };
 // The Concordium wallet allows one open prompt at a time: never send a second request while one is open.
@@ -719,6 +790,18 @@ async function walletSignOnce(message) {
   }
   throw new Error("No wallet connected");
 }
+
+(async function restoreWallet() {
+  try {
+    const { detectConcordiumProvider } = await import("https://esm.sh/@concordium/browser-wallet-api-helpers@3.3.0");
+    const provider = await detectConcordiumProvider(1500).catch(() => null);
+    const recent = await provider?.getMostRecentlySelectedAccount?.().catch(() => null);
+    if (!provider || !recent || wallet.account) return;   // only restore if this site is already connected
+    await walletCfg();
+    wallet.kind = "browser"; wallet.provider = provider; wallet.accounts = [String(recent)]; watchBrowserWallet(provider);
+    wallet.account = String(recent); renderWallet();
+  } catch {}
+})();
 
 // ---------------- cross-chain suppliers ----------------
 let chains = [], lastX = null;
