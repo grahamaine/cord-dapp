@@ -9,7 +9,7 @@
   "functions": {
     "api/index.ts": {
       "maxDuration": 60,
-      "includeFiles": "{data/agent-card.*.json,src/public/index.html}"
+      "includeFiles": "{data/agent-card.*.json,src/public/index.html,src/ui/cord.css}"
     }
   }
 }

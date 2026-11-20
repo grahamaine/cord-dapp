@@ -18,6 +18,7 @@ import { checkBadge } from "../lib/badge.js";
 import { readReceipts, verifyChain, type Receipt } from "../lib/receipts.js";
 import { loadPolicy, savePolicy, spentToday } from "../lib/policy.js";
 import { buy, PaymentRefused } from "../buyer/procurebot.js";
+import { mountAssets } from "../ui/assets.js";
 
 const APP_NAME = process.env.APP_NAME || "Cord";
 const PORT = Number(process.env.WEB_PORT || 4030);
@@ -74,6 +75,7 @@ function payments(receipts: Receipt[]) {
 
 const app = express();
 app.use(express.json({ limit: "100kb" }));
+mountAssets(app);
 
 const page = () => readFileSync(new URL("./index.html", import.meta.url), "utf8").replaceAll("{{APP_NAME}}", APP_NAME);
 app.get("/", (_req, res) => res.type("html").send(page()));

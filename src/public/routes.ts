@@ -10,6 +10,7 @@ import { Router, type Request } from "express";
 import { existsSync, readFileSync } from "node:fs";
 import { getExplorerTxUrl } from "@x402/concordium";
 import { config } from "../lib/config.js";
+import { mountAssets } from "../ui/assets.js";
 
 const APP_NAME = process.env.APP_NAME || "Cord";
 const TESTNET = config.network === "ccd:4221332d34e1694168c2a0c0b3fd0f27";
@@ -115,6 +116,7 @@ const page = () =>
 
 export function publicRouter() {
   const r = Router();
+  mountAssets(r);
   r.get("/", (req, res, next) => (wantsHtml(req) ? res.type("html").send(page()) : next()));
   r.get("/api/public/overview", async (_req, res) => {
     try {
