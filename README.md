@@ -1,4 +1,8 @@
-# Cord: verified supplier payments for Ugandan businesses
+<p align="center"><img src="src/ui/brand/kakasa-banner.jpg" alt="Kakasa: Agents. Business. East Africa." width="760"></p>
+
+# Kakasa: accountable AI agents for supplier payments
+
+*Agents. Business. East Africa.* (The repository and some file names still say `cord`, the project's working name.)
 
 AI agents that pay supplier invoices on Concordium, but **only to identity-verified agents**,
 **only within limits the business owner sets**, with **network fees sponsored** and every payment
@@ -25,7 +29,7 @@ receipts (8) chains intact, all 3 anchors match their on-chain data, all 4 payme
 | Audit anchor: entries 1–35, receipts 1–8 | | owner | [c5c36694…](https://ccdexplorer.io/testnet/transaction/c5c36694428de46b6d49d29d00399827ddf4eb347c54b6ab0911ec4b8b79ddca) |
 | Audit anchor: entries 1–36, receipts 1–8 | | owner | [fb3325d2…](https://ccdexplorer.io/testnet/transaction/fb3325d2e26412b6bc1422857c45fb28d32d120aea9e0fa8de52261b4c398af2) |
 
-Every payment was a sponsored transaction (the Cord facilitator paid the fee) to a supplier agent that is
+Every payment was a sponsored transaction (the Kakasa facilitator paid the fee) to a supplier agent that is
 **Verified by Concordium**. Both agents are verified (see [Live on testnet](#live-on-testnet)).
 
 **Who it's for:** any Ugandan organisation that regularly pays service providers and suppliers —
@@ -41,13 +45,13 @@ Ugandan organisations pay many service providers and suppliers, large and small.
 unauthorised or oversized payments, and missing records at audit time. Once AI agents start making
 these payments, the risks grow, because an agent can't tell who is really behind a payee.
 
-Cord makes "who owns this payee, and is this payment allowed?" a precondition of every payment.
+Kakasa makes "who owns this payee, and is this payment allowed?" a precondition of every payment.
 
 ## How it works
 In the owner dashboard you can simply ask ProcureBot: *"pay the laundry invoice"*. It creates and funds a
 payment lock and runs its checks; you then press **Release** and sign with your Concordium wallet. Under the hood:
 ```
- Owner page / CLI        ProcureBot (buyer)          TenderScout (supplier agent)   Cord facilitator     Concordium
+ Owner page / CLI        ProcureBot (buyer)          TenderScout (supplier agent)   Kakasa facilitator     Concordium
       | Pay invoice ------>| GET /invoices/:id/pay + X-Agent-Badge ->|                      |                  |
       |                    |               buyer badge check (registry)                     |                  |
       |                    |<- 402 price for this invoice -----------|                      |                  |
@@ -75,7 +79,7 @@ https://agent-registry-mcp.concordium.com/v1/badge-check/JyP9U3BHQRbFTuQx4N1Gn
 | Component | Where |
 |---|---|
 | x402 payments (`@x402/concordium`, exact scheme) | `src/seller/server.ts`, `src/buyer/procurebot.ts` |
-| Sponsored transactions | `src/facilitator/server.ts`: Cord's facilitator pays every network fee |
+| Sponsored transactions | `src/facilitator/server.ts`: Kakasa's facilitator pays every network fee |
 | Agent Registry (CIS-8004) + Agent Cards | `src/scripts/build-card.ts`, served at `/.well-known/agent-card.json` |
 | Verified by Concordium badge | `src/lib/badge.ts`: checked by the seller (buyer badge) and the buyer (payee badge) |
 | Protocol-Level Tokens | set `PRICE_ASSET` / `ALLOWED_ASSETS` to a PLT such as USDR (planned) |
@@ -98,13 +102,13 @@ limits are **€10,000 per lock and €10,000 per day**.
 
 **Owner wallet approval:** by default Release must also be **signed by the owner's Concordium wallet**.
 Connect it from the owner page (top right): the Concordium browser extension, or the phone wallet by
-scanning a WalletConnect QR code (needs a free `WALLETCONNECT_PROJECT_ID`). Cord issues a one-time
+scanning a WalletConnect QR code (needs a free `WALLETCONNECT_PROJECT_ID`). Kakasa issues a one-time
 challenge naming the lock, invoice, supplier and amount; the wallet signs it; the server checks the
 signature against the account's on-chain keys and that the account is an authorised owner
 (`OWNER_ACCOUNTS`, default the buyer agent's owner). The signed approval is stored on the lock and in
 the audit log.
 
-"Fund" reserves budget in Cord's records; it does not move money into an on-chain escrow. Money moves once,
+"Fund" reserves budget in Kakasa's records; it does not move money into an on-chain escrow. Money moves once,
 on release. On testnet each EUR amount settles as a small CCD amount at a fixed demo rate
 (`DEMO_ATOMIC_PER_EUR`, default €1,000 = 0.1 CCD); in production invoices would be paid in a euro stablecoin.
 
@@ -112,17 +116,17 @@ on release. On testnet each EUR amount settles as a small CCD amount at a fixed 
 Agents on Ethereum, Base, Solana, Fetch.ai and other chains can link their key to a Concordium agent
 through the **CIS-8 external key registry** (testnet contract `12801.0`). On the owner page
 (Policy → *Suppliers on other blockchains*), pick the chain and paste the supplier's Solana address
-or EVM public key, or let the supplier sign once with MetaMask so Cord can recover the key. Cord calls
+or EVM public key, or let the supplier sign once with MetaMask so Kakasa can recover the key. Kakasa calls
 the registry's `owner_of_key` and `agent_by_external_reference` tools, then runs the normal
 Verified by Concordium badge check on the linked agent. A verified supplier can be added to the
 approved list; payment still settles on Concordium to its verified owner account. Settling on the other
 chain (x402 on Base or Solana) is planned. How to link a key: see `docs/cross-chain.md`.
 
 ## EU AI Act alignment
-Cord prepares business-to-business supplier payments, which is not on the AI Act's high-risk list, but it
+Kakasa prepares business-to-business supplier payments, which is not on the AI Act's high-risk list, but it
 applies the Act's core safeguards by design:
 
-| AI Act | How Cord does it |
+| AI Act | How Kakasa does it |
 |---|---|
 | Art. 14 human oversight | Release needs a person who **signs with the owner's wallet**; the owner can cancel any lock or **pause the agent** (every payment refused while paused) |
 | Art. 12 record-keeping | Hash-chained audit log of every operation, refusal and policy change (`data/audit.jsonl`) plus payment receipts, anchored on Concordium for an external timestamp |
@@ -131,7 +135,7 @@ applies the Act's core safeguards by design:
 | Art. 26 deployer duties | Keep logs at least six months; assign named people to oversight |
 
 Timing: Art. 50 transparency duties apply from 2 August 2026; after the 2026 Digital Omnibus, high-risk
-obligations for stand-alone systems apply from 2 December 2027. This describes Cord's design, not legal advice.
+obligations for stand-alone systems apply from 2 December 2027. This describes Kakasa's design, not legal advice.
 
 ## Owner dashboard (`npm run web`, http://localhost:4030)
 - **Dashboard**: service status, account balances, badge status, every payment with its
@@ -154,7 +158,7 @@ obligations for stand-alone systems apply from 2 December 2027. This describes C
   approval → on-chain payment → buyer and seller receipts → which anchor covers it.
 - **Wallet / switch account** (top right): connect the browser or mobile wallet, then click the account button to
   switch between the accounts you've connected (each marked owner or not), add more accounts from the wallet,
-  change wallet, or disconnect. Switching account inside the Concordium wallet extension also switches it in Cord,
+  change wallet, or disconnect. Switching account inside the Concordium wallet extension also switches it in Kakasa,
   and the connection is restored on reload without a new prompt. Only an owner account can sign a Release.
 - **Pause agent** (top right): stops all payments until resumed.
 
@@ -209,7 +213,7 @@ Requires Node.js 20+. On Windows PowerShell, use `npm.cmd` in place of `npm`, or
    anchor (exit code 1 if anything was altered). `npm run badge -- <account or badge>` checks a badge.
 
 ## Registering an agent (what worked)
-The registry website can't edit an agent after registering it, and its form pins its own hash. Cord uses the
+The registry website can't edit an agent after registering it, and its form pins its own hash. Kakasa uses the
 registry's developer tools at `https://agent-registry-mcp.concordium.com/mcp` instead:
 1. Host the card publicly (Vercel serves `data/agent-card.*.json`; no private keys are stored there).
 2. `build_register` with the card URL and its SHA-256 → sign with the owner's wallet → note the new token id.

@@ -25,7 +25,7 @@ export function createChallenge(lock: { id: string; invoiceId: string; supplier:
   const nonce = randomBytes(12).toString("hex");
   const expires = Date.now() + TTL_MS;
   const message = [
-    "Cord · release approval",
+    "Kakasa · release approval",
     `Lock: ${lock.id}`,
     `Invoice: ${lock.invoiceId}`,
     `Supplier: ${lock.supplier}`,

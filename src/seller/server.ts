@@ -51,7 +51,7 @@ app.use(judgeRouter());
 app.get("/", (_req, res) =>
   res.json({
     agent: "TenderScout",
-    by: "Cord",
+    by: "Kakasa",
     paid: ["GET /tenders?sector=", "GET /price-benchmark?item=", "GET /invoices/:id/pay"],
     free: ["GET /invoices", "GET /healthz"],
     card: "/.well-known/agent-card.json",

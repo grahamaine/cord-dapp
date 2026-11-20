@@ -9,6 +9,18 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&display=swap" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/kakasa-mark-32.png" />
+<link rel="apple-touch-icon" href="/assets/brand/kakasa-mark-180.png" />
+<link rel="manifest" href="/manifest.webmanifest" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="{{APP_NAME}}" />
+<meta property="og:title" content="Kakasa — accountable AI agents for supplier payments" />
+<meta property="og:description" content="AI agents that pay suppliers only when they're Verified by Concordium, within owner limits, released by a human wallet signature, with an on-chain audit trail. Built in Uganda." />
+<meta property="og:image" content="https://cord-dapp.vercel.app/assets/brand/kakasa-og.jpg" />
+<meta property="og:image:width" content="1200" /><meta property="og:image:height" content="630" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://cord-dapp.vercel.app/assets/brand/kakasa-og.jpg" />
 <link rel="stylesheet" href="/assets/cord.css" />
 <style>
   .hero { padding: clamp(3rem, 8vw, 6rem) 0 1rem; display: grid; grid-template-columns: 1.3fr 1fr; gap: 3rem; align-items: center; }
@@ -47,7 +59,7 @@
 <header class="topbar">
   <div class="wrap">
     <a class="brand" href="/">
-      <span class="logo"><svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true"><circle cx="9" cy="16" r="5" fill="none" stroke="#fff" stroke-width="3"/><circle cx="23" cy="16" r="5" fill="none" stroke="#fff" stroke-width="3" opacity=".7"/><path d="M13.5 16h5" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg></span>
+      <img class="logo-img" src="/assets/brand/kakasa-mark-128.png" alt="" width="38" height="38" />
       {{APP_NAME}}
     </a>
     <span class="net" id="net">TESTNET</span>
@@ -100,7 +112,7 @@
       <div class="card hover"><div class="num">1</div><h3>Buyer verified</h3><p>The supplier agent only serves buyers with a Verified by Concordium badge.</p></div>
       <div class="card hover"><div class="num">2</div><h3>Payee verified</h3><p>The buyer checks the payee owns an active, badged agent tied to a real identity.</p></div>
       <div class="card hover"><div class="num">3</div><h3>Owner's limits</h3><p>Per-payment cap, daily limit, allowed assets and an approved-supplier list.</p></div>
-      <div class="card hover"><div class="num">4</div><h3>Sponsored payment</h3><p>Paid over x402 on Concordium. Cord's facilitator covers the network fee.</p></div>
+      <div class="card hover"><div class="num">4</div><h3>Sponsored payment</h3><p>Paid over x402 on Concordium. Kakasa's facilitator covers the network fee.</p></div>
       <div class="card hover"><div class="num">5</div><h3>Receipt trail</h3><p>Both sides add a hash-chained receipt linking the payment to two verified owners.</p></div>
     </div>
   </section>
@@ -121,7 +133,7 @@
   <section class="section" id="ai-act">
     <div class="kicker">EU AI Act</div>
     <h2>Built around human oversight and records</h2>
-    <p class="sub">Cord prepares business-to-business supplier payments. That use isn't on the AI Act's high-risk list, but Cord applies the Act's core safeguards anyway, so organisations can deploy it with confidence.</p>
+    <p class="sub">Kakasa prepares business-to-business supplier payments. That use isn't on the AI Act's high-risk list, but Cord applies the Act's core safeguards anyway, so organisations can deploy it with confidence.</p>
     <div class="grid g2">
       <div class="card"><div class="act"><span class="art">Art. 14</span><div><h3>Human oversight</h3><p>Release needs a person, who signs it with the owner's own Concordium wallet (browser or phone). The owner can cancel any lock or pause the agent instantly.</p></div></div></div>
       <div class="card"><div class="act"><span class="art">Art. 12</span><div><h3>Record-keeping</h3><p>Every operation, refusal and policy change is logged automatically in a hash-chained audit log, alongside on-chain payment receipts.</p></div></div></div>
@@ -139,7 +151,7 @@
     <p class="sub">A supplier's agent doesn't have to live on Concordium. Agents on Ethereum, Base, Solana and other chains can link their key to a Concordium agent through the CIS-8 external key registry. Cord looks that link up and runs the same Verified by Concordium check before anyone is paid.</p>
     <div class="grid g3">
       <div class="card hover"><div class="num">1</div><h3>Link the key</h3><p>The supplier proves it controls its Ethereum or Solana key and links it to a Concordium agent owned by an identity-verified account.</p></div>
-      <div class="card hover"><div class="num">2</div><h3>Cord checks it</h3><p>Paste the supplier's Solana address or EVM public key — or let them sign once with MetaMask — and Cord finds the linked agent and badge.</p></div>
+      <div class="card hover"><div class="num">2</div><h3>Kakasa checks it</h3><p>Paste the supplier's Solana address or EVM public key — or let them sign once with MetaMask — and Cord finds the linked agent and badge.</p></div>
       <div class="card hover"><div class="num">3</div><h3>Pay with confidence</h3><p>Approve the verified owner as a supplier. Payments still settle on Concordium, under the same limits and human release.</p></div>
     </div>
     <div class="chips" style="margin-top:1rem"><span class="chip"><i></i>Ethereum</span><span class="chip"><i></i>Base</span><span class="chip"><i></i>Solana</span><span class="chip"><i></i>Fetch.ai</span><span class="chip mute"><i></i>Payment on other chains: planned</span></div>
@@ -184,7 +196,7 @@
       <div class="card hover"><h3>Agent Registry · CIS-8004</h3><p>Each agent is an on-chain record pointing to its Agent Card, pinned by a SHA-256 hash.</p></div>
       <div class="card hover"><h3>Verified by Concordium</h3><p>Ties every agent to an identity-verified owner account. Checked by both sides.</p></div>
       <div class="card hover"><h3>x402 payments</h3><p>The supplier answers "402 Payment Required"; the buyer pays and retries in one flow.</p></div>
-      <div class="card hover"><h3>Sponsored transactions</h3><p>Cord's facilitator pays network fees, so small invoices stay cheap.</p></div>
+      <div class="card hover"><h3>Sponsored transactions</h3><p>Kakasa's facilitator pays network fees, so small invoices stay cheap.</p></div>
       <div class="card hover"><h3>Stablecoins · PLT</h3><p>Invoices priced in a stablecoin such as USDR at full value. On testnet, small CCD amounts.</p></div>
       <div class="card hover"><h3>MCP</h3><p>An owner can instruct the purchasing agent through Claude or any MCP client.</p></div>
     </div>

@@ -201,3 +201,6 @@ html, body { overflow-x: clip; }
   .chat-form .btn { padding-left: 1rem; padding-right: 1rem; }
   .modal .box { width: 100% !important; max-height: 92vh; overflow: auto; }
 }
+
+/* ---------- brand mark ---------- */
+.logo-img { width: 38px; height: 38px; border-radius: 10px; display: block; box-shadow: 0 6px 18px rgba(10, 20, 48, .25); }

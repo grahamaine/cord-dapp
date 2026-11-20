@@ -54,5 +54,5 @@ app.post("/settle", async (req, res) => {
 app.get("/healthz", (_req, res) => res.json({ ok: true, sponsor: config.facilitator.address(), network: config.network }));
 
 if (!process.env.VERCEL) app.listen(config.facilitator.port, () =>
-  console.log(`Cord facilitator on :${config.facilitator.port} (sponsor ${config.facilitator.address()}, ${config.network})`),
+  console.log(`Kakasa facilitator on :${config.facilitator.port} (sponsor ${config.facilitator.address()}, ${config.network})`),
 );

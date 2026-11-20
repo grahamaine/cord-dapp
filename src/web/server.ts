@@ -32,7 +32,7 @@ import { builtinReply } from "../agent/builtin.js";
 import { mountAuth, authEnabled } from "./auth.js";
 import { claudeEnabled, claudeReply } from "../agent/claude.js";
 
-const APP_NAME = process.env.APP_NAME || "Cord";
+const APP_NAME = process.env.APP_NAME || "Kakasa";
 const PORT = Number(process.env.WEB_PORT || 4030);
 const HOST = process.env.WEB_HOST || "127.0.0.1";
 const TESTNET = config.network === "ccd:4221332d34e1694168c2a0c0b3fd0f27";

@@ -14,7 +14,7 @@ try {
   const { app: facilitator } = await import("../src/facilitator/server.js");
   root.use("/facilitator", facilitator);
 } catch (e) {
-  root.use("/facilitator", notConfigured("Cord facilitator", e, "Set CCD_FACILITATOR_ADDRESS and CCD_FACILITATOR_PRIVATE_KEY in Vercel env vars, then redeploy."));
+  root.use("/facilitator", notConfigured("Kakasa facilitator", e, "Set CCD_FACILITATOR_ADDRESS and CCD_FACILITATOR_PRIVATE_KEY in Vercel env vars, then redeploy."));
 }
 
 try {

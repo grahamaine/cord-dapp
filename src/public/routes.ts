@@ -12,7 +12,7 @@ import { getExplorerTxUrl } from "@x402/concordium";
 import { config } from "../lib/config.js";
 import { mountAssets } from "../ui/assets.js";
 
-const APP_NAME = process.env.APP_NAME || "Cord";
+const APP_NAME = process.env.APP_NAME || "Kakasa";
 const TESTNET = config.network === "ccd:4221332d34e1694168c2a0c0b3fd0f27";
 const WALLET_PROXY = process.env.WALLET_PROXY || (TESTNET ? "https://wallet-proxy.testnet.concordium.com" : "https://wallet-proxy.mainnet.concordium.software");
 
@@ -81,13 +81,13 @@ async function payments(seller: string, buyers: Set<string>) {
 }
 
 let cache: { at: number; body: unknown } | undefined;
-/** The three Cord accounts with live balances (all public on-chain data; nothing here needs a key). */
+/** The three Kakasa accounts with live balances (all public on-chain data; nothing here needs a key). */
 async function accounts(agents: any[]) {
   const explorer = (a: string) => `https://ccdexplorer.io/${TESTNET ? "testnet" : "mainnet"}/account/${a}`;
   const list = [
     { key: "buyer", name: "ProcureBot", role: "Purchasing agent: pays approved supplier invoices", address: agents.find((a) => a.key === "buyer")?.owner || "" },
     { key: "seller", name: "TenderScout", role: "Supplier agent: receives payments", address: process.env.SELLER_PAY_TO || agents.find((a) => a.key === "seller")?.owner || "" },
-    { key: "facilitator", name: "Cord facilitator", role: "Sponsor: pays the network fees so agents need no gas", address: process.env.PUBLIC_FACILITATOR_ADDRESS || "" },
+    { key: "facilitator", name: "Kakasa facilitator", role: "Sponsor: pays the network fees so agents need no gas", address: process.env.PUBLIC_FACILITATOR_ADDRESS || "" },
   ].filter((a) => a.address);
   return Promise.all(list.map(async (a) => {
     try {

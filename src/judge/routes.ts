@@ -21,7 +21,7 @@ import { verifyReceiptEntries, type Receipt } from "../lib/receipts.js";
 import type { Anchor } from "../lib/anchor.js";
 import type { Lock } from "../lib/locks.js";
 
-const APP_NAME = process.env.APP_NAME || "Cord";
+const APP_NAME = process.env.APP_NAME || "Kakasa";
 const SNAPSHOT = "judge/snapshot.json";
 const PAGE = "src/judge/index.html";
 
