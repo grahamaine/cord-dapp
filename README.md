@@ -99,7 +99,7 @@ applies the Act's core safeguards by design:
 |---|---|
 | Art. 14 human oversight | Release needs a person who **signs with the owner's wallet**; the owner can cancel any lock or **pause the agent** (every payment refused while paused) |
 | Art. 12 record-keeping | Hash-chained audit log of every operation, refusal and policy change (`data/audit.jsonl`) plus payment receipts, anchored on Concordium for an external timestamp |
-| Art. 13 / 50 transparency | The owner page tells users they're working with an AI agent and shows its checks and reasons before release |
+| Art. 13 / 50 transparency | The Agent chat says up front that you're talking to an AI and labels every tool it used; the owner page tells users they're working with an AI agent and shows its checks and reasons before release |
 | Art. 9 / 15 risk controls | Per-lock and daily limits, verified-supplier checks, refusal before any signature |
 | Art. 26 deployer duties | Keep logs at least six months; assign named people to oversight |
 
@@ -109,6 +109,13 @@ obligations for stand-alone systems apply from 2 December 2027. This describes C
 ## Owner dashboard (`npm run web`, http://localhost:4030)
 - **Dashboard**: service status, account balances, badge status, every payment with its
   CCDExplorer link, and whether the receipt chain is intact.
+- **Agent**: chat with ProcureBot in plain words. "What's due?", "Pay the laundry invoice", "How much budget
+  is left?", "Find hospitality tenders", "Benchmark rice", "Verify 3wT8…", "Check solana <address>", "Cancel
+  LCK-…", "Show the audit trail". It can **prepare** a payment (create → fund → agent checks) but has no way to
+  release one: it points you to Locks, where you release with your wallet signature. Refusals (limits,
+  unverified supplier, paused) are explained with the next step. Runs on a free built-in assistant on your
+  computer; if `ANTHROPIC_API_KEY` is set, Claude drives the same tools instead. Any action that changes
+  something or buys data is written to the audit log as an AI-agent action.
 - **Locks**: supplier invoices, the five lock operations, and today's budget (released + set aside vs limit).
 - **Policy**: per-lock and daily limits in EUR, allowed assets, "only pay Verified by Concordium suppliers",
   "a person must release every payment", and an approved-supplier list (saved to `data/policy.json`).

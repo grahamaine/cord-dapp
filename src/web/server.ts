@@ -28,6 +28,8 @@ import { CHAINS, verifyCrossChain } from "../lib/xchain.js";
 import { anchorNow, anchorData, checkAnchors } from "../lib/anchor.js";
 import { buy, PaymentRefused } from "../buyer/procurebot.js";
 import { mountAssets } from "../ui/assets.js";
+import { builtinReply } from "../agent/builtin.js";
+import { claudeEnabled, claudeReply } from "../agent/claude.js";
 
 const APP_NAME = process.env.APP_NAME || "Cord";
 const PORT = Number(process.env.WEB_PORT || 4030);
@@ -169,6 +171,28 @@ app.post("/api/agent/:action(pause|resume)", (req, res) => {
 });
 
 // Wallet connect settings for the owner page (no secrets here: the project id is public).
+// ---- ProcureBot chat: built-in assistant (free) or Claude if ANTHROPIC_API_KEY is set. Never releases.
+app.get("/api/agent/info", (_req, res) => res.json({ mode: claudeEnabled() ? "claude" : "builtin", name: "ProcureBot" }));
+app.post("/api/agent/chat", async (req, res) => {
+  const message = String(req.body?.message ?? "").slice(0, 2000).trim();
+  if (!message) return res.status(400).json({ error: "empty message" });
+  const history = (Array.isArray(req.body?.history) ? req.body.history : [])
+    .filter((m: any) => (m?.role === "user" || m?.role === "assistant") && typeof m.content === "string")
+    .map((m: any) => ({ role: m.role, content: m.content.slice(0, 4000) }));
+  try {
+    let out;
+    if (claudeEnabled()) {
+      try { out = await claudeReply([...history, { role: "user", content: message }]); }
+      catch (e) { out = await builtinReply(message); out.reply = `(Claude unavailable: ${(e as Error).message.slice(0, 120)} — using the built-in assistant)\n\n` + out.reply; }
+    } else out = await builtinReply(message);
+    const READ_ONLY = new Set(["list_invoices", "list_locks", "budget_status", "audit_summary", "check_supplier", "check_cross_chain_supplier"]);
+    if (out.actions.some((a) => !READ_ONLY.has(a.tool))) audit({ actor: "agent", op: "chat", outcome: "ok", detail: `Owner asked: "${message.slice(0, 120)}" → ${out.actions.map((a) => a.tool).join(", ")}`, data: { mode: out.mode } });
+    res.json(out);
+  } catch (e) {
+    res.status(500).json({ error: (e as Error).message });
+  }
+});
+
 app.get("/api/wallet/config", (_req, res) =>
   res.json({
     network: config.registry.network,

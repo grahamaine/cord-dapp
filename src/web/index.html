@@ -95,6 +95,7 @@
     </div>
     <nav class="tabs" role="tablist">
       <button class="tab on" data-tab="dash" role="tab">Dashboard</button>
+      <button class="tab" data-tab="agent" role="tab">Agent</button>
       <button class="tab" data-tab="locks" role="tab">Locks<span class="count hidden" id="await-count"></span></button>
       <button class="tab" data-tab="policy" role="tab">Policy</button>
       <button class="tab" data-tab="audit" role="tab">Audit log</button>
@@ -126,6 +127,23 @@
   </div>
 
   <!-- LOCKS -->
+  <!-- AGENT CHAT -->
+  <div id="tab-agent" class="hidden">
+    <div class="card chat-card">
+      <div class="chat-head">
+        <div><h3>ProcureBot</h3><div class="hint" style="margin:0" id="chat-mode">Your AI purchasing agent</div></div>
+        <span class="ai-tag">AI system · EU AI Act Art. 50</span>
+      </div>
+      <div class="chat-notice">You are talking to an AI agent. It can look things up and <b>prepare</b> payments, but it cannot release money — only you can, by pressing Release and signing with your wallet. Everything it does is in the Audit log.</div>
+      <div id="chat-log" class="chat-log" aria-live="polite"></div>
+      <div id="chat-chips" class="chat-chips"></div>
+      <form id="chat-form" class="chat-form">
+        <input id="chat-in" autocomplete="off" placeholder="e.g. What's due? · Pay the laundry invoice · Benchmark rice" maxlength="2000" />
+        <button class="btn btn-primary" type="submit">Send</button>
+      </form>
+    </div>
+  </div>
+
   <div id="tab-locks" class="hidden">
     <div class="card">
       <div class="flow">
@@ -290,12 +308,52 @@ const post = (path, body = {}) => api(path, { method: "POST", headers: { "conten
 
 function showTab(name) {
   document.querySelectorAll(".tab").forEach((x) => x.classList.toggle("on", x.dataset.tab === name));
-  for (const t of ["dash", "locks", "policy", "audit"]) $("#tab-" + t).classList.toggle("hidden", t !== name);
+  for (const t of ["dash", "agent", "locks", "policy", "audit"]) $("#tab-" + t).classList.toggle("hidden", t !== name);
   if (name === "locks") loadLocksTab();
+  if (name === "agent") initChat();
   if (name === "policy") loadPolicy();
   if (name === "audit") loadAudit();
 }
 document.querySelectorAll(".tab").forEach((b) => b.onclick = () => showTab(b.dataset.tab));
+
+// ---- ProcureBot chat
+const chat = { history: [], started: false, busy: false };
+const md = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\n/g, "<br>");
+const TOOL_LABEL = { list_invoices: "read invoices", prepare_payment: "prepared a payment", list_locks: "read locks", cancel_lock: "cancelled a lock", budget_status: "checked budget", check_supplier: "checked a badge", check_cross_chain_supplier: "checked another chain", find_tenders: "bought tender data", price_benchmark: "bought a benchmark", audit_summary: "read the audit log" };
+function chatAdd(role, text, actions = []) {
+  const d = document.createElement("div");
+  d.className = "msg " + (role === "user" ? "me" : "bot");
+  d.innerHTML = md(text) + (actions.length ? `<div class="acts">${actions.map((a) => `<span>⚙ ${a.result?.done === false ? "tried: " : ""}${TOOL_LABEL[a.tool] || a.tool}</span>`).join("")}</div>` : "");
+  if (role !== "user" && /\bLocks\b/.test(text) && actions.some((a) => a.tool === "prepare_payment" && a.result?.done)) {
+    const b = document.createElement("button"); b.className = "btn btn-outline btn-sm"; b.textContent = "Open Locks to release →"; b.type = "button"; b.style.marginTop = ".6rem";
+    b.onclick = () => showTab("locks"); d.appendChild(b);
+  }
+  $("#chat-log").appendChild(d); $("#chat-log").scrollTop = 1e9;
+  return d;
+}
+function chatChips(list) {
+  $("#chat-chips").innerHTML = "";
+  for (const s of list || []) { const b = document.createElement("button"); b.type = "button"; b.className = "chip"; b.textContent = s; b.onclick = () => chatSend(s); $("#chat-chips").appendChild(b); }
+}
+async function chatSend(text) {
+  text = String(text || "").trim(); if (!text || chat.busy) return;
+  chat.busy = true; $("#chat-in").value = ""; chatAdd("user", text);
+  const wait = chatAdd("bot", "…"); wait.classList.add("typing");
+  try {
+    const r = await post("/api/agent/chat", { message: text, history: chat.history });
+    wait.remove(); chatAdd("bot", r.reply, r.actions || []); chatChips(r.suggestions);
+    chat.history.push({ role: "user", content: text }, { role: "assistant", content: r.reply });
+    chat.history = chat.history.slice(-20);
+    if ((r.actions || []).some((a) => /prepare_payment|cancel_lock|find_tenders|price_benchmark/.test(a.tool))) loadOverview();
+  } catch (e) { wait.remove(); chatAdd("bot", "Sorry — " + e.message); }
+  finally { chat.busy = false; $("#chat-in").focus(); }
+}
+async function initChat() {
+  if (chat.started) return; chat.started = true;
+  $("#chat-form").onsubmit = (ev) => { ev.preventDefault(); chatSend($("#chat-in").value); };
+  try { const i = await api("/api/agent/info"); $("#chat-mode").textContent = i.mode === "claude" ? "Powered by Claude · your AI purchasing agent" : "Built-in assistant · runs on this computer, no API cost"; } catch {}
+  chatSend("hello");
+}
 
 function renderAgentState() {
   const paused = overview?.policy?.paused;
