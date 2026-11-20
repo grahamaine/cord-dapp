@@ -1,0 +1,1117 @@
+{
+ "kind": "cord-judge-snapshot",
+ "version": 1,
+ "publishedAt": "2026-11-20T13:31:48.253Z",
+ "network": "ccd:4221332d34e1694168c2a0c0b3fd0f27",
+ "accounts": {
+  "procurebot": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+  "facilitator": "3iKSW5yYC3ukE4y2smSb3SbCGEa8BzfT8CbLaAfpJjJtGrgcD1",
+  "supplier": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8"
+ },
+ "badges": {
+  "procurebot": "",
+  "supplier": "JyP9TwhskJ6cKHDzW23Yj"
+ },
+ "policy": {
+  "maxPerLockEur": 10000,
+  "dailyLimitEur": 10000,
+  "requireSellerBadge": true,
+  "requireHumanRelease": true,
+  "requireOwnerSignature": true,
+  "paused": false
+ },
+ "locks": [
+  {
+   "id": "LCK-8C6516",
+   "invoiceId": "INV-MNT-0092",
+   "supplier": "Wakiso Plumbing & Repairs",
+   "category": "Maintenance",
+   "description": "Kitchen drainage repair",
+   "payTo": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+   "amountEur": 640,
+   "amount": "64000",
+   "asset": "CCD",
+   "status": "cancelled",
+   "createdAt": "2026-11-20T08:43:04.831Z",
+   "updatedAt": "2026-11-20T08:45:10.075Z",
+   "history": [
+    {
+     "op": "create",
+     "at": "2026-11-20T08:43:08.815Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Lock opened for INV-MNT-0092 (Wakiso Plumbing & Repairs), €640"
+    },
+    {
+     "op": "fund",
+     "at": "2026-11-20T08:43:08.895Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "€640 set aside against today's budget"
+    },
+    {
+     "op": "send",
+     "at": "2026-11-20T08:43:10.013Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Checks passed: payee Verified by Concordium, within limits. Awaiting human release."
+    },
+    {
+     "op": "cancel",
+     "at": "2026-11-20T08:45:10.075Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Cancelled; €640 returned to today's budget"
+    }
+   ],
+   "checks": {
+    "at": "2026-11-20T08:43:10.013Z",
+    "badgeVerified": true,
+    "badgeIssues": [],
+    "policy": null
+   }
+  },
+  {
+   "id": "LCK-A80818",
+   "invoiceId": "INV-LAU-1107",
+   "supplier": "Lakeside Laundry Services",
+   "category": "Laundry",
+   "description": "Linen & towel laundry, 1–15 Nov",
+   "payTo": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+   "amountEur": 1850,
+   "amount": "185000",
+   "asset": "CCD",
+   "status": "cancelled",
+   "createdAt": "2026-11-20T08:45:22.609Z",
+   "updatedAt": "2026-11-20T08:45:41.489Z",
+   "history": [
+    {
+     "op": "create",
+     "at": "2026-11-20T08:45:22.609Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Lock opened for INV-LAU-1107 (Lakeside Laundry Services), €1,850"
+    },
+    {
+     "op": "fund",
+     "at": "2026-11-20T08:45:29.106Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "€1,850 set aside against today's budget"
+    },
+    {
+     "op": "send",
+     "at": "2026-11-20T08:45:31.970Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Checks passed: payee Verified by Concordium, within limits. Awaiting human release."
+    },
+    {
+     "op": "cancel",
+     "at": "2026-11-20T08:45:41.489Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Cancelled; €1,850 returned to today's budget"
+    }
+   ],
+   "checks": {
+    "at": "2026-11-20T08:45:31.969Z",
+    "badgeVerified": true,
+    "badgeIssues": [],
+    "policy": null
+   }
+  },
+  {
+   "id": "LCK-1E200A",
+   "invoiceId": "INV-LAU-1107",
+   "supplier": "Lakeside Laundry Services",
+   "category": "Laundry",
+   "description": "Linen & towel laundry, 1–15 Nov",
+   "payTo": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+   "amountEur": 1850,
+   "amount": "185000",
+   "asset": "CCD",
+   "status": "released",
+   "createdAt": "2026-11-20T10:41:04.082Z",
+   "updatedAt": "2026-11-20T11:02:40.368Z",
+   "history": [
+    {
+     "op": "create",
+     "at": "2026-11-20T10:41:10.561Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Lock opened for INV-LAU-1107 (Lakeside Laundry Services), €1,850"
+    },
+    {
+     "op": "fund",
+     "at": "2026-11-20T10:41:11.002Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "€1,850 set aside against today's budget"
+    },
+    {
+     "op": "send",
+     "at": "2026-11-20T10:41:11.057Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Checks passed: payee Verified by Concordium, within limits. Awaiting human release."
+    },
+    {
+     "op": "approve",
+     "at": "2026-11-20T10:41:23.300Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Release signed by owner wallet 39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd"
+    },
+    {
+     "op": "release",
+     "at": "2026-11-20T10:41:26.813Z",
+     "actor": "owner",
+     "outcome": "error",
+     "note": "402 from http://localhost:4021/invoices/INV-LAU-1107/pay: {}"
+    },
+    {
+     "op": "approve",
+     "at": "2026-11-20T11:02:31.533Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Release signed by owner wallet 39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd"
+    },
+    {
+     "op": "release",
+     "at": "2026-11-20T11:02:40.368Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Released by owner: €1,850 settled on Concordium (fee sponsored)"
+    }
+   ],
+   "checks": {
+    "at": "2026-11-20T10:41:11.057Z",
+    "badgeVerified": true,
+    "badgeIssues": [],
+    "policy": null
+   },
+   "approval": {
+    "account": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+    "nonce": "17b1d8d8ffdc9ff5f10cfb5a",
+    "message": "Cord · release approval\nLock: LCK-1E200A\nInvoice: INV-LAU-1107\nSupplier: Lakeside Laundry Services\nAmount: EUR 1,850 (demo)\nPayee: 3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8\nNetwork: testnet\nNonce: 17b1d8d8ffdc9ff5f10cfb5a\nExpires: 2026-11-20T11:07:18.307Z\nI approve this payment prepared by an AI agent.",
+    "signature": {
+     "0": {
+      "0": "7eddd6132990f814520328e48aac2837f8b84ac092994e98a9844e6605452adc257895846bf5f3a0886d154a1a47cac0ef9ab1bb94adf7a60ed6102564114f0d"
+     }
+    },
+    "at": "2026-11-20T11:02:31.532Z"
+   },
+   "txHash": "26f8ab55d0697e8dd1f4d01fe9fe40d4728b92a0ce6ce26abeb713830cf3fe0f",
+   "explorerUrl": "https://ccdexplorer.io/testnet/transaction/26f8ab55d0697e8dd1f4d01fe9fe40d4728b92a0ce6ce26abeb713830cf3fe0f",
+   "receiptSeq": 2
+  },
+  {
+   "id": "LCK-310091",
+   "invoiceId": "INV-CON-0007",
+   "supplier": "Victoria Builders Ltd",
+   "category": "Construction",
+   "description": "Kitchen refurbishment, phase 1 (over the €10,000 cap)",
+   "payTo": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+   "amountEur": 12500,
+   "amount": "1250000",
+   "asset": "CCD",
+   "status": "created",
+   "createdAt": "2026-11-20T11:38:06.235Z",
+   "updatedAt": "2026-11-20T11:38:08.541Z",
+   "history": [
+    {
+     "op": "create",
+     "at": "2026-11-20T11:38:06.745Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Lock opened for INV-CON-0007 (Victoria Builders Ltd), €12,500"
+    },
+    {
+     "op": "fund",
+     "at": "2026-11-20T11:38:08.541Z",
+     "actor": "agent",
+     "outcome": "refused",
+     "note": "€12,500 is over the per-payment limit of €10,000"
+    }
+   ],
+   "lastError": "€12,500 is over the per-payment limit of €10,000"
+  },
+  {
+   "id": "LCK-F107C6",
+   "invoiceId": "INV-TRN-0418",
+   "supplier": "Kitooro Airport Transfers",
+   "category": "Transport",
+   "description": "Guest airport transfers, 14 trips",
+   "payTo": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+   "amountEur": 980,
+   "amount": "98000",
+   "asset": "CCD",
+   "status": "released",
+   "createdAt": "2026-11-20T13:23:55.710Z",
+   "updatedAt": "2026-11-20T13:24:29.440Z",
+   "history": [
+    {
+     "op": "create",
+     "at": "2026-11-20T13:23:57.047Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Lock opened for INV-TRN-0418 (Kitooro Airport Transfers), €980"
+    },
+    {
+     "op": "fund",
+     "at": "2026-11-20T13:23:57.107Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "€980 set aside against today's budget"
+    },
+    {
+     "op": "send",
+     "at": "2026-11-20T13:23:57.123Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Checks passed: payee Verified by Concordium, within limits. Awaiting human release."
+    },
+    {
+     "op": "approve",
+     "at": "2026-11-20T13:24:15.666Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Release signed by owner wallet 39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd"
+    },
+    {
+     "op": "release",
+     "at": "2026-11-20T13:24:29.440Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Released by owner: €980 settled on Concordium (fee sponsored)"
+    }
+   ],
+   "checks": {
+    "at": "2026-11-20T13:23:57.123Z",
+    "badgeVerified": true,
+    "badgeIssues": [],
+    "policy": null
+   },
+   "approval": {
+    "account": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+    "nonce": "8c3ef32117010691a60d08f5",
+    "message": "Cord · release approval\nLock: LCK-F107C6\nInvoice: INV-TRN-0418\nSupplier: Kitooro Airport Transfers\nAmount: EUR 980 (demo)\nPayee: 3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8\nNetwork: testnet\nNonce: 8c3ef32117010691a60d08f5\nExpires: 2026-11-20T13:29:09.614Z\nI approve this payment prepared by an AI agent.",
+    "signature": {
+     "0": {
+      "0": "8e5f0432a582cab7d06d73dee0545b73f82eb8e18c85b2c1fe7f6b58aea189afedcc6769224ea1513e3d65a447788d577d68a662e3828db70944d0489190df05"
+     }
+    },
+    "at": "2026-11-20T13:24:15.666Z"
+   },
+   "txHash": "76d81e795a083ee6fb03e78873aed1c8f8ae8e78ed281bc8c50e9ce6431f5226",
+   "explorerUrl": "https://ccdexplorer.io/testnet/transaction/76d81e795a083ee6fb03e78873aed1c8f8ae8e78ed281bc8c50e9ce6431f5226",
+   "receiptSeq": 6
+  },
+  {
+   "id": "LCK-30E65C",
+   "invoiceId": "INV-MNT-0092",
+   "supplier": "Wakiso Plumbing & Repairs",
+   "category": "Maintenance",
+   "description": "Kitchen drainage repair",
+   "payTo": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+   "amountEur": 640,
+   "amount": "64000",
+   "asset": "CCD",
+   "status": "released",
+   "createdAt": "2026-11-20T13:26:12.646Z",
+   "updatedAt": "2026-11-20T13:26:38.382Z",
+   "history": [
+    {
+     "op": "create",
+     "at": "2026-11-20T13:26:12.646Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Lock opened for INV-MNT-0092 (Wakiso Plumbing & Repairs), €640"
+    },
+    {
+     "op": "fund",
+     "at": "2026-11-20T13:26:19.838Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "€640 set aside against today's budget"
+    },
+    {
+     "op": "send",
+     "at": "2026-11-20T13:26:22.701Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Checks passed: payee Verified by Concordium, within limits. Awaiting human release."
+    },
+    {
+     "op": "approve",
+     "at": "2026-11-20T13:26:28.392Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Release signed by owner wallet 39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd"
+    },
+    {
+     "op": "release",
+     "at": "2026-11-20T13:26:38.382Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Released by owner: €640 settled on Concordium (fee sponsored)"
+    }
+   ],
+   "checks": {
+    "at": "2026-11-20T13:26:22.700Z",
+    "badgeVerified": true,
+    "badgeIssues": [],
+    "policy": null
+   },
+   "approval": {
+    "account": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+    "nonce": "6ad9971e5b73a03fecc9df87",
+    "message": "Cord · release approval\nLock: LCK-30E65C\nInvoice: INV-MNT-0092\nSupplier: Wakiso Plumbing & Repairs\nAmount: EUR 640 (demo)\nPayee: 3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8\nNetwork: testnet\nNonce: 6ad9971e5b73a03fecc9df87\nExpires: 2026-11-20T13:31:25.639Z\nI approve this payment prepared by an AI agent.",
+    "signature": {
+     "0": {
+      "0": "ae9be2811722e35805aaee4bc64083f63ab4efd471dbab06f7629adc9be10046668ef665489f4a83ad9bfd77d1bc514925c17b58ba463aec319fb98352fb4908"
+     }
+    },
+    "at": "2026-11-20T13:26:28.392Z"
+   },
+   "txHash": "a3f1f201786f31265008b6a090dbc03265233aee2a486362bcd5603a7d3c1586",
+   "explorerUrl": "https://ccdexplorer.io/testnet/transaction/a3f1f201786f31265008b6a090dbc03265233aee2a486362bcd5603a7d3c1586",
+   "receiptSeq": 8
+  }
+ ],
+ "audit": [
+  {
+   "actor": "agent",
+   "op": "create",
+   "lockId": "LCK-8C6516",
+   "outcome": "ok",
+   "detail": "Lock opened for INV-MNT-0092 (Wakiso Plumbing & Repairs), €640",
+   "data": {
+    "invoiceId": "INV-MNT-0092",
+    "amountEur": 640,
+    "status": "created"
+   },
+   "seq": 1,
+   "ts": "2026-11-20T08:43:08.815Z",
+   "prevHash": "0000000000000000000000000000000000000000000000000000000000000000",
+   "hash": "0abc10f8e67418c8c4aac684cabcc8a213f315276b021ed599697f9343dd9508"
+  },
+  {
+   "actor": "agent",
+   "op": "fund",
+   "lockId": "LCK-8C6516",
+   "outcome": "ok",
+   "detail": "€640 set aside against today's budget",
+   "data": {
+    "invoiceId": "INV-MNT-0092",
+    "amountEur": 640,
+    "status": "funded"
+   },
+   "seq": 2,
+   "ts": "2026-11-20T08:43:08.907Z",
+   "prevHash": "0abc10f8e67418c8c4aac684cabcc8a213f315276b021ed599697f9343dd9508",
+   "hash": "e3bf33ed8f5b74d3c81bf4ad2eef69f6deeaff6f920ca004d22df0e0422d9aa1"
+  },
+  {
+   "actor": "agent",
+   "op": "send",
+   "lockId": "LCK-8C6516",
+   "outcome": "ok",
+   "detail": "Checks passed: payee Verified by Concordium, within limits. Awaiting human release.",
+   "data": {
+    "invoiceId": "INV-MNT-0092",
+    "amountEur": 640,
+    "status": "sent",
+    "badgeVerified": true
+   },
+   "seq": 3,
+   "ts": "2026-11-20T08:43:10.016Z",
+   "prevHash": "e3bf33ed8f5b74d3c81bf4ad2eef69f6deeaff6f920ca004d22df0e0422d9aa1",
+   "hash": "42e71b7d4da1151e115116c406647bcbd7c8bca9f992faf079989a2edddc1c20"
+  },
+  {
+   "actor": "agent",
+   "op": "chat",
+   "outcome": "ok",
+   "detail": "Owner asked: \"pay the plumbing invoice\" → prepare_payment",
+   "data": {
+    "mode": "builtin"
+   },
+   "seq": 4,
+   "ts": "2026-11-20T08:43:10.079Z",
+   "prevHash": "42e71b7d4da1151e115116c406647bcbd7c8bca9f992faf079989a2edddc1c20",
+   "hash": "53aaf63a82f37af37875ed255bad9a812ac32f522bb82533808d94b47f502302"
+  },
+  {
+   "actor": "owner",
+   "op": "cancel",
+   "lockId": "LCK-8C6516",
+   "outcome": "ok",
+   "detail": "Cancelled; €640 returned to today's budget",
+   "data": {
+    "invoiceId": "INV-MNT-0092",
+    "amountEur": 640,
+    "status": "cancelled"
+   },
+   "seq": 5,
+   "ts": "2026-11-20T08:45:10.079Z",
+   "prevHash": "53aaf63a82f37af37875ed255bad9a812ac32f522bb82533808d94b47f502302",
+   "hash": "e4940d73320a26d5c3e6986475aac64ebf087dba379a5915bd1012216aae5413"
+  },
+  {
+   "actor": "owner",
+   "op": "create",
+   "lockId": "LCK-A80818",
+   "outcome": "ok",
+   "detail": "Lock opened for INV-LAU-1107 (Lakeside Laundry Services), €1,850",
+   "data": {
+    "invoiceId": "INV-LAU-1107",
+    "amountEur": 1850,
+    "status": "created"
+   },
+   "seq": 6,
+   "ts": "2026-11-20T08:45:22.612Z",
+   "prevHash": "e4940d73320a26d5c3e6986475aac64ebf087dba379a5915bd1012216aae5413",
+   "hash": "d1b19f8bf7d80680ff5c2d7e6348119e137b815925f83885032e42a452e7d028"
+  },
+  {
+   "actor": "owner",
+   "op": "fund",
+   "lockId": "LCK-A80818",
+   "outcome": "ok",
+   "detail": "€1,850 set aside against today's budget",
+   "data": {
+    "invoiceId": "INV-LAU-1107",
+    "amountEur": 1850,
+    "status": "funded"
+   },
+   "seq": 7,
+   "ts": "2026-11-20T08:45:29.108Z",
+   "prevHash": "d1b19f8bf7d80680ff5c2d7e6348119e137b815925f83885032e42a452e7d028",
+   "hash": "719fbfaddc4f021cbd634a45a8443ef28083f860908e15dc40d1332bcb52b031"
+  },
+  {
+   "actor": "agent",
+   "op": "send",
+   "lockId": "LCK-A80818",
+   "outcome": "ok",
+   "detail": "Checks passed: payee Verified by Concordium, within limits. Awaiting human release.",
+   "data": {
+    "invoiceId": "INV-LAU-1107",
+    "amountEur": 1850,
+    "status": "sent",
+    "badgeVerified": true
+   },
+   "seq": 8,
+   "ts": "2026-11-20T08:45:31.971Z",
+   "prevHash": "719fbfaddc4f021cbd634a45a8443ef28083f860908e15dc40d1332bcb52b031",
+   "hash": "121373b79fed50bf97370d428e951d950fa1d90a7fa2170bb7332f3ba8c11dcc"
+  },
+  {
+   "actor": "owner",
+   "op": "cancel",
+   "lockId": "LCK-A80818",
+   "outcome": "ok",
+   "detail": "Cancelled; €1,850 returned to today's budget",
+   "data": {
+    "invoiceId": "INV-LAU-1107",
+    "amountEur": 1850,
+    "status": "cancelled"
+   },
+   "seq": 9,
+   "ts": "2026-11-20T08:45:41.493Z",
+   "prevHash": "121373b79fed50bf97370d428e951d950fa1d90a7fa2170bb7332f3ba8c11dcc",
+   "hash": "ef9db533ab39441c0556aaff001305b1e4a1c0c9be13c24ea6b543c5e14f1029"
+  },
+  {
+   "actor": "owner",
+   "op": "pause",
+   "outcome": "ok",
+   "detail": "Agent paused: all payments refused until resumed",
+   "seq": 10,
+   "ts": "2026-11-20T09:51:29.876Z",
+   "prevHash": "ef9db533ab39441c0556aaff001305b1e4a1c0c9be13c24ea6b543c5e14f1029",
+   "hash": "387ce14de680c6ff14386032ae0dfd97bf88a4e4b86500b0c886c30066efadf3"
+  },
+  {
+   "actor": "owner",
+   "op": "resume",
+   "outcome": "ok",
+   "detail": "Agent resumed",
+   "seq": 11,
+   "ts": "2026-11-20T10:40:31.548Z",
+   "prevHash": "387ce14de680c6ff14386032ae0dfd97bf88a4e4b86500b0c886c30066efadf3",
+   "hash": "aa17ea10efa6be4653dc74e9403cfc24f8cc00ff7507832c0a706c9f3e47f651"
+  },
+  {
+   "actor": "agent",
+   "op": "create",
+   "lockId": "LCK-1E200A",
+   "outcome": "ok",
+   "detail": "Lock opened for INV-LAU-1107 (Lakeside Laundry Services), €1,850",
+   "data": {
+    "invoiceId": "INV-LAU-1107",
+    "amountEur": 1850,
+    "status": "created"
+   },
+   "seq": 12,
+   "ts": "2026-11-20T10:41:10.565Z",
+   "prevHash": "aa17ea10efa6be4653dc74e9403cfc24f8cc00ff7507832c0a706c9f3e47f651",
+   "hash": "b7994b539ea2b4ccf54762bbbc29a7bf146f3a62da410ea741b6df83eb0ec00c"
+  },
+  {
+   "actor": "agent",
+   "op": "fund",
+   "lockId": "LCK-1E200A",
+   "outcome": "ok",
+   "detail": "€1,850 set aside against today's budget",
+   "data": {
+    "invoiceId": "INV-LAU-1107",
+    "amountEur": 1850,
+    "status": "funded"
+   },
+   "seq": 13,
+   "ts": "2026-11-20T10:41:11.005Z",
+   "prevHash": "b7994b539ea2b4ccf54762bbbc29a7bf146f3a62da410ea741b6df83eb0ec00c",
+   "hash": "4ff6fc2c9f725f2f0cbea314b596497f48664b765a3311c836dcd6d7af793eff"
+  },
+  {
+   "actor": "agent",
+   "op": "send",
+   "lockId": "LCK-1E200A",
+   "outcome": "ok",
+   "detail": "Checks passed: payee Verified by Concordium, within limits. Awaiting human release.",
+   "data": {
+    "invoiceId": "INV-LAU-1107",
+    "amountEur": 1850,
+    "status": "sent",
+    "badgeVerified": true
+   },
+   "seq": 14,
+   "ts": "2026-11-20T10:41:11.060Z",
+   "prevHash": "4ff6fc2c9f725f2f0cbea314b596497f48664b765a3311c836dcd6d7af793eff",
+   "hash": "c6e9138c1bc1aeb60badc29455255be47c34490550c11a9f913b84650c1aa9fb"
+  },
+  {
+   "actor": "agent",
+   "op": "chat",
+   "outcome": "ok",
+   "detail": "Owner asked: \"Pay the laundry invoice\" → prepare_payment",
+   "data": {
+    "mode": "builtin"
+   },
+   "seq": 15,
+   "ts": "2026-11-20T10:41:11.081Z",
+   "prevHash": "c6e9138c1bc1aeb60badc29455255be47c34490550c11a9f913b84650c1aa9fb",
+   "hash": "f7237196c0f70034929758f39b13364a73792416f2d7ec300f4262c47fc0026d"
+  },
+  {
+   "actor": "owner",
+   "op": "approve",
+   "lockId": "LCK-1E200A",
+   "outcome": "ok",
+   "detail": "Release signed by owner wallet 39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "data": {
+    "invoiceId": "INV-LAU-1107",
+    "amountEur": 1850,
+    "status": "sent",
+    "account": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd"
+   },
+   "seq": 16,
+   "ts": "2026-11-20T10:41:23.316Z",
+   "prevHash": "f7237196c0f70034929758f39b13364a73792416f2d7ec300f4262c47fc0026d",
+   "hash": "4b1221ca24c1ad2e9b3dae82ccb43f613fed74939913e6b193db959be4e17766"
+  },
+  {
+   "actor": "owner",
+   "op": "release",
+   "lockId": "LCK-1E200A",
+   "outcome": "error",
+   "detail": "402 from http://localhost:4021/invoices/INV-LAU-1107/pay: {}",
+   "data": {
+    "invoiceId": "INV-LAU-1107",
+    "amountEur": 1850,
+    "status": "sent"
+   },
+   "seq": 17,
+   "ts": "2026-11-20T10:41:26.816Z",
+   "prevHash": "4b1221ca24c1ad2e9b3dae82ccb43f613fed74939913e6b193db959be4e17766",
+   "hash": "4930d66fafefc82ae2c277f04bfdd1c1c4f64c7ad91899a33b92d1d91c626587"
+  },
+  {
+   "actor": "owner",
+   "op": "approve",
+   "lockId": "LCK-1E200A",
+   "outcome": "ok",
+   "detail": "Release signed by owner wallet 39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "data": {
+    "invoiceId": "INV-LAU-1107",
+    "amountEur": 1850,
+    "status": "sent",
+    "account": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd"
+   },
+   "seq": 18,
+   "ts": "2026-11-20T11:02:31.535Z",
+   "prevHash": "4930d66fafefc82ae2c277f04bfdd1c1c4f64c7ad91899a33b92d1d91c626587",
+   "hash": "374fafdcc8519301ebbaf2dadd0a17221f1f1c4e4f54447ff1c506085be709a3"
+  },
+  {
+   "actor": "owner",
+   "op": "release",
+   "lockId": "LCK-1E200A",
+   "outcome": "ok",
+   "detail": "Released by owner: €1,850 settled on Concordium (fee sponsored)",
+   "data": {
+    "invoiceId": "INV-LAU-1107",
+    "amountEur": 1850,
+    "status": "released",
+    "txHash": "26f8ab55d0697e8dd1f4d01fe9fe40d4728b92a0ce6ce26abeb713830cf3fe0f"
+   },
+   "seq": 19,
+   "ts": "2026-11-20T11:02:40.370Z",
+   "prevHash": "374fafdcc8519301ebbaf2dadd0a17221f1f1c4e4f54447ff1c506085be709a3",
+   "hash": "63d8aab662edf45b0ae6360d8f93bd0a67cc3179e56c69efce66200c6374708c"
+  },
+  {
+   "actor": "owner",
+   "op": "anchor",
+   "outcome": "ok",
+   "detail": "Audit trail anchored on Concordium at #19 (receipts #2)",
+   "data": {
+    "txHash": "12650e367d5ffb94482a9c4b87a8c08c3b5ec418e8e78a54b28888110614799c"
+   },
+   "seq": 20,
+   "ts": "2026-11-20T11:03:47.894Z",
+   "prevHash": "63d8aab662edf45b0ae6360d8f93bd0a67cc3179e56c69efce66200c6374708c",
+   "hash": "a46020b6c00eb59315531f3ebc95defa68556b9a965662b0f9e525c771b831bf"
+  },
+  {
+   "actor": "agent",
+   "op": "create",
+   "lockId": "LCK-310091",
+   "outcome": "ok",
+   "detail": "Lock opened for INV-CON-0007 (Victoria Builders Ltd), €12,500",
+   "data": {
+    "invoiceId": "INV-CON-0007",
+    "amountEur": 12500,
+    "status": "created"
+   },
+   "seq": 21,
+   "ts": "2026-11-20T11:38:07.276Z",
+   "prevHash": "a46020b6c00eb59315531f3ebc95defa68556b9a965662b0f9e525c771b831bf",
+   "hash": "2d1b8410b98aa55254fc8f8f7475d992c85deb46eaefad2f3912c784032aba0f"
+  },
+  {
+   "actor": "agent",
+   "op": "fund",
+   "lockId": "LCK-310091",
+   "outcome": "refused",
+   "detail": "€12,500 is over the per-payment limit of €10,000",
+   "data": {
+    "invoiceId": "INV-CON-0007",
+    "amountEur": 12500,
+    "status": "created"
+   },
+   "seq": 22,
+   "ts": "2026-11-20T11:38:08.606Z",
+   "prevHash": "2d1b8410b98aa55254fc8f8f7475d992c85deb46eaefad2f3912c784032aba0f",
+   "hash": "a6632b670270ed6d9c0a3de889f36ca3c27423c6416cffda3336c8662477302c"
+  },
+  {
+   "actor": "agent",
+   "op": "chat",
+   "outcome": "ok",
+   "detail": "Owner asked: \"construction Jimmy invoice pay\" → prepare_payment",
+   "data": {
+    "mode": "builtin"
+   },
+   "seq": 23,
+   "ts": "2026-11-20T11:38:09.197Z",
+   "prevHash": "a6632b670270ed6d9c0a3de889f36ca3c27423c6416cffda3336c8662477302c",
+   "hash": "f7db9171f9ca9b93b9c403a84f45d56d2cd2e9cb9d60e4956824d16eecc591dd"
+  },
+  {
+   "actor": "agent",
+   "op": "chat",
+   "outcome": "ok",
+   "detail": "Owner asked: \"Find hospitality tenders\" → find_tenders",
+   "data": {
+    "mode": "builtin"
+   },
+   "seq": 24,
+   "ts": "2026-11-20T11:40:24.542Z",
+   "prevHash": "f7db9171f9ca9b93b9c403a84f45d56d2cd2e9cb9d60e4956824d16eecc591dd",
+   "hash": "3b6149603c662d35692222386241edb1a3a4787349d5da51ecbd77f4572365ba"
+  },
+  {
+   "actor": "agent",
+   "op": "create",
+   "lockId": "LCK-F107C6",
+   "outcome": "ok",
+   "detail": "Lock opened for INV-TRN-0418 (Kitooro Airport Transfers), €980",
+   "data": {
+    "invoiceId": "INV-TRN-0418",
+    "amountEur": 980,
+    "status": "created"
+   },
+   "seq": 25,
+   "ts": "2026-11-20T13:23:57.050Z",
+   "prevHash": "3b6149603c662d35692222386241edb1a3a4787349d5da51ecbd77f4572365ba",
+   "hash": "dd6daa11985552229dd34227d797f1dbfab425f2d5b717d99c5dfa28b30706cb"
+  },
+  {
+   "actor": "agent",
+   "op": "fund",
+   "lockId": "LCK-F107C6",
+   "outcome": "ok",
+   "detail": "€980 set aside against today's budget",
+   "data": {
+    "invoiceId": "INV-TRN-0418",
+    "amountEur": 980,
+    "status": "funded"
+   },
+   "seq": 26,
+   "ts": "2026-11-20T13:23:57.111Z",
+   "prevHash": "dd6daa11985552229dd34227d797f1dbfab425f2d5b717d99c5dfa28b30706cb",
+   "hash": "75860f465d27fbd2d359bcd0aa4e361ede81ac5a9fa6e08193feaa12861435c8"
+  },
+  {
+   "actor": "agent",
+   "op": "send",
+   "lockId": "LCK-F107C6",
+   "outcome": "ok",
+   "detail": "Checks passed: payee Verified by Concordium, within limits. Awaiting human release.",
+   "data": {
+    "invoiceId": "INV-TRN-0418",
+    "amountEur": 980,
+    "status": "sent",
+    "badgeVerified": true
+   },
+   "seq": 27,
+   "ts": "2026-11-20T13:23:57.127Z",
+   "prevHash": "75860f465d27fbd2d359bcd0aa4e361ede81ac5a9fa6e08193feaa12861435c8",
+   "hash": "5b7b5288255ba2d8124251a1ff691f5a0905d88446af0002801509b4f1b58a7b"
+  },
+  {
+   "actor": "agent",
+   "op": "chat",
+   "outcome": "ok",
+   "detail": "Owner asked: \"pay the transport invoice\" → prepare_payment",
+   "data": {
+    "mode": "builtin"
+   },
+   "seq": 28,
+   "ts": "2026-11-20T13:23:57.135Z",
+   "prevHash": "5b7b5288255ba2d8124251a1ff691f5a0905d88446af0002801509b4f1b58a7b",
+   "hash": "31ed5d34e4775cca974c477931d0d7570d3c59450ef12e084bb3d1ef6f1b09f1"
+  },
+  {
+   "actor": "owner",
+   "op": "approve",
+   "lockId": "LCK-F107C6",
+   "outcome": "ok",
+   "detail": "Release signed by owner wallet 39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "data": {
+    "invoiceId": "INV-TRN-0418",
+    "amountEur": 980,
+    "status": "sent",
+    "account": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd"
+   },
+   "seq": 29,
+   "ts": "2026-11-20T13:24:15.669Z",
+   "prevHash": "31ed5d34e4775cca974c477931d0d7570d3c59450ef12e084bb3d1ef6f1b09f1",
+   "hash": "33dbc5744ddfae974ceaabbf14ce83dc96b5ef43a90cec9ac254d9475d7b9db4"
+  },
+  {
+   "actor": "owner",
+   "op": "release",
+   "lockId": "LCK-F107C6",
+   "outcome": "ok",
+   "detail": "Released by owner: €980 settled on Concordium (fee sponsored)",
+   "data": {
+    "invoiceId": "INV-TRN-0418",
+    "amountEur": 980,
+    "status": "released",
+    "txHash": "76d81e795a083ee6fb03e78873aed1c8f8ae8e78ed281bc8c50e9ce6431f5226"
+   },
+   "seq": 30,
+   "ts": "2026-11-20T13:24:29.444Z",
+   "prevHash": "33dbc5744ddfae974ceaabbf14ce83dc96b5ef43a90cec9ac254d9475d7b9db4",
+   "hash": "b7d9ca2f14a9c4770c70a96f7f99ef073992987b2b7c7b6609b6612a92f408bc"
+  },
+  {
+   "actor": "owner",
+   "op": "create",
+   "lockId": "LCK-30E65C",
+   "outcome": "ok",
+   "detail": "Lock opened for INV-MNT-0092 (Wakiso Plumbing & Repairs), €640",
+   "data": {
+    "invoiceId": "INV-MNT-0092",
+    "amountEur": 640,
+    "status": "created"
+   },
+   "seq": 31,
+   "ts": "2026-11-20T13:26:12.650Z",
+   "prevHash": "b7d9ca2f14a9c4770c70a96f7f99ef073992987b2b7c7b6609b6612a92f408bc",
+   "hash": "db53c51ebd9fc497b861e347557b9482dc4a9698b57709c65400a62a4af24fd9"
+  },
+  {
+   "actor": "owner",
+   "op": "fund",
+   "lockId": "LCK-30E65C",
+   "outcome": "ok",
+   "detail": "€640 set aside against today's budget",
+   "data": {
+    "invoiceId": "INV-MNT-0092",
+    "amountEur": 640,
+    "status": "funded"
+   },
+   "seq": 32,
+   "ts": "2026-11-20T13:26:19.841Z",
+   "prevHash": "db53c51ebd9fc497b861e347557b9482dc4a9698b57709c65400a62a4af24fd9",
+   "hash": "b82243e8a5b32cfc6f9cbdb6a0d5194cacd6093d3c8c34404421fa6eed6adad3"
+  },
+  {
+   "actor": "agent",
+   "op": "send",
+   "lockId": "LCK-30E65C",
+   "outcome": "ok",
+   "detail": "Checks passed: payee Verified by Concordium, within limits. Awaiting human release.",
+   "data": {
+    "invoiceId": "INV-MNT-0092",
+    "amountEur": 640,
+    "status": "sent",
+    "badgeVerified": true
+   },
+   "seq": 33,
+   "ts": "2026-11-20T13:26:22.703Z",
+   "prevHash": "b82243e8a5b32cfc6f9cbdb6a0d5194cacd6093d3c8c34404421fa6eed6adad3",
+   "hash": "877bea3299f0e82f2f8dd97c7f5e7656d49014c49173e667e16b007661d56d68"
+  },
+  {
+   "actor": "owner",
+   "op": "approve",
+   "lockId": "LCK-30E65C",
+   "outcome": "ok",
+   "detail": "Release signed by owner wallet 39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "data": {
+    "invoiceId": "INV-MNT-0092",
+    "amountEur": 640,
+    "status": "sent",
+    "account": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd"
+   },
+   "seq": 34,
+   "ts": "2026-11-20T13:26:28.396Z",
+   "prevHash": "877bea3299f0e82f2f8dd97c7f5e7656d49014c49173e667e16b007661d56d68",
+   "hash": "747e06ea46e13c3a7c67a3316998634de9093cdad3d56ad70ff07cf21ba04ccd"
+  },
+  {
+   "actor": "owner",
+   "op": "release",
+   "lockId": "LCK-30E65C",
+   "outcome": "ok",
+   "detail": "Released by owner: €640 settled on Concordium (fee sponsored)",
+   "data": {
+    "invoiceId": "INV-MNT-0092",
+    "amountEur": 640,
+    "status": "released",
+    "txHash": "a3f1f201786f31265008b6a090dbc03265233aee2a486362bcd5603a7d3c1586"
+   },
+   "seq": 35,
+   "ts": "2026-11-20T13:26:38.385Z",
+   "prevHash": "747e06ea46e13c3a7c67a3316998634de9093cdad3d56ad70ff07cf21ba04ccd",
+   "hash": "ab9dfb09439d42bef3c68ee605422744602a393c8f164fea90b84c1c5c5e675a"
+  },
+  {
+   "actor": "owner",
+   "op": "anchor",
+   "outcome": "ok",
+   "detail": "Audit trail anchored on Concordium at #35 (receipts #8)",
+   "data": {
+    "txHash": "c5c36694428de46b6d49d29d00399827ddf4eb347c54b6ab0911ec4b8b79ddca"
+   },
+   "seq": 36,
+   "ts": "2026-11-20T13:26:57.735Z",
+   "prevHash": "ab9dfb09439d42bef3c68ee605422744602a393c8f164fea90b84c1c5c5e675a",
+   "hash": "b31f1a77424bfe11e80302915c88e1a8e2812f336c67444c01e84b323c5df052"
+  },
+  {
+   "actor": "owner",
+   "op": "anchor",
+   "outcome": "ok",
+   "detail": "Audit trail anchored on Concordium at #36 (receipts #8)",
+   "data": {
+    "txHash": "fb3325d2e26412b6bc1422857c45fb28d32d120aea9e0fa8de52261b4c398af2"
+   },
+   "seq": 37,
+   "ts": "2026-11-20T13:27:07.744Z",
+   "prevHash": "b31f1a77424bfe11e80302915c88e1a8e2812f336c67444c01e84b323c5df052",
+   "hash": "6087a566984fad35c60f71efcca2445f53301e3b8512c9e760a7a3e77c439e00"
+  }
+ ],
+ "receipts": [
+  {
+   "role": "seller",
+   "resource": "/invoices/INV-LAU-1107/pay",
+   "buyerAccount": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "sellerAccount": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+   "sellerBadge": "JyP9TwhskJ6cKHDzW23Yj",
+   "amount": "185000",
+   "asset": "CCD",
+   "network": "ccd:4221332d34e1694168c2a0c0b3fd0f27",
+   "txHash": "26f8ab55d0697e8dd1f4d01fe9fe40d4728b92a0ce6ce26abeb713830cf3fe0f",
+   "seq": 1,
+   "ts": "2026-11-20T11:02:40.231Z",
+   "prevHash": "0000000000000000000000000000000000000000000000000000000000000000",
+   "hash": "0609ae6e2bddfa0e5e966419e2d5392711f698ef78bafb04b2e87c5526a3bbf2"
+  },
+  {
+   "role": "buyer",
+   "resource": "http://localhost:4021/invoices/INV-LAU-1107/pay",
+   "purpose": "Lock LCK-1E200A: pay INV-LAU-1107 (Lakeside Laundry Services)",
+   "buyerAccount": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "sellerAccount": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+   "amount": "185000",
+   "asset": "CCD",
+   "network": "ccd:4221332d34e1694168c2a0c0b3fd0f27",
+   "txHash": "26f8ab55d0697e8dd1f4d01fe9fe40d4728b92a0ce6ce26abeb713830cf3fe0f",
+   "explorerUrl": "https://ccdexplorer.io/testnet/transaction/26f8ab55d0697e8dd1f4d01fe9fe40d4728b92a0ce6ce26abeb713830cf3fe0f",
+   "seq": 2,
+   "ts": "2026-11-20T11:02:40.234Z",
+   "prevHash": "0609ae6e2bddfa0e5e966419e2d5392711f698ef78bafb04b2e87c5526a3bbf2",
+   "hash": "c6d68b6d0c21b9dded249b1fc8f03cb3b57852e29f37f3388133ef90381d2d91"
+  },
+  {
+   "role": "buyer",
+   "resource": "http://localhost:4021/tenders?sector=hospitality",
+   "purpose": "Agent chat: \"Find hospitality tenders\"",
+   "buyerAccount": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "sellerAccount": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+   "amount": "100000",
+   "asset": "CCD",
+   "network": "ccd:4221332d34e1694168c2a0c0b3fd0f27",
+   "txHash": "4854b184bd49c8cbb8618a7e60b31176ed100c2d8e0685abafc948851a0746e6",
+   "explorerUrl": "https://ccdexplorer.io/testnet/transaction/4854b184bd49c8cbb8618a7e60b31176ed100c2d8e0685abafc948851a0746e6",
+   "seq": 3,
+   "ts": "2026-11-20T11:40:24.500Z",
+   "prevHash": "c6d68b6d0c21b9dded249b1fc8f03cb3b57852e29f37f3388133ef90381d2d91",
+   "hash": "6b152bdfe1c6e3b1288f2edfb2aa61715c320d736c7dac0de9f1b226dc8deed2"
+  },
+  {
+   "role": "seller",
+   "resource": "/tenders?sector=hospitality",
+   "buyerAccount": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "sellerAccount": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+   "sellerBadge": "JyP9TwhskJ6cKHDzW23Yj",
+   "amount": "100000",
+   "asset": "CCD",
+   "network": "ccd:4221332d34e1694168c2a0c0b3fd0f27",
+   "txHash": "4854b184bd49c8cbb8618a7e60b31176ed100c2d8e0685abafc948851a0746e6",
+   "seq": 4,
+   "ts": "2026-11-20T11:40:24.518Z",
+   "prevHash": "6b152bdfe1c6e3b1288f2edfb2aa61715c320d736c7dac0de9f1b226dc8deed2",
+   "hash": "3b992f6d99a6f6b9e6b7c3a51bb9ed3f9e11ee5df20d673120280b35e73a3c9c"
+  },
+  {
+   "role": "seller",
+   "resource": "/invoices/INV-TRN-0418/pay",
+   "buyerAccount": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "sellerAccount": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+   "sellerBadge": "JyP9TwhskJ6cKHDzW23Yj",
+   "amount": "98000",
+   "asset": "CCD",
+   "network": "ccd:4221332d34e1694168c2a0c0b3fd0f27",
+   "txHash": "76d81e795a083ee6fb03e78873aed1c8f8ae8e78ed281bc8c50e9ce6431f5226",
+   "seq": 5,
+   "ts": "2026-11-20T13:24:29.440Z",
+   "prevHash": "3b992f6d99a6f6b9e6b7c3a51bb9ed3f9e11ee5df20d673120280b35e73a3c9c",
+   "hash": "872768d49752e2aa4f244424c3e27521e86b0f66b0e527f293821efe555e228a"
+  },
+  {
+   "role": "buyer",
+   "resource": "http://localhost:4021/invoices/INV-TRN-0418/pay",
+   "purpose": "Lock LCK-F107C6: pay INV-TRN-0418 (Kitooro Airport Transfers)",
+   "buyerAccount": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "sellerAccount": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+   "amount": "98000",
+   "asset": "CCD",
+   "network": "ccd:4221332d34e1694168c2a0c0b3fd0f27",
+   "txHash": "76d81e795a083ee6fb03e78873aed1c8f8ae8e78ed281bc8c50e9ce6431f5226",
+   "explorerUrl": "https://ccdexplorer.io/testnet/transaction/76d81e795a083ee6fb03e78873aed1c8f8ae8e78ed281bc8c50e9ce6431f5226",
+   "seq": 6,
+   "ts": "2026-11-20T13:24:29.439Z",
+   "prevHash": "872768d49752e2aa4f244424c3e27521e86b0f66b0e527f293821efe555e228a",
+   "hash": "4f5174397d9fb96eddcd004813b6cd36f3669c090991dcdbc17a1dd845ad9589"
+  },
+  {
+   "role": "seller",
+   "resource": "/invoices/INV-MNT-0092/pay",
+   "buyerAccount": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "sellerAccount": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+   "sellerBadge": "JyP9TwhskJ6cKHDzW23Yj",
+   "amount": "64000",
+   "asset": "CCD",
+   "network": "ccd:4221332d34e1694168c2a0c0b3fd0f27",
+   "txHash": "a3f1f201786f31265008b6a090dbc03265233aee2a486362bcd5603a7d3c1586",
+   "seq": 7,
+   "ts": "2026-11-20T13:26:38.357Z",
+   "prevHash": "4f5174397d9fb96eddcd004813b6cd36f3669c090991dcdbc17a1dd845ad9589",
+   "hash": "c4729e4b8e400153c86a6d633616270b662ce978921f6d190ef277983eaecc37"
+  },
+  {
+   "role": "buyer",
+   "resource": "http://localhost:4021/invoices/INV-MNT-0092/pay",
+   "purpose": "Lock LCK-30E65C: pay INV-MNT-0092 (Wakiso Plumbing & Repairs)",
+   "buyerAccount": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "sellerAccount": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+   "amount": "64000",
+   "asset": "CCD",
+   "network": "ccd:4221332d34e1694168c2a0c0b3fd0f27",
+   "txHash": "a3f1f201786f31265008b6a090dbc03265233aee2a486362bcd5603a7d3c1586",
+   "explorerUrl": "https://ccdexplorer.io/testnet/transaction/a3f1f201786f31265008b6a090dbc03265233aee2a486362bcd5603a7d3c1586",
+   "seq": 8,
+   "ts": "2026-11-20T13:26:38.382Z",
+   "prevHash": "c4729e4b8e400153c86a6d633616270b662ce978921f6d190ef277983eaecc37",
+   "hash": "b29a2b89172b3dbda152be081e1c6e53c055b9a6e5f2ff54c1999f78f23df6ec"
+  }
+ ],
+ "anchors": [
+  {
+   "at": "2026-11-20T11:03:47.860Z",
+   "data": "cord:audit:v1|a=19:63d8aab662edf45b0ae6360d8f93bd0a67cc3179e56c69efce66200c6374708c|r=2:c6d68b6d0c21b9dded249b1fc8f03cb3b57852e29f37f3388133ef90381d2d91",
+   "auditSeq": 19,
+   "auditHash": "63d8aab662edf45b0ae6360d8f93bd0a67cc3179e56c69efce66200c6374708c",
+   "receiptSeq": 2,
+   "receiptHash": "c6d68b6d0c21b9dded249b1fc8f03cb3b57852e29f37f3388133ef90381d2d91",
+   "txHash": "12650e367d5ffb94482a9c4b87a8c08c3b5ec418e8e78a54b28888110614799c",
+   "explorerUrl": "https://ccdexplorer.io/testnet/transaction/12650e367d5ffb94482a9c4b87a8c08c3b5ec418e8e78a54b28888110614799c",
+   "sender": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "finalized": true
+  },
+  {
+   "at": "2026-11-20T13:26:57.730Z",
+   "data": "cord:audit:v1|a=35:ab9dfb09439d42bef3c68ee605422744602a393c8f164fea90b84c1c5c5e675a|r=8:b29a2b89172b3dbda152be081e1c6e53c055b9a6e5f2ff54c1999f78f23df6ec",
+   "auditSeq": 35,
+   "auditHash": "ab9dfb09439d42bef3c68ee605422744602a393c8f164fea90b84c1c5c5e675a",
+   "receiptSeq": 8,
+   "receiptHash": "b29a2b89172b3dbda152be081e1c6e53c055b9a6e5f2ff54c1999f78f23df6ec",
+   "txHash": "c5c36694428de46b6d49d29d00399827ddf4eb347c54b6ab0911ec4b8b79ddca",
+   "explorerUrl": "https://ccdexplorer.io/testnet/transaction/c5c36694428de46b6d49d29d00399827ddf4eb347c54b6ab0911ec4b8b79ddca",
+   "sender": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "finalized": true
+  },
+  {
+   "at": "2026-11-20T13:27:07.741Z",
+   "data": "cord:audit:v1|a=36:b31f1a77424bfe11e80302915c88e1a8e2812f336c67444c01e84b323c5df052|r=8:b29a2b89172b3dbda152be081e1c6e53c055b9a6e5f2ff54c1999f78f23df6ec",
+   "auditSeq": 36,
+   "auditHash": "b31f1a77424bfe11e80302915c88e1a8e2812f336c67444c01e84b323c5df052",
+   "receiptSeq": 8,
+   "receiptHash": "b29a2b89172b3dbda152be081e1c6e53c055b9a6e5f2ff54c1999f78f23df6ec",
+   "txHash": "fb3325d2e26412b6bc1422857c45fb28d32d120aea9e0fa8de52261b4c398af2",
+   "explorerUrl": "https://ccdexplorer.io/testnet/transaction/fb3325d2e26412b6bc1422857c45fb28d32d120aea9e0fa8de52261b4c398af2",
+   "sender": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "finalized": true
+  }
+ ]
+}
