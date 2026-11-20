@@ -81,6 +81,25 @@ async function payments(seller: string, buyers: Set<string>) {
 }
 
 let cache: { at: number; body: unknown } | undefined;
+/** The three Cord accounts with live balances (all public on-chain data; nothing here needs a key). */
+async function accounts(agents: any[]) {
+  const explorer = (a: string) => `https://ccdexplorer.io/${TESTNET ? "testnet" : "mainnet"}/account/${a}`;
+  const list = [
+    { key: "buyer", name: "ProcureBot", role: "Purchasing agent: pays approved supplier invoices", address: agents.find((a) => a.key === "buyer")?.owner || "" },
+    { key: "seller", name: "TenderScout", role: "Supplier agent: receives payments", address: process.env.SELLER_PAY_TO || agents.find((a) => a.key === "seller")?.owner || "" },
+    { key: "facilitator", name: "Cord facilitator", role: "Sponsor: pays the network fees so agents need no gas", address: process.env.PUBLIC_FACILITATOR_ADDRESS || "" },
+  ].filter((a) => a.address);
+  return Promise.all(list.map(async (a) => {
+    try {
+      const b = await getJson(`${WALLET_PROXY}/v0/accBalance/${a.address}`);
+      const atomic = String(b?.finalizedBalance?.accountAmount ?? b?.currentBalance?.accountAmount ?? "");
+      return { ...a, balance: atomic || null, explorerUrl: explorer(a.address) };
+    } catch {
+      return { ...a, balance: null, explorerUrl: explorer(a.address) };
+    }
+  }));
+}
+
 async function overview() {
   if (cache && Date.now() - cache.at < 30_000) return cache.body;
   const agents = await Promise.all(AGENTS.map(agentStatus));
@@ -101,6 +120,7 @@ async function overview() {
     agents,
     payments: pays,
     paymentsError,
+    accounts: await accounts(agents),
     totals: { count: pays.length, amount: pays.reduce((s, p) => s + BigInt(p.amount), 0n).toString() },
     updatedAt: new Date().toISOString(),
   };

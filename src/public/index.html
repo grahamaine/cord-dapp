@@ -171,6 +171,9 @@
         <tbody id="payments"><tr><td colspan="4" class="empty">Loading on-chain history…</td></tr></tbody>
       </table>
     </div>
+    <h2 style="margin-top:3rem;font-size:1.5rem">The accounts</h2>
+    <p class="muted">Live from Concordium testnet. Open any account on CCDExplorer to see every transaction it has made.</p>
+    <div class="grid g3" id="accounts" style="margin-top:1rem"><div class="card empty">Loading balances…</div></div>
     <div class="updated" id="updated"></div>
   </section>
 
@@ -235,6 +238,14 @@ async function load() {
   $("#h-pay").textContent = o.totals.count;
   $("#p-count").textContent = o.totals.count;
   $("#p-total").textContent = ccd(o.totals.amount);
+  const fmtCcd = (atomic) => (Number(atomic) / 1e6).toLocaleString(undefined, { maximumFractionDigits: 2 }) + " CCD";
+  $("#accounts").innerHTML = (o.accounts || []).map((a) => `<div class="card hover">
+      <div class="kicker" style="margin-bottom:.3rem">${esc(a.name)}</div>
+      <p class="muted" style="margin:0 0 .8rem">${esc(a.role)}</p>
+      <div class="mono" style="font-size:.85rem;word-break:break-all">${esc(a.address)}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.9rem;gap:.5rem;flex-wrap:wrap">
+        <b style="font-size:1.25rem;font-weight:500">${a.balance != null ? fmtCcd(a.balance) : "–"}</b>
+        <a href="${esc(a.explorerUrl)}" target="_blank" rel="noopener">CCDExplorer ↗</a></div></div>`).join("") || `<div class="card empty">No accounts configured.</div>`;
   $("#payments").innerHTML = o.payments.length
     ? o.payments.map((p) => `<tr><td>${esc(when(p.time))}</td><td>${esc(names[p.from] || short(p.from))} → ${esc(names[p.to] || "TenderScout")}</td><td class="r">${ccd(p.amount)}</td><td><a class="mono" href="${esc(p.explorerUrl)}" target="_blank" rel="noopener">${esc(short(p.txHash))} ↗</a></td></tr>`).join("")
     : `<tr><td colspan="4" class="empty">${esc(o.paymentsError || "No verified payments yet. The first one appears here within a minute of settling.")}</td></tr>`;
