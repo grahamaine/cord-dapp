@@ -96,7 +96,7 @@ export async function buy(url: string, purpose: string, opts: { reservedEur?: nu
     throw e;
   }
   const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(`${res.status} from ${url}: ${JSON.stringify(data)}`);
+  if (!res.ok) throw new Error(`${res.status} from ${url}: ${explain402(res, data)}`);
 
   const header = res.headers.get("PAYMENT-RESPONSE") ?? res.headers.get("X-PAYMENT-RESPONSE");
   const sel = lastSelected as Selection | undefined; // set by the pre-payment hook during the fetch
@@ -117,4 +117,24 @@ export async function buy(url: string, purpose: string, opts: { reservedEur?: nu
     explorerUrl: getExplorerTxUrl(config.network, settle.transaction),
   });
   return { data, receipt, sellerVerified: sel.verified };
+}
+
+/** x402 puts the reason for a rejected payment in the PAYMENT-REQUIRED header (base64 JSON), not the body. */
+function explain402(res: Response, data: unknown): string {
+  const raw = res.headers.get("PAYMENT-REQUIRED") ?? res.headers.get("X-PAYMENT-REQUIRED");
+  let reason = "";
+  if (raw) {
+    try {
+      const j = JSON.parse(Buffer.from(raw, "base64").toString("utf8"));
+      reason = j.error || j.errorReason || j.invalidReason || "";
+    } catch { /* not base64 JSON */ }
+  }
+  const body = data && typeof data === "object" && Object.keys(data as object).length ? JSON.stringify(data) : "";
+  const hint: Record<string, string> = {
+    insufficient_funds: "the ProcureBot account doesn't have enough test CCD — top it up from the testnet faucet",
+    preflight_insufficient_funds: "the ProcureBot account doesn't have enough test CCD — top it up from the testnet faucet",
+  };
+  const key = Object.keys(hint).find((k) => reason.includes(k));
+  return [reason, key ? `(${hint[key]})` : "", body].filter(Boolean).join(" ") ||
+    "payment rejected without a reason; check the seller and facilitator windows for the error";
 }
