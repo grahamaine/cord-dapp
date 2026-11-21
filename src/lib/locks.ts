@@ -21,7 +21,7 @@ import { randomBytes } from "node:crypto";
 import { audit, type Actor } from "./audit.js";
 import { checkBadge } from "./badge.js";
 import { loadPolicy, policyViolation } from "./policy.js";
-import { atomicToEur } from "./eur.js";
+import { atomicToEur, fmtAtomic } from "./eur.js";
 
 export type LockStatus = "created" | "funded" | "sent" | "released" | "cancelled";
 export interface LockEvent { op: string; at: string; actor: Actor; outcome: "ok" | "refused" | "error"; note: string }
@@ -33,7 +33,7 @@ export interface Lock {
   description: string;
   payTo: string;
   amountEur: number;
-  amount: string; // atomic units settled on-chain (demo rate)
+  amount: string; // atomic units of `asset` settled on-chain (full value for a stablecoin, demo rate for CCD)
   asset: string;
   status: LockStatus;
   createdAt: string;
@@ -173,7 +173,7 @@ export async function releaseLock(
     lock.explorerUrl = r.explorerUrl;
     lock.receiptSeq = r.receiptSeq;
     lock.lastError = undefined;
-    record(lock, "release", actor, "ok", `Released by ${actor}: €${lock.amountEur.toLocaleString()} settled on Concordium (fee sponsored)`, { txHash: r.txHash });
+    record(lock, "release", actor, "ok", `Released by ${actor}: €${lock.amountEur.toLocaleString()} settled on Concordium as ${fmtAtomic(lock.amount, lock.asset)} (fee sponsored)`, { txHash: r.txHash });
     saveLock(lock);
     return lock;
   } catch (e) {
@@ -203,7 +203,10 @@ export const lockTotals = () => {
     awaitingRelease: by("sent").length,
     reservedEur: reservedEur(),
     releasedEur: by("released").reduce((s, l) => s + l.amountEur, 0),
-    releasedAtomic: by("released").reduce((s, l) => s + BigInt(l.amount), 0n).toString(),
+    releasedByAsset: by("released").reduce<Record<string, string>>((acc, l) => {
+      acc[l.asset] = (BigInt(acc[l.asset] ?? "0") + BigInt(l.amount)).toString();
+      return acc;
+    }, {}),
   };
 };
 export { atomicToEur };

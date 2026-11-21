@@ -98,7 +98,7 @@ export async function builtinReply(message: string): Promise<AgentReply> {
     if (r.done) {
       const l = r.lock;
       if (!r.steps.length) return done(`**${l.id}** for ${l.supplier} (${eur(l.amountEur)}) is already prepared and ${l.awaitingRelease ? "**awaiting your release** — open **Locks** and press **Release**." : `is ${l.status}.`}`, ["Show my locks", "What's due?"]);
-      return done(`Prepared **${l.id}** for ${l.supplier}: **${eur(l.amountEur)}** (${l.invoiceId}).\n✔ ${r.steps.join(" · ")}\n${l.checks?.badgeVerified ? "✔ Supplier is Verified by Concordium" : "⚠ Supplier not verified (allowed by your policy)"}\n\n👉 **Your turn:** open **Locks** and press **Release** — your wallet will ask you to sign.`, ["Show my locks", "How much budget is left?", "What's due?"]);
+      return done(`Prepared **${l.id}** for ${l.supplier}: **${eur(l.amountEur)}** (${l.invoiceId})${l.fullValue ? `, paid as **${l.settles}**` : ""}.\n✔ ${r.steps.join(" · ")}\n${l.checks?.badgeVerified ? "✔ Supplier is Verified by Concordium" : "⚠ Supplier not verified (allowed by your policy)"}\n\n👉 **Your turn:** open **Locks** and press **Release** — your wallet will ask you to sign.`, ["Show my locks", "How much budget is left?", "What's due?"]);
     }
     if (r.candidates?.length > 1) return done(`More than one invoice matches — which one?\n${r.candidates.map((c: string) => `• ${c}`).join("\n")}`);
     const tip = r.lock && r.lock.status === "created" ? `\nLock **${r.lock.id}** is on hold. You can raise the limit in **Policy**, or say "cancel ${r.lock.id}" to drop it.` : "";
