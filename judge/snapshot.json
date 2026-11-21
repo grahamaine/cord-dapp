@@ -1,7 +1,7 @@
 {
  "kind": "cord-judge-snapshot",
  "version": 1,
- "publishedAt": "2026-11-21T07:03:43.105Z",
+ "publishedAt": "2026-11-21T07:12:21.082Z",
  "network": "ccd:4221332d34e1694168c2a0c0b3fd0f27",
  "accounts": {
   "procurebot": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
@@ -1128,6 +1128,19 @@
    "ts": "2026-11-21T06:58:22.976Z",
    "prevHash": "c6b6d5aa8174c8b7a6833974717312d0a0862f1fb0f51a1541c8ea3dcd7317bd",
    "hash": "d64835ee519166d2cbd304c3283eb53224860bef74f0295d54b627f3ea31643f"
+  },
+  {
+   "actor": "owner",
+   "op": "anchor",
+   "outcome": "ok",
+   "detail": "Audit trail anchored on Concordium at #44 (receipts #10)",
+   "data": {
+    "txHash": "eb531dca2315a8adde354daf9ee11a1b2516cdccfb2691ae4e647da0c7b0df19"
+   },
+   "seq": 45,
+   "ts": "2026-11-21T07:10:02.881Z",
+   "prevHash": "d64835ee519166d2cbd304c3283eb53224860bef74f0295d54b627f3ea31643f",
+   "hash": "99649568777f3cf17d6dd40230db25ae2f645e07528674d5eceb86b8d97e94b7"
   }
  ],
  "receipts": [
@@ -1335,6 +1348,18 @@
    "receiptHash": "fc7cd005bf71dbbe98afa43a3b11f3d373c86e970b570ea7edb6ac31a22d9285",
    "txHash": "c388b0d335a5fd733e0685b3cc42515ab14ca5bb735914ba5931f6d2e51d0c4f",
    "explorerUrl": "https://ccdexplorer.io/testnet/transaction/c388b0d335a5fd733e0685b3cc42515ab14ca5bb735914ba5931f6d2e51d0c4f",
+   "sender": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "finalized": true
+  },
+  {
+   "at": "2026-11-21T07:10:02.878Z",
+   "data": "cord:audit:v1|a=44:d64835ee519166d2cbd304c3283eb53224860bef74f0295d54b627f3ea31643f|r=10:fc7cd005bf71dbbe98afa43a3b11f3d373c86e970b570ea7edb6ac31a22d9285",
+   "auditSeq": 44,
+   "auditHash": "d64835ee519166d2cbd304c3283eb53224860bef74f0295d54b627f3ea31643f",
+   "receiptSeq": 10,
+   "receiptHash": "fc7cd005bf71dbbe98afa43a3b11f3d373c86e970b570ea7edb6ac31a22d9285",
+   "txHash": "eb531dca2315a8adde354daf9ee11a1b2516cdccfb2691ae4e647da0c7b0df19",
+   "explorerUrl": "https://ccdexplorer.io/testnet/transaction/eb531dca2315a8adde354daf9ee11a1b2516cdccfb2691ae4e647da0c7b0df19",
    "sender": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
    "finalized": true
   }
