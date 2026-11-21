@@ -1,7 +1,7 @@
 {
  "kind": "cord-judge-snapshot",
  "version": 1,
- "publishedAt": "2026-11-20T13:31:48.253Z",
+ "publishedAt": "2026-11-21T06:59:31.879Z",
  "network": "ccd:4221332d34e1694168c2a0c0b3fd0f27",
  "accounts": {
   "procurebot": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
@@ -9,7 +9,7 @@
   "supplier": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8"
  },
  "badges": {
-  "procurebot": "",
+  "procurebot": "JyP9U3BHQRbFTuQx4N1Gn",
   "supplier": "JyP9TwhskJ6cKHDzW23Yj"
  },
  "policy": {
@@ -378,6 +378,77 @@
    "txHash": "a3f1f201786f31265008b6a090dbc03265233aee2a486362bcd5603a7d3c1586",
    "explorerUrl": "https://ccdexplorer.io/testnet/transaction/a3f1f201786f31265008b6a090dbc03265233aee2a486362bcd5603a7d3c1586",
    "receiptSeq": 8
+  },
+  {
+   "id": "LCK-E20A24",
+   "invoiceId": "INV-PRO-2231",
+   "supplier": "Entebbe Fresh Produce",
+   "category": "Food supply",
+   "description": "Vegetables & fruit, week 46",
+   "payTo": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+   "amountEur": 2420,
+   "amount": "242000",
+   "asset": "CCD",
+   "status": "released",
+   "createdAt": "2026-11-21T06:57:04.979Z",
+   "updatedAt": "2026-11-21T06:57:25.247Z",
+   "history": [
+    {
+     "op": "create",
+     "at": "2026-11-21T06:57:05.016Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Lock opened for INV-PRO-2231 (Entebbe Fresh Produce), €2,420"
+    },
+    {
+     "op": "fund",
+     "at": "2026-11-21T06:57:05.121Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "€2,420 set aside against today's budget"
+    },
+    {
+     "op": "send",
+     "at": "2026-11-21T06:57:05.905Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Checks passed: payee Verified by Concordium, within limits. Awaiting human release."
+    },
+    {
+     "op": "approve",
+     "at": "2026-11-21T06:57:15.785Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Release signed by owner wallet 39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd"
+    },
+    {
+     "op": "release",
+     "at": "2026-11-21T06:57:25.247Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Released by owner: €2,420 settled on Concordium (fee sponsored)"
+    }
+   ],
+   "checks": {
+    "at": "2026-11-21T06:57:05.905Z",
+    "badgeVerified": true,
+    "badgeIssues": [],
+    "policy": null
+   },
+   "approval": {
+    "account": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+    "nonce": "76117cd98d0303c8f6de1e94",
+    "message": "Cord · release approval\nLock: LCK-E20A24\nInvoice: INV-PRO-2231\nSupplier: Entebbe Fresh Produce\nAmount: EUR 2,420 (demo)\nPayee: 3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8\nNetwork: testnet\nNonce: 76117cd98d0303c8f6de1e94\nExpires: 2026-11-21T07:02:11.097Z\nI approve this payment prepared by an AI agent.",
+    "signature": {
+     "0": {
+      "0": "21bec5e26b21c0a1dedd3a794f54bec82dad01c5e19a59d7e94cf57ec51d41bc69a0dd2d1f96ccdf88f5db2bc71c536b8cad0ade96c0ad43e8c5ad2a1fa62505"
+     }
+    },
+    "at": "2026-11-21T06:57:15.785Z"
+   },
+   "txHash": "59db71e19c2573ebab84bda8a5a7fce95f5de1dfbaa9efb8b474cd77fe2106c6",
+   "explorerUrl": "https://ccdexplorer.io/testnet/transaction/59db71e19c2573ebab84bda8a5a7fce95f5de1dfbaa9efb8b474cd77fe2106c6",
+   "receiptSeq": 10
   }
  ],
  "audit": [
@@ -948,6 +1019,115 @@
    "ts": "2026-11-20T13:27:07.744Z",
    "prevHash": "b31f1a77424bfe11e80302915c88e1a8e2812f336c67444c01e84b323c5df052",
    "hash": "6087a566984fad35c60f71efcca2445f53301e3b8512c9e760a7a3e77c439e00"
+  },
+  {
+   "actor": "agent",
+   "op": "create",
+   "lockId": "LCK-E20A24",
+   "outcome": "ok",
+   "detail": "Lock opened for INV-PRO-2231 (Entebbe Fresh Produce), €2,420",
+   "data": {
+    "invoiceId": "INV-PRO-2231",
+    "amountEur": 2420,
+    "status": "created"
+   },
+   "seq": 38,
+   "ts": "2026-11-21T06:57:05.020Z",
+   "prevHash": "6087a566984fad35c60f71efcca2445f53301e3b8512c9e760a7a3e77c439e00",
+   "hash": "c796d17c5d148bda60d8a8a819416aa839e13a39ec78164659b520fcb643ec90"
+  },
+  {
+   "actor": "agent",
+   "op": "fund",
+   "lockId": "LCK-E20A24",
+   "outcome": "ok",
+   "detail": "€2,420 set aside against today's budget",
+   "data": {
+    "invoiceId": "INV-PRO-2231",
+    "amountEur": 2420,
+    "status": "funded"
+   },
+   "seq": 39,
+   "ts": "2026-11-21T06:57:05.125Z",
+   "prevHash": "c796d17c5d148bda60d8a8a819416aa839e13a39ec78164659b520fcb643ec90",
+   "hash": "1e7e7921530a6d9c3425cbcc1787c56278e9c86a10fee5cad385784b76fa32b3"
+  },
+  {
+   "actor": "agent",
+   "op": "send",
+   "lockId": "LCK-E20A24",
+   "outcome": "ok",
+   "detail": "Checks passed: payee Verified by Concordium, within limits. Awaiting human release.",
+   "data": {
+    "invoiceId": "INV-PRO-2231",
+    "amountEur": 2420,
+    "status": "sent",
+    "badgeVerified": true
+   },
+   "seq": 40,
+   "ts": "2026-11-21T06:57:05.909Z",
+   "prevHash": "1e7e7921530a6d9c3425cbcc1787c56278e9c86a10fee5cad385784b76fa32b3",
+   "hash": "ce79c57daa0f6ee41932ade47b150eaf1aeed97d23765d3dfcabab1a0799d5b9"
+  },
+  {
+   "actor": "agent",
+   "op": "chat",
+   "outcome": "ok",
+   "detail": "Owner asked: \"pay INV-PRO-2231\" → prepare_payment",
+   "data": {
+    "mode": "builtin"
+   },
+   "seq": 41,
+   "ts": "2026-11-21T06:57:05.921Z",
+   "prevHash": "ce79c57daa0f6ee41932ade47b150eaf1aeed97d23765d3dfcabab1a0799d5b9",
+   "hash": "88998ae03147e82518185106e68160196e645f33a95ddac5a8215e975b7779ee"
+  },
+  {
+   "actor": "owner",
+   "op": "approve",
+   "lockId": "LCK-E20A24",
+   "outcome": "ok",
+   "detail": "Release signed by owner wallet 39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "data": {
+    "invoiceId": "INV-PRO-2231",
+    "amountEur": 2420,
+    "status": "sent",
+    "account": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd"
+   },
+   "seq": 42,
+   "ts": "2026-11-21T06:57:15.787Z",
+   "prevHash": "88998ae03147e82518185106e68160196e645f33a95ddac5a8215e975b7779ee",
+   "hash": "ec977f38ec5a1b02ca17e7c2db143909bc69172a53cff16dcc815438f234f0da"
+  },
+  {
+   "actor": "owner",
+   "op": "release",
+   "lockId": "LCK-E20A24",
+   "outcome": "ok",
+   "detail": "Released by owner: €2,420 settled on Concordium (fee sponsored)",
+   "data": {
+    "invoiceId": "INV-PRO-2231",
+    "amountEur": 2420,
+    "status": "released",
+    "txHash": "59db71e19c2573ebab84bda8a5a7fce95f5de1dfbaa9efb8b474cd77fe2106c6"
+   },
+   "seq": 43,
+   "ts": "2026-11-21T06:57:25.251Z",
+   "prevHash": "ec977f38ec5a1b02ca17e7c2db143909bc69172a53cff16dcc815438f234f0da",
+   "hash": "c6b6d5aa8174c8b7a6833974717312d0a0862f1fb0f51a1541c8ea3dcd7317bd"
+  },
+  {
+   "actor": "owner",
+   "op": "anchor",
+   "outcome": "ok",
+   "detail": "Audit trail anchored on Concordium at #43 (receipts #10)",
+   "data": {
+    "txHash": "c388b0d335a5fd733e0685b3cc42515ab14ca5bb735914ba5931f6d2e51d0c4f"
+   },
+   "seq": 44,
+   "ts": "2026-11-21T06:58:22.976Z",
+   "prevHash": "c6b6d5aa8174c8b7a6833974717312d0a0862f1fb0f51a1541c8ea3dcd7317bd",
+   "hash": "d64835ee519166d2cbd304c3283eb53224860bef74f0295d54b627f3ea31643f"
   }
  ],
  "receipts": [
@@ -1074,6 +1254,39 @@
    "ts": "2026-11-20T13:26:38.382Z",
    "prevHash": "c4729e4b8e400153c86a6d633616270b662ce978921f6d190ef277983eaecc37",
    "hash": "b29a2b89172b3dbda152be081e1c6e53c055b9a6e5f2ff54c1999f78f23df6ec"
+  },
+  {
+   "role": "seller",
+   "resource": "/invoices/INV-PRO-2231/pay",
+   "buyerAccount": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "buyerBadge": "JyP9U3BHQRbFTuQx4N1Gn",
+   "sellerAccount": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+   "sellerBadge": "JyP9TwhskJ6cKHDzW23Yj",
+   "amount": "242000",
+   "asset": "CCD",
+   "network": "ccd:4221332d34e1694168c2a0c0b3fd0f27",
+   "txHash": "59db71e19c2573ebab84bda8a5a7fce95f5de1dfbaa9efb8b474cd77fe2106c6",
+   "seq": 9,
+   "ts": "2026-11-21T06:57:25.243Z",
+   "prevHash": "b29a2b89172b3dbda152be081e1c6e53c055b9a6e5f2ff54c1999f78f23df6ec",
+   "hash": "4accf6727462f6e33af7951e6f4117c8b8350b88d33c8a2c975a867d21946e08"
+  },
+  {
+   "role": "buyer",
+   "resource": "http://localhost:4021/invoices/INV-PRO-2231/pay",
+   "purpose": "Lock LCK-E20A24: pay INV-PRO-2231 (Entebbe Fresh Produce)",
+   "buyerAccount": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "buyerBadge": "JyP9U3BHQRbFTuQx4N1Gn",
+   "sellerAccount": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+   "amount": "242000",
+   "asset": "CCD",
+   "network": "ccd:4221332d34e1694168c2a0c0b3fd0f27",
+   "txHash": "59db71e19c2573ebab84bda8a5a7fce95f5de1dfbaa9efb8b474cd77fe2106c6",
+   "explorerUrl": "https://ccdexplorer.io/testnet/transaction/59db71e19c2573ebab84bda8a5a7fce95f5de1dfbaa9efb8b474cd77fe2106c6",
+   "seq": 10,
+   "ts": "2026-11-21T06:57:25.245Z",
+   "prevHash": "4accf6727462f6e33af7951e6f4117c8b8350b88d33c8a2c975a867d21946e08",
+   "hash": "fc7cd005bf71dbbe98afa43a3b11f3d373c86e970b570ea7edb6ac31a22d9285"
   }
  ],
  "anchors": [
@@ -1110,6 +1323,18 @@
    "receiptHash": "b29a2b89172b3dbda152be081e1c6e53c055b9a6e5f2ff54c1999f78f23df6ec",
    "txHash": "fb3325d2e26412b6bc1422857c45fb28d32d120aea9e0fa8de52261b4c398af2",
    "explorerUrl": "https://ccdexplorer.io/testnet/transaction/fb3325d2e26412b6bc1422857c45fb28d32d120aea9e0fa8de52261b4c398af2",
+   "sender": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "finalized": true
+  },
+  {
+   "at": "2026-11-21T06:58:22.973Z",
+   "data": "cord:audit:v1|a=43:c6b6d5aa8174c8b7a6833974717312d0a0862f1fb0f51a1541c8ea3dcd7317bd|r=10:fc7cd005bf71dbbe98afa43a3b11f3d373c86e970b570ea7edb6ac31a22d9285",
+   "auditSeq": 43,
+   "auditHash": "c6b6d5aa8174c8b7a6833974717312d0a0862f1fb0f51a1541c8ea3dcd7317bd",
+   "receiptSeq": 10,
+   "receiptHash": "fc7cd005bf71dbbe98afa43a3b11f3d373c86e970b570ea7edb6ac31a22d9285",
+   "txHash": "c388b0d335a5fd733e0685b3cc42515ab14ca5bb735914ba5931f6d2e51d0c4f",
+   "explorerUrl": "https://ccdexplorer.io/testnet/transaction/c388b0d335a5fd733e0685b3cc42515ab14ca5bb735914ba5931f6d2e51d0c4f",
    "sender": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
    "finalized": true
   }
