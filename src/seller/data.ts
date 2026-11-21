@@ -1,4 +1,4 @@
-import { eurToAtomic } from "../lib/eur.js";
+import { eurToAtomic, INVOICE_ASSET } from "../lib/eur.js";
 
 /**
  * SAMPLE DATA for the demo. Replace with a real source (e.g. a scraper over the Uganda
@@ -20,8 +20,8 @@ export const benchmarks: Record<string, { unit: string; low: number; median: num
 
 /**
  * SAMPLE supplier invoices for the owner page (lead example: a hotel's recurring service providers).
- * Amounts are in demo EUR; `amount` is what settles on-chain (see src/lib/eur.ts for the demo rate).
- * In production the invoice would be priced in a euro stablecoin at full value.
+ * Amounts are in EUR; `amount` is what settles on-chain in `asset` (INVOICE_ASSET): at full value in a
+ * stablecoin such as EURR, or at the CCD demo rate (see src/lib/eur.ts).
  */
 export interface Invoice {
   id: string;
@@ -31,9 +31,10 @@ export interface Invoice {
   issued: string;
   due: string;
   amountEur: number;
-  amount: string; // atomic units of PRICE_ASSET charged on-chain (demo rate)
+  amount: string; // atomic units of `asset` charged on-chain
+  asset: string; // settlement asset (INVOICE_ASSET)
 }
-const inv = (i: Omit<Invoice, "amount">): Invoice => ({ ...i, amount: eurToAtomic(i.amountEur) });
+const inv = (i: Omit<Invoice, "amount" | "asset">): Invoice => ({ ...i, amount: eurToAtomic(i.amountEur, INVOICE_ASSET), asset: INVOICE_ASSET });
 export const invoices: Invoice[] = [
   inv({ id: "INV-LAU-1107", supplier: "Lakeside Laundry Services", category: "Laundry", description: "Linen & towel laundry, 1–15 Nov", issued: "2026-11-15", due: "2026-11-29", amountEur: 1850 }),
   inv({ id: "INV-PRO-2231", supplier: "Entebbe Fresh Produce", category: "Food supply", description: "Vegetables & fruit, week 46", issued: "2026-11-16", due: "2026-11-23", amountEur: 2420 }),
