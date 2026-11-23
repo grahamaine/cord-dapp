@@ -171,12 +171,14 @@ export async function buy(url: string, purpose: string, opts: { reservedEur?: nu
 
 /** x402 puts the reason for a rejected payment in the PAYMENT-REQUIRED header (base64 JSON), not the body. */
 function explain402(res: Response, data: unknown): string {
-  const raw = res.headers.get("PAYMENT-REQUIRED") ?? res.headers.get("X-PAYMENT-REQUIRED");
+  // A failed verify puts the reason in PAYMENT-REQUIRED; a failed settlement puts it in PAYMENT-RESPONSE.
   let reason = "";
-  if (raw) {
+  for (const h of ["PAYMENT-REQUIRED", "X-PAYMENT-REQUIRED", "PAYMENT-RESPONSE", "X-PAYMENT-RESPONSE"]) {
+    const raw = res.headers.get(h);
+    if (!raw || reason) continue;
     try {
       const j = JSON.parse(Buffer.from(raw, "base64").toString("utf8"));
-      reason = j.error || j.errorReason || j.invalidReason || "";
+      reason = [j.error || j.errorReason || j.invalidReason, j.errorMessage && j.errorMessage !== (j.errorReason || j.error) ? j.errorMessage : ""].filter(Boolean).join(": ");
     } catch { /* not base64 JSON */ }
   }
   const body = data && typeof data === "object" && Object.keys(data as object).length ? JSON.stringify(data) : "";
