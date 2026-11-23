@@ -23,6 +23,7 @@
 </style>
 </head>
 <body>
+<button class="back-btn" id="back-btn" type="button" aria-label="Go back" style="position:fixed;top:1rem;left:1rem;z-index:10" onclick="history.length > 1 ? history.back() : (location.href = '/')">&larr; Back</button>
 <div class="aurora"><div class="grid-lines"></div></div>
 <div class="center">
   <form class="card login" id="f">

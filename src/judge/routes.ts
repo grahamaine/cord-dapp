@@ -24,6 +24,9 @@ import type { Lock } from "../lib/locks.js";
 import { fmtAtomic } from "../lib/eur.js";
 
 const APP_NAME = process.env.APP_NAME || "Kakasa";
+// Where the AI agent (owner dashboard) runs. It holds a key, so it isn't on Vercel; set AGENT_URL to a tunnel link to override.
+const AGENT_URL = process.env.AGENT_URL || "http://localhost:4030/#agent";
+const AGENT_URL_LABEL = AGENT_URL.replace(/^https?:\/\//, "").replace(/\/?#.*$/, "");
 const SNAPSHOT = "judge/snapshot.json";
 const PAGE = "src/judge/index.html";
 
@@ -110,7 +113,7 @@ export function judgeRouter() {
   const r = Router();
   r.get("/judge", (_req, res) => {
     const html = existsSync(PAGE) ? readFileSync(PAGE, "utf8") : readFileSync(new URL("./index.html", import.meta.url), "utf8");
-    res.type("html").send(html.replaceAll("{{APP_NAME}}", APP_NAME));
+    res.type("html").send(html.replaceAll("{{APP_NAME}}", APP_NAME).replaceAll("{{AGENT_URL_LABEL}}", AGENT_URL_LABEL).replaceAll("{{AGENT_URL}}", AGENT_URL));
   });
   r.get("/api/judge", async (_req, res) => {
     try {
