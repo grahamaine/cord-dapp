@@ -27,7 +27,8 @@ export const config = {
     url: opt("SELLER_URL", vercelBase || "http://localhost:4021"),
     payTo: () => env("SELLER_PAY_TO"),
     badge: opt("SELLER_BADGE"),
-    asset: opt("PRICE_ASSET", "CCD"),
+    asset: opt("PRICE_ASSET", "CCD"), // data calls (tenders, benchmarks)
+    invoiceAsset: opt("INVOICE_ASSET", opt("PRICE_ASSET", "CCD")), // supplier invoices
     priceTenders: opt("PRICE_TENDERS", "100000"),
     priceBenchmark: opt("PRICE_BENCHMARK", "250000"),
     requireBuyerBadge: bool("REQUIRE_BUYER_BADGE", true),
@@ -37,7 +38,7 @@ export const config = {
     privateKey: () => env("CCD_PRIVATE_KEY"),
     badge: opt("BUYER_BADGE"),
     maxPayment: BigInt(opt("MAX_PAYMENT", "1000000")),
-    allowedAssets: opt("ALLOWED_ASSETS", "CCD,USDR").split(",").map((a) => a.trim()).filter(Boolean),
+    allowedAssets: opt("ALLOWED_ASSETS", "CCD,EURR,USDR,EURC").split(",").map((a) => a.trim()).filter(Boolean),
     requireSellerBadge: bool("REQUIRE_SELLER_BADGE", true),
   },
   receiptsPath: opt("RECEIPTS_PATH", process.env.VERCEL ? "/tmp/receipts.jsonl" : "data/receipts.jsonl"),

@@ -1,7 +1,7 @@
 {
  "kind": "cord-judge-snapshot",
  "version": 1,
- "publishedAt": "2026-11-20T13:31:48.253Z",
+ "publishedAt": "2026-11-23T08:18:55.965Z",
  "network": "ccd:4221332d34e1694168c2a0c0b3fd0f27",
  "accounts": {
   "procurebot": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
@@ -9,7 +9,7 @@
   "supplier": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8"
  },
  "badges": {
-  "procurebot": "",
+  "procurebot": "JyP9U3BHQRbFTuQx4N1Gn",
   "supplier": "JyP9TwhskJ6cKHDzW23Yj"
  },
  "policy": {
@@ -218,7 +218,7 @@
    "asset": "CCD",
    "status": "created",
    "createdAt": "2026-11-20T11:38:06.235Z",
-   "updatedAt": "2026-11-20T11:38:08.541Z",
+   "updatedAt": "2026-11-23T08:16:39.598Z",
    "history": [
     {
      "op": "create",
@@ -231,6 +231,13 @@
      "op": "fund",
      "at": "2026-11-20T11:38:08.541Z",
      "actor": "agent",
+     "outcome": "refused",
+     "note": "€12,500 is over the per-payment limit of €10,000"
+    },
+    {
+     "op": "fund",
+     "at": "2026-11-23T08:16:39.598Z",
+     "actor": "owner",
      "outcome": "refused",
      "note": "€12,500 is over the per-payment limit of €10,000"
     }
@@ -378,6 +385,152 @@
    "txHash": "a3f1f201786f31265008b6a090dbc03265233aee2a486362bcd5603a7d3c1586",
    "explorerUrl": "https://ccdexplorer.io/testnet/transaction/a3f1f201786f31265008b6a090dbc03265233aee2a486362bcd5603a7d3c1586",
    "receiptSeq": 8
+  },
+  {
+   "id": "LCK-E20A24",
+   "invoiceId": "INV-PRO-2231",
+   "supplier": "Entebbe Fresh Produce",
+   "category": "Food supply",
+   "description": "Vegetables & fruit, week 46",
+   "payTo": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+   "amountEur": 2420,
+   "amount": "242000",
+   "asset": "CCD",
+   "status": "released",
+   "createdAt": "2026-11-21T06:57:04.979Z",
+   "updatedAt": "2026-11-21T06:57:25.247Z",
+   "history": [
+    {
+     "op": "create",
+     "at": "2026-11-21T06:57:05.016Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Lock opened for INV-PRO-2231 (Entebbe Fresh Produce), €2,420"
+    },
+    {
+     "op": "fund",
+     "at": "2026-11-21T06:57:05.121Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "€2,420 set aside against today's budget"
+    },
+    {
+     "op": "send",
+     "at": "2026-11-21T06:57:05.905Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Checks passed: payee Verified by Concordium, within limits. Awaiting human release."
+    },
+    {
+     "op": "approve",
+     "at": "2026-11-21T06:57:15.785Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Release signed by owner wallet 39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd"
+    },
+    {
+     "op": "release",
+     "at": "2026-11-21T06:57:25.247Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Released by owner: €2,420 settled on Concordium (fee sponsored)"
+    }
+   ],
+   "checks": {
+    "at": "2026-11-21T06:57:05.905Z",
+    "badgeVerified": true,
+    "badgeIssues": [],
+    "policy": null
+   },
+   "approval": {
+    "account": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+    "nonce": "76117cd98d0303c8f6de1e94",
+    "message": "Cord · release approval\nLock: LCK-E20A24\nInvoice: INV-PRO-2231\nSupplier: Entebbe Fresh Produce\nAmount: EUR 2,420 (demo)\nPayee: 3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8\nNetwork: testnet\nNonce: 76117cd98d0303c8f6de1e94\nExpires: 2026-11-21T07:02:11.097Z\nI approve this payment prepared by an AI agent.",
+    "signature": {
+     "0": {
+      "0": "21bec5e26b21c0a1dedd3a794f54bec82dad01c5e19a59d7e94cf57ec51d41bc69a0dd2d1f96ccdf88f5db2bc71c536b8cad0ade96c0ad43e8c5ad2a1fa62505"
+     }
+    },
+    "at": "2026-11-21T06:57:15.785Z"
+   },
+   "txHash": "59db71e19c2573ebab84bda8a5a7fce95f5de1dfbaa9efb8b474cd77fe2106c6",
+   "explorerUrl": "https://ccdexplorer.io/testnet/transaction/59db71e19c2573ebab84bda8a5a7fce95f5de1dfbaa9efb8b474cd77fe2106c6",
+   "receiptSeq": 10
+  },
+  {
+   "id": "LCK-E60A8B",
+   "invoiceId": "INV-NET-5521",
+   "supplier": "MTN Uganda (Business Internet)",
+   "category": "Internet & telecoms",
+   "description": "Business fibre, December · settles on Base",
+   "payTo": "0x0288658cE06d2eF1F63b4C7e1e9072aE8cFde4BC",
+   "amountEur": 1150,
+   "amount": "1150000",
+   "asset": "EURC",
+   "network": "eip155:84532",
+   "payPath": "/invoices/INV-NET-5521/pay/base",
+   "status": "released",
+   "createdAt": "2026-11-23T08:11:03.919Z",
+   "updatedAt": "2026-11-23T08:12:31.431Z",
+   "history": [
+    {
+     "op": "create",
+     "at": "2026-11-23T08:11:04.821Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Lock opened for INV-NET-5521 (MTN Uganda (Business Internet)), €1,150, settles on Base Sepolia"
+    },
+    {
+     "op": "fund",
+     "at": "2026-11-23T08:11:04.934Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "€1,150 set aside against today's budget"
+    },
+    {
+     "op": "send",
+     "at": "2026-11-23T08:11:07.041Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Checks passed: payee on Base Sepolia, CIS-8 linked to Verified by Concordium owner 3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8, within limits. Awaiting human release."
+    },
+    {
+     "op": "approve",
+     "at": "2026-11-23T08:12:23.690Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Release signed by owner wallet 39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd"
+    },
+    {
+     "op": "release",
+     "at": "2026-11-23T08:12:31.431Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Released by owner: €1,150 settled on Base Sepolia as 1.15 EURC (fee sponsored)"
+    }
+   ],
+   "checks": {
+    "at": "2026-11-23T08:11:07.041Z",
+    "badgeVerified": true,
+    "badgeIssues": [],
+    "policy": null,
+    "linkedOwner": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+    "link": "Verified: Base Sepolia key linked through CIS-8 to Concordium account 3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8, which owns 1 Verified by Concordium agent."
+   },
+   "approval": {
+    "account": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+    "nonce": "08786808dc893af0aded18b5",
+    "message": "Kakasa · release approval\nLock: LCK-E60A8B\nInvoice: INV-NET-5521\nSupplier: MTN Uganda (Business Internet)\nAmount: EUR 1,150 (demo)\nPayee: 0x0288658cE06d2eF1F63b4C7e1e9072aE8cFde4BC\nNetwork: testnet\nNonce: 08786808dc893af0aded18b5\nExpires: 2026-11-23T08:17:20.049Z\nI approve this payment prepared by an AI agent.",
+    "signature": {
+     "0": {
+      "0": "31badac408972daf40d72b5e4fdef6ad06001f64409484a4525399b9cb92fbe8133b19720d3fffb941d91388aff829295872c4dc4a6e09593a4a00033fdd540c"
+     }
+    },
+    "at": "2026-11-23T08:12:23.690Z"
+   },
+   "txHash": "0xce9298625089a76251949cefc91a914886ecc4bcd8497a5db3770ca5bf9bba7e",
+   "explorerUrl": "https://sepolia.basescan.org/tx/0xce9298625089a76251949cefc91a914886ecc4bcd8497a5db3770ca5bf9bba7e",
+   "receiptSeq": 11
   }
  ],
  "audit": [
@@ -948,6 +1101,324 @@
    "ts": "2026-11-20T13:27:07.744Z",
    "prevHash": "b31f1a77424bfe11e80302915c88e1a8e2812f336c67444c01e84b323c5df052",
    "hash": "6087a566984fad35c60f71efcca2445f53301e3b8512c9e760a7a3e77c439e00"
+  },
+  {
+   "actor": "agent",
+   "op": "create",
+   "lockId": "LCK-E20A24",
+   "outcome": "ok",
+   "detail": "Lock opened for INV-PRO-2231 (Entebbe Fresh Produce), €2,420",
+   "data": {
+    "invoiceId": "INV-PRO-2231",
+    "amountEur": 2420,
+    "status": "created"
+   },
+   "seq": 38,
+   "ts": "2026-11-21T06:57:05.020Z",
+   "prevHash": "6087a566984fad35c60f71efcca2445f53301e3b8512c9e760a7a3e77c439e00",
+   "hash": "c796d17c5d148bda60d8a8a819416aa839e13a39ec78164659b520fcb643ec90"
+  },
+  {
+   "actor": "agent",
+   "op": "fund",
+   "lockId": "LCK-E20A24",
+   "outcome": "ok",
+   "detail": "€2,420 set aside against today's budget",
+   "data": {
+    "invoiceId": "INV-PRO-2231",
+    "amountEur": 2420,
+    "status": "funded"
+   },
+   "seq": 39,
+   "ts": "2026-11-21T06:57:05.125Z",
+   "prevHash": "c796d17c5d148bda60d8a8a819416aa839e13a39ec78164659b520fcb643ec90",
+   "hash": "1e7e7921530a6d9c3425cbcc1787c56278e9c86a10fee5cad385784b76fa32b3"
+  },
+  {
+   "actor": "agent",
+   "op": "send",
+   "lockId": "LCK-E20A24",
+   "outcome": "ok",
+   "detail": "Checks passed: payee Verified by Concordium, within limits. Awaiting human release.",
+   "data": {
+    "invoiceId": "INV-PRO-2231",
+    "amountEur": 2420,
+    "status": "sent",
+    "badgeVerified": true
+   },
+   "seq": 40,
+   "ts": "2026-11-21T06:57:05.909Z",
+   "prevHash": "1e7e7921530a6d9c3425cbcc1787c56278e9c86a10fee5cad385784b76fa32b3",
+   "hash": "ce79c57daa0f6ee41932ade47b150eaf1aeed97d23765d3dfcabab1a0799d5b9"
+  },
+  {
+   "actor": "agent",
+   "op": "chat",
+   "outcome": "ok",
+   "detail": "Owner asked: \"pay INV-PRO-2231\" → prepare_payment",
+   "data": {
+    "mode": "builtin"
+   },
+   "seq": 41,
+   "ts": "2026-11-21T06:57:05.921Z",
+   "prevHash": "ce79c57daa0f6ee41932ade47b150eaf1aeed97d23765d3dfcabab1a0799d5b9",
+   "hash": "88998ae03147e82518185106e68160196e645f33a95ddac5a8215e975b7779ee"
+  },
+  {
+   "actor": "owner",
+   "op": "approve",
+   "lockId": "LCK-E20A24",
+   "outcome": "ok",
+   "detail": "Release signed by owner wallet 39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "data": {
+    "invoiceId": "INV-PRO-2231",
+    "amountEur": 2420,
+    "status": "sent",
+    "account": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd"
+   },
+   "seq": 42,
+   "ts": "2026-11-21T06:57:15.787Z",
+   "prevHash": "88998ae03147e82518185106e68160196e645f33a95ddac5a8215e975b7779ee",
+   "hash": "ec977f38ec5a1b02ca17e7c2db143909bc69172a53cff16dcc815438f234f0da"
+  },
+  {
+   "actor": "owner",
+   "op": "release",
+   "lockId": "LCK-E20A24",
+   "outcome": "ok",
+   "detail": "Released by owner: €2,420 settled on Concordium (fee sponsored)",
+   "data": {
+    "invoiceId": "INV-PRO-2231",
+    "amountEur": 2420,
+    "status": "released",
+    "txHash": "59db71e19c2573ebab84bda8a5a7fce95f5de1dfbaa9efb8b474cd77fe2106c6"
+   },
+   "seq": 43,
+   "ts": "2026-11-21T06:57:25.251Z",
+   "prevHash": "ec977f38ec5a1b02ca17e7c2db143909bc69172a53cff16dcc815438f234f0da",
+   "hash": "c6b6d5aa8174c8b7a6833974717312d0a0862f1fb0f51a1541c8ea3dcd7317bd"
+  },
+  {
+   "actor": "owner",
+   "op": "anchor",
+   "outcome": "ok",
+   "detail": "Audit trail anchored on Concordium at #43 (receipts #10)",
+   "data": {
+    "txHash": "c388b0d335a5fd733e0685b3cc42515ab14ca5bb735914ba5931f6d2e51d0c4f"
+   },
+   "seq": 44,
+   "ts": "2026-11-21T06:58:22.976Z",
+   "prevHash": "c6b6d5aa8174c8b7a6833974717312d0a0862f1fb0f51a1541c8ea3dcd7317bd",
+   "hash": "d64835ee519166d2cbd304c3283eb53224860bef74f0295d54b627f3ea31643f"
+  },
+  {
+   "actor": "owner",
+   "op": "anchor",
+   "outcome": "ok",
+   "detail": "Audit trail anchored on Concordium at #44 (receipts #10)",
+   "data": {
+    "txHash": "eb531dca2315a8adde354daf9ee11a1b2516cdccfb2691ae4e647da0c7b0df19"
+   },
+   "seq": 45,
+   "ts": "2026-11-21T07:10:02.881Z",
+   "prevHash": "d64835ee519166d2cbd304c3283eb53224860bef74f0295d54b627f3ea31643f",
+   "hash": "99649568777f3cf17d6dd40230db25ae2f645e07528674d5eceb86b8d97e94b7"
+  },
+  {
+   "actor": "owner",
+   "op": "pause",
+   "outcome": "ok",
+   "detail": "Agent paused: all payments refused until resumed",
+   "seq": 46,
+   "ts": "2026-11-23T07:34:57.324Z",
+   "prevHash": "99649568777f3cf17d6dd40230db25ae2f645e07528674d5eceb86b8d97e94b7",
+   "hash": "1f4bb6f1991fb60ec0fce4787495babc12d78c51f886f57fcb670f766e9c5b7d"
+  },
+  {
+   "actor": "owner",
+   "op": "resume",
+   "outcome": "ok",
+   "detail": "Agent resumed",
+   "seq": 47,
+   "ts": "2026-11-23T07:41:19.759Z",
+   "prevHash": "1f4bb6f1991fb60ec0fce4787495babc12d78c51f886f57fcb670f766e9c5b7d",
+   "hash": "446d913fa84dce2bef90f14c46e01d69aa27ac2571ab73be7bd84abb5309e5c3"
+  },
+  {
+   "actor": "owner",
+   "op": "xchain-link",
+   "outcome": "ok",
+   "detail": "CIS-8 key link for TenderScout on base sent by 3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8: f8d6c93210790ba53a71b65bb93e0a3932b44ee295c692ac518292d38f352aff",
+   "data": {
+    "chain": "base",
+    "txHash": "f8d6c93210790ba53a71b65bb93e0a3932b44ee295c692ac518292d38f352aff",
+    "account": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8"
+   },
+   "seq": 48,
+   "ts": "2026-11-23T08:02:18.934Z",
+   "prevHash": "446d913fa84dce2bef90f14c46e01d69aa27ac2571ab73be7bd84abb5309e5c3",
+   "hash": "d544689ddf951c4de005ddd2836122a8b0aaa6ca295347df8bbcd515ebf313d6"
+  },
+  {
+   "actor": "owner",
+   "op": "xchain-link",
+   "outcome": "ok",
+   "detail": "CIS-8 key link for TenderScout on solana sent by 3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8: 978a836f7057424ff98aa2644e3b2b3ecdbf07455f29e67355c8694398f79525",
+   "data": {
+    "chain": "solana",
+    "txHash": "978a836f7057424ff98aa2644e3b2b3ecdbf07455f29e67355c8694398f79525",
+    "account": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8"
+   },
+   "seq": 49,
+   "ts": "2026-11-23T08:02:37.663Z",
+   "prevHash": "d544689ddf951c4de005ddd2836122a8b0aaa6ca295347df8bbcd515ebf313d6",
+   "hash": "81c5d11821893c7cffe2334b8aa29e62d0ba456952281709b04a1cf550f52cc0"
+  },
+  {
+   "actor": "owner",
+   "op": "policy",
+   "outcome": "ok",
+   "detail": "Policy saved (no changes)",
+   "data": {
+    "maxPerLockEur": 10000,
+    "dailyLimitEur": 10000,
+    "requireSellerBadge": true,
+    "requireHumanRelease": true,
+    "approvedSuppliers": 0
+   },
+   "seq": 50,
+   "ts": "2026-11-23T08:06:22.563Z",
+   "prevHash": "81c5d11821893c7cffe2334b8aa29e62d0ba456952281709b04a1cf550f52cc0",
+   "hash": "94cba6a3591bb34a95bd82d8e326b415cec92dddd5fcc5922db4ac201e875580"
+  },
+  {
+   "actor": "owner",
+   "op": "policy",
+   "outcome": "ok",
+   "detail": "Policy changed: allowedAssets",
+   "data": {
+    "maxPerLockEur": 10000,
+    "dailyLimitEur": 10000,
+    "requireSellerBadge": true,
+    "requireHumanRelease": true,
+    "approvedSuppliers": 0
+   },
+   "seq": 51,
+   "ts": "2026-11-23T08:06:43.541Z",
+   "prevHash": "94cba6a3591bb34a95bd82d8e326b415cec92dddd5fcc5922db4ac201e875580",
+   "hash": "944fe7cac5c640c250a4a23a33743f0cc09fbe10140e5d65a2d588090cb43550"
+  },
+  {
+   "actor": "agent",
+   "op": "create",
+   "lockId": "LCK-E60A8B",
+   "outcome": "ok",
+   "detail": "Lock opened for INV-NET-5521 (MTN Uganda (Business Internet)), €1,150, settles on Base Sepolia",
+   "data": {
+    "invoiceId": "INV-NET-5521",
+    "amountEur": 1150,
+    "status": "created"
+   },
+   "seq": 52,
+   "ts": "2026-11-23T08:11:04.832Z",
+   "prevHash": "944fe7cac5c640c250a4a23a33743f0cc09fbe10140e5d65a2d588090cb43550",
+   "hash": "72a3f8445a752bb2af4804b68e32afcd7decdd5875fda19bbd4a2aa46ff763e2"
+  },
+  {
+   "actor": "agent",
+   "op": "fund",
+   "lockId": "LCK-E60A8B",
+   "outcome": "ok",
+   "detail": "€1,150 set aside against today's budget",
+   "data": {
+    "invoiceId": "INV-NET-5521",
+    "amountEur": 1150,
+    "status": "funded"
+   },
+   "seq": 53,
+   "ts": "2026-11-23T08:11:04.937Z",
+   "prevHash": "72a3f8445a752bb2af4804b68e32afcd7decdd5875fda19bbd4a2aa46ff763e2",
+   "hash": "d9022d05f96d5662395e379a3824c8dadf30fde66a48251ff64c2878bd04ec90"
+  },
+  {
+   "actor": "agent",
+   "op": "send",
+   "lockId": "LCK-E60A8B",
+   "outcome": "ok",
+   "detail": "Checks passed: payee on Base Sepolia, CIS-8 linked to Verified by Concordium owner 3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8, within limits. Awaiting human release.",
+   "data": {
+    "invoiceId": "INV-NET-5521",
+    "amountEur": 1150,
+    "status": "sent",
+    "badgeVerified": true
+   },
+   "seq": 54,
+   "ts": "2026-11-23T08:11:07.044Z",
+   "prevHash": "d9022d05f96d5662395e379a3824c8dadf30fde66a48251ff64c2878bd04ec90",
+   "hash": "c4c648306d895043263c8bcca7ff39a4b0f9535cdf96ebb04c5c8ea3abc55b40"
+  },
+  {
+   "actor": "agent",
+   "op": "chat",
+   "outcome": "ok",
+   "detail": "Owner asked: \"pay the internet invoice\" → prepare_payment",
+   "data": {
+    "mode": "builtin"
+   },
+   "seq": 55,
+   "ts": "2026-11-23T08:11:07.132Z",
+   "prevHash": "c4c648306d895043263c8bcca7ff39a4b0f9535cdf96ebb04c5c8ea3abc55b40",
+   "hash": "03e247e891af8c95a3b768412d23420d5f97a7c53b2639aad957533825b98242"
+  },
+  {
+   "actor": "owner",
+   "op": "approve",
+   "lockId": "LCK-E60A8B",
+   "outcome": "ok",
+   "detail": "Release signed by owner wallet 39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "data": {
+    "invoiceId": "INV-NET-5521",
+    "amountEur": 1150,
+    "status": "sent",
+    "account": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd"
+   },
+   "seq": 56,
+   "ts": "2026-11-23T08:12:23.693Z",
+   "prevHash": "03e247e891af8c95a3b768412d23420d5f97a7c53b2639aad957533825b98242",
+   "hash": "41e7973af62ad67aa088688cc48a060bfd75d9c208fdb562f58f651cdaa5862e"
+  },
+  {
+   "actor": "owner",
+   "op": "release",
+   "lockId": "LCK-E60A8B",
+   "outcome": "ok",
+   "detail": "Released by owner: €1,150 settled on Base Sepolia as 1.15 EURC (fee sponsored)",
+   "data": {
+    "invoiceId": "INV-NET-5521",
+    "amountEur": 1150,
+    "status": "released",
+    "txHash": "0xce9298625089a76251949cefc91a914886ecc4bcd8497a5db3770ca5bf9bba7e"
+   },
+   "seq": 57,
+   "ts": "2026-11-23T08:12:31.434Z",
+   "prevHash": "41e7973af62ad67aa088688cc48a060bfd75d9c208fdb562f58f651cdaa5862e",
+   "hash": "313bc18062652647dd369c4f3afbb6ce876e1dd1a14691ddc5309a4257ae353e"
+  },
+  {
+   "actor": "owner",
+   "op": "fund",
+   "lockId": "LCK-310091",
+   "outcome": "refused",
+   "detail": "€12,500 is over the per-payment limit of €10,000",
+   "data": {
+    "invoiceId": "INV-CON-0007",
+    "amountEur": 12500,
+    "status": "created"
+   },
+   "seq": 58,
+   "ts": "2026-11-23T08:16:39.599Z",
+   "prevHash": "313bc18062652647dd369c4f3afbb6ce876e1dd1a14691ddc5309a4257ae353e",
+   "hash": "49cd83fb3a54d0b16a040960f406e5de13741a45d9c13fc11fbff8787bc33aff"
   }
  ],
  "receipts": [
@@ -1074,6 +1545,73 @@
    "ts": "2026-11-20T13:26:38.382Z",
    "prevHash": "c4729e4b8e400153c86a6d633616270b662ce978921f6d190ef277983eaecc37",
    "hash": "b29a2b89172b3dbda152be081e1c6e53c055b9a6e5f2ff54c1999f78f23df6ec"
+  },
+  {
+   "role": "seller",
+   "resource": "/invoices/INV-PRO-2231/pay",
+   "buyerAccount": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "buyerBadge": "JyP9U3BHQRbFTuQx4N1Gn",
+   "sellerAccount": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+   "sellerBadge": "JyP9TwhskJ6cKHDzW23Yj",
+   "amount": "242000",
+   "asset": "CCD",
+   "network": "ccd:4221332d34e1694168c2a0c0b3fd0f27",
+   "txHash": "59db71e19c2573ebab84bda8a5a7fce95f5de1dfbaa9efb8b474cd77fe2106c6",
+   "seq": 9,
+   "ts": "2026-11-21T06:57:25.243Z",
+   "prevHash": "b29a2b89172b3dbda152be081e1c6e53c055b9a6e5f2ff54c1999f78f23df6ec",
+   "hash": "4accf6727462f6e33af7951e6f4117c8b8350b88d33c8a2c975a867d21946e08"
+  },
+  {
+   "role": "buyer",
+   "resource": "http://localhost:4021/invoices/INV-PRO-2231/pay",
+   "purpose": "Lock LCK-E20A24: pay INV-PRO-2231 (Entebbe Fresh Produce)",
+   "buyerAccount": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "buyerBadge": "JyP9U3BHQRbFTuQx4N1Gn",
+   "sellerAccount": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+   "amount": "242000",
+   "asset": "CCD",
+   "network": "ccd:4221332d34e1694168c2a0c0b3fd0f27",
+   "txHash": "59db71e19c2573ebab84bda8a5a7fce95f5de1dfbaa9efb8b474cd77fe2106c6",
+   "explorerUrl": "https://ccdexplorer.io/testnet/transaction/59db71e19c2573ebab84bda8a5a7fce95f5de1dfbaa9efb8b474cd77fe2106c6",
+   "seq": 10,
+   "ts": "2026-11-21T06:57:25.245Z",
+   "prevHash": "4accf6727462f6e33af7951e6f4117c8b8350b88d33c8a2c975a867d21946e08",
+   "hash": "fc7cd005bf71dbbe98afa43a3b11f3d373c86e970b570ea7edb6ac31a22d9285"
+  },
+  {
+   "role": "buyer",
+   "resource": "http://localhost:4021/invoices/INV-NET-5521/pay/base",
+   "purpose": "Lock LCK-E60A8B: pay INV-NET-5521 (MTN Uganda (Business Internet))",
+   "buyerBadge": "JyP9U3BHQRbFTuQx4N1Gn",
+   "buyerAccount": "0xaD75bF7Bb67AEe0462d3F770df621534350ffE65",
+   "sellerAccount": "0x0288658cE06d2eF1F63b4C7e1e9072aE8cFde4BC",
+   "sellerOwner": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+   "amount": "1150000",
+   "asset": "EURC",
+   "network": "eip155:84532",
+   "txHash": "0xce9298625089a76251949cefc91a914886ecc4bcd8497a5db3770ca5bf9bba7e",
+   "explorerUrl": "https://sepolia.basescan.org/tx/0xce9298625089a76251949cefc91a914886ecc4bcd8497a5db3770ca5bf9bba7e",
+   "seq": 11,
+   "ts": "2026-11-23T08:12:31.429Z",
+   "prevHash": "fc7cd005bf71dbbe98afa43a3b11f3d373c86e970b570ea7edb6ac31a22d9285",
+   "hash": "9574abe8d484e298606f661d479e3f3d0543ecd2de1cb8bc83b112ea7e134f3e"
+  },
+  {
+   "role": "seller",
+   "resource": "/invoices/INV-NET-5521/pay/base",
+   "buyerAccount": "0xaD75bF7Bb67AEe0462d3F770df621534350ffE65",
+   "buyerBadge": "JyP9U3BHQRbFTuQx4N1Gn",
+   "sellerAccount": "0x0288658cE06d2eF1F63b4C7e1e9072aE8cFde4BC",
+   "sellerBadge": "JyP9TwhskJ6cKHDzW23Yj",
+   "amount": "1150000",
+   "asset": "EURC",
+   "network": "eip155:84532",
+   "txHash": "0xce9298625089a76251949cefc91a914886ecc4bcd8497a5db3770ca5bf9bba7e",
+   "seq": 12,
+   "ts": "2026-11-23T08:12:31.438Z",
+   "prevHash": "9574abe8d484e298606f661d479e3f3d0543ecd2de1cb8bc83b112ea7e134f3e",
+   "hash": "5de5880dfcdcf55241c07d3273306e23c5644b7c54244e1323ca7f4f30f90eb1"
   }
  ],
  "anchors": [
@@ -1110,6 +1648,30 @@
    "receiptHash": "b29a2b89172b3dbda152be081e1c6e53c055b9a6e5f2ff54c1999f78f23df6ec",
    "txHash": "fb3325d2e26412b6bc1422857c45fb28d32d120aea9e0fa8de52261b4c398af2",
    "explorerUrl": "https://ccdexplorer.io/testnet/transaction/fb3325d2e26412b6bc1422857c45fb28d32d120aea9e0fa8de52261b4c398af2",
+   "sender": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "finalized": true
+  },
+  {
+   "at": "2026-11-21T06:58:22.973Z",
+   "data": "cord:audit:v1|a=43:c6b6d5aa8174c8b7a6833974717312d0a0862f1fb0f51a1541c8ea3dcd7317bd|r=10:fc7cd005bf71dbbe98afa43a3b11f3d373c86e970b570ea7edb6ac31a22d9285",
+   "auditSeq": 43,
+   "auditHash": "c6b6d5aa8174c8b7a6833974717312d0a0862f1fb0f51a1541c8ea3dcd7317bd",
+   "receiptSeq": 10,
+   "receiptHash": "fc7cd005bf71dbbe98afa43a3b11f3d373c86e970b570ea7edb6ac31a22d9285",
+   "txHash": "c388b0d335a5fd733e0685b3cc42515ab14ca5bb735914ba5931f6d2e51d0c4f",
+   "explorerUrl": "https://ccdexplorer.io/testnet/transaction/c388b0d335a5fd733e0685b3cc42515ab14ca5bb735914ba5931f6d2e51d0c4f",
+   "sender": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "finalized": true
+  },
+  {
+   "at": "2026-11-21T07:10:02.878Z",
+   "data": "cord:audit:v1|a=44:d64835ee519166d2cbd304c3283eb53224860bef74f0295d54b627f3ea31643f|r=10:fc7cd005bf71dbbe98afa43a3b11f3d373c86e970b570ea7edb6ac31a22d9285",
+   "auditSeq": 44,
+   "auditHash": "d64835ee519166d2cbd304c3283eb53224860bef74f0295d54b627f3ea31643f",
+   "receiptSeq": 10,
+   "receiptHash": "fc7cd005bf71dbbe98afa43a3b11f3d373c86e970b570ea7edb6ac31a22d9285",
+   "txHash": "eb531dca2315a8adde354daf9ee11a1b2516cdccfb2691ae4e647da0c7b0df19",
+   "explorerUrl": "https://ccdexplorer.io/testnet/transaction/eb531dca2315a8adde354daf9ee11a1b2516cdccfb2691ae4e647da0c7b0df19",
    "sender": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
    "finalized": true
   }

@@ -33,5 +33,22 @@ Owner page → **Policy → Suppliers on other blockchains** → pick the chain 
 or EVM public key (or click **Sign with MetaMask** while the supplier's wallet is connected) → **Verify**.
 If the result is *Verified by Concordium*, **Add to approved suppliers** and save the policy.
 
-Payment still settles on Concordium, to the linked agent's verified owner account. Settling directly on
-the supplier's own chain (x402 `exact` on Base USDC or Solana) is the next step.
+Kakasa can then pay the supplier on its own chain, in EURC through x402 `exact` (Base Sepolia, Solana devnet),
+or its verified owner on Concordium. See "Settlement on Base and Solana" in the README.
+
+## Linking TenderScout's own keys (demo)
+`npm run wallets` creates TenderScout's Base and Solana keys; `npm run link-keys -- base` / `-- solana` signs the
+registry's canonical bytes with them, builds the CIS-8 `register` call and dry-runs it; the owner then sends it from
+the dashboard (Policy → *Link TenderScout's keys*). A key bound to an owner account that already runs a
+Verified by Concordium agent counts as verified, without registering a new agent.
+
+Both links are live on testnet (23 Nov 2026), owned by `3wT8KD…Ph6h8`:
+
+| Chain | TenderScout key | CIS-8 link transaction |
+|---|---|---|
+| Base Sepolia | `0x0288658cE06d2eF1F63b4C7e1e9072aE8cFde4BC` | [f8d6c932…](https://ccdexplorer.io/testnet/transaction/f8d6c93210790ba53a71b65bb93e0a3932b44ee295c692ac518292d38f352aff) |
+| Solana devnet | `GDmQ2WahUCmVJ529aDUoRTtBehXnj3Q8Sv1RYGRU737R` | [978a836f…](https://ccdexplorer.io/testnet/transaction/978a836f7057424ff98aa2644e3b2b3ecdbf07455f29e67355c8694398f79525) |
+
+The first payment through a link settled on Base Sepolia:
+[0xce929862…](https://sepolia.basescan.org/tx/0xce9298625089a76251949cefc91a914886ecc4bcd8497a5db3770ca5bf9bba7e)
+(MTN Uganda invoice, 1.15 EURC).

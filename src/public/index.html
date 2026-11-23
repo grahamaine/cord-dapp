@@ -58,13 +58,14 @@
 <div class="aurora"><div class="grid-lines"></div></div>
 <header class="topbar">
   <div class="wrap">
+    <button class="back-btn" id="back-btn" type="button" aria-label="Go back">&larr; Back</button>
     <a class="brand" href="/">
       <img class="logo-img" src="/assets/brand/kakasa-mark-128.png" alt="" width="38" height="38" />
       {{APP_NAME}}
     </a>
     <span class="net" id="net">TESTNET</span>
     <nav class="top-links collapsible">
-      <a href="#how">How it works</a><a href="#locks">Locks</a><a href="#ai-act">EU AI Act</a><a href="#live">Live agents</a><a href="/judge">Judge view</a><a href="https://github.com/grahamaine/cord-dapp">GitHub</a>
+      <a href="#how">How it works</a><a href="#locks">Locks</a><a href="#ai-act">EU AI Act</a><a href="#live">Live agents</a><a href="/judge">Judge view</a><a class="agent-link" href="{{AGENT_URL}}" target="_blank" rel="noopener">AI agent ↗</a><a href="https://github.com/grahamaine/cord-dapp">GitHub</a>
     </nav>
   </div>
 </header>
@@ -78,6 +79,7 @@
       <div class="cta">
         <a class="btn btn-primary" href="#live">See the live agents</a>
         <a class="btn btn-outline" href="/judge">Verify the records</a>
+        <a class="btn btn-outline" href="{{AGENT_URL}}" target="_blank" rel="noopener" title="Runs on the owner's computer ({{AGENT_URL_LABEL}})">Open the AI agent</a>
         <a class="btn btn-outline" href="https://github.com/grahamaine/cord-dapp">View the code</a>
       </div>
     </div>
@@ -197,7 +199,7 @@
       <div class="card hover"><h3>Verified by Concordium</h3><p>Ties every agent to an identity-verified owner account. Checked by both sides.</p></div>
       <div class="card hover"><h3>x402 payments</h3><p>The supplier answers "402 Payment Required"; the buyer pays and retries in one flow.</p></div>
       <div class="card hover"><h3>Sponsored transactions</h3><p>Kakasa's facilitator pays network fees, so small invoices stay cheap.</p></div>
-      <div class="card hover"><h3>Stablecoins · PLT</h3><p>Invoices priced in a stablecoin such as USDR at full value. On testnet, small CCD amounts.</p></div>
+      <div class="card hover"><h3>Stablecoins · PLT</h3><p>Invoices settle in a euro stablecoin such as EURR at full value: a €1,850 invoice pays 1,850 EURR. Data calls and early test payments used small CCD amounts.</p></div>
       <div class="card hover"><h3>MCP</h3><p>An owner can instruct the purchasing agent through Claude or any MCP client.</p></div>
     </div>
   </section>
@@ -250,22 +252,37 @@ async function load() {
 
   $("#h-pay").textContent = o.totals.count;
   $("#p-count").textContent = o.totals.count;
-  $("#p-total").textContent = ccd(o.totals.amount);
+  $("#p-total").textContent = (o.totals.byAsset && o.totals.byAsset.length) ? o.totals.byAsset.join(" + ") : ccd(o.totals.amount);
   const fmtCcd = (atomic) => (Number(atomic) / 1e6).toLocaleString(undefined, { maximumFractionDigits: 2 }) + " CCD";
   $("#accounts").innerHTML = (o.accounts || []).map((a) => `<div class="card hover">
       <div class="kicker" style="margin-bottom:.3rem">${esc(a.name)}</div>
       <p class="muted" style="margin:0 0 .8rem">${esc(a.role)}</p>
       <div class="mono" style="font-size:.85rem;word-break:break-all">${esc(a.address)}</div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.9rem;gap:.5rem;flex-wrap:wrap">
-        <b style="font-size:1.25rem;font-weight:500">${a.balance != null ? fmtCcd(a.balance) : "–"}</b>
+        <b style="font-size:1.25rem;font-weight:500">${a.balance != null ? fmtCcd(a.balance) : "–"}${(a.tokens || []).map((t) => `<br><span style="font-size:1rem">${esc(t.display)}</span>`).join("")}</b>
         <a href="${esc(a.explorerUrl)}" target="_blank" rel="noopener">CCDExplorer ↗</a></div></div>`).join("") || `<div class="card empty">No accounts configured.</div>`;
   $("#payments").innerHTML = o.payments.length
-    ? o.payments.map((p) => `<tr><td>${esc(when(p.time))}</td><td>${esc(names[p.from] || short(p.from))} → ${esc(names[p.to] || "TenderScout")}</td><td class="r">${ccd(p.amount)}</td><td><a class="mono" href="${esc(p.explorerUrl)}" target="_blank" rel="noopener">${esc(short(p.txHash))} ↗</a></td></tr>`).join("")
+    ? o.payments.map((p) => `<tr><td>${esc(when(p.time))}</td><td>${esc(names[p.from] || short(p.from))} → ${esc(names[p.to] || "TenderScout")}</td><td class="r">${esc(p.display || ccd(p.amount))}</td><td><a class="mono" href="${esc(p.explorerUrl)}" target="_blank" rel="noopener">${esc(short(p.txHash))} ↗</a></td></tr>`).join("")
     : `<tr><td colspan="4" class="empty">${esc(o.paymentsError || "No verified payments yet. The first one appears here within a minute of settling.")}</td></tr>`;
   $("#updated").textContent = `Updated ${when(o.updatedAt)} · refreshes every 30 seconds`;
 }
 load();
 setInterval(load, 30000);
+</script>
+<script>
+  // Back button: steps back through sections you jumped to on this page, then to the previous Kakasa page,
+  // otherwise goes to the home page (or the top of it).
+  (() => {
+    let hops = 0;
+    const internal = () => { try { return !!document.referrer && new URL(document.referrer).origin === location.origin; } catch { return false; } };
+    document.addEventListener("click", (e) => { const a = e.target.closest && e.target.closest('a[href^="#"]'); if (a && a.getAttribute("href").length > 1) hops++; });
+    addEventListener("popstate", () => { hops = Math.max(0, hops - 1); });
+    document.getElementById("back-btn").addEventListener("click", () => {
+      if (hops > 0 || (internal() && history.length > 1)) history.back();
+      else if (location.pathname !== "/") location.href = "/";
+      else { history.replaceState(null, "", location.pathname); scrollTo({ top: 0, behavior: "smooth" }); }
+    });
+  })();
 </script>
 </body>
 </html>

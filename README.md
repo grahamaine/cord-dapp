@@ -31,7 +31,21 @@ receipts (8) chains intact, all 3 anchors match their on-chain data, all 4 payme
 | Audit anchor: entries 1–35, receipts 1–8 | | owner | [c5c36694…](https://ccdexplorer.io/testnet/transaction/c5c36694428de46b6d49d29d00399827ddf4eb347c54b6ab0911ec4b8b79ddca) |
 | Audit anchor: entries 1–36, receipts 1–8 | | owner | [fb3325d2…](https://ccdexplorer.io/testnet/transaction/fb3325d2e26412b6bc1422857c45fb28d32d120aea9e0fa8de52261b4c398af2) |
 
-Every payment was a sponsored transaction (the Kakasa facilitator paid the fee) to a supplier agent that is
+**Live proof on Base and Solana (23 Nov 2026).** TenderScout's Base Sepolia and Solana devnet keys are linked
+through CIS-8 to its identity-verified Concordium owner, and ProcureBot paid a supplier invoice in EURC on Base
+only after checking that link.
+
+| What happened | Amount | Who did it | Transaction |
+|---|---|---|---|
+| TenderScout's Base Sepolia key linked (CIS-8) | | supplier's owner, wallet-signed | [f8d6c932…](https://ccdexplorer.io/testnet/transaction/f8d6c93210790ba53a71b65bb93e0a3932b44ee295c692ac518292d38f352aff) (Concordium) |
+| TenderScout's Solana devnet key linked (CIS-8) | | supplier's owner, wallet-signed | [978a836f…](https://ccdexplorer.io/testnet/transaction/978a836f7057424ff98aa2644e3b2b3ecdbf07455f29e67355c8694398f79525) (Concordium) |
+| MTN Uganda internet invoice paid on **Base Sepolia** | €1,150 = 1.15 EURC | agent prepared, owner signed Release | [0xce929862…](https://sepolia.basescan.org/tx/0xce9298625089a76251949cefc91a914886ecc4bcd8497a5db3770ca5bf9bba7e) (BaseScan) |
+| Corporate Security Services invoice on **Solana devnet** | €3,200 = 3.2 EURC | agent prepared, awaiting owner Release | pending |
+
+The Base payment's gas was paid by the public x402 facilitator, so neither agent holds ETH. See
+[Settlement on Base and Solana](#settlement-on-base-and-solana-eurc).
+
+Every Concordium payment was a sponsored transaction (the Kakasa facilitator paid the fee) to a supplier agent that is
 **Verified by Concordium**. Both agents are verified (see [Live on testnet](#live-on-testnet)).
 
 **Who it's for:** any Ugandan organisation that regularly pays service providers and suppliers —
@@ -41,6 +55,12 @@ construction and facilities firms, logistics companies, and public bodies runnin
 **Lead example:** a hotel in Entebbe paying its regular providers — laundry, fresh produce, airport
 transfers, maintenance. The same flow covers other recurring service bills: security, cleaning,
 internet and telecoms, utilities, fuel, catering, transport and equipment servicing.
+
+The demo invoices name **real businesses that serve Entebbe hotels** (Mother Laundry, Pure Grow Africa, Airport
+Taxi Services, Handymen Uganda, Corporate Security Services, MTN Uganda Business Internet, Excel Construction).
+The invoices themselves are illustrative: numbers, dates and amounts are made up, and on testnet every payment
+goes to TenderScout's demo accounts, not to these companies. **Tenders are live** from Uganda's Government
+Procurement Portal (see [Live public tenders](#live-public-tenders)).
 
 ## The problem
 Ugandan organisations pay many service providers and suppliers, large and small. The recurring risks are fake or duplicate suppliers,
@@ -80,14 +100,14 @@ https://agent-registry-mcp.concordium.com/v1/badge-check/JyP9U3BHQRbFTuQx4N1Gn
 ## Concordium components used
 | Component | Where |
 |---|---|
-| x402 payments (`@x402/concordium`, exact scheme) | `src/seller/server.ts`, `src/buyer/procurebot.ts` |
+| x402 payments (`@x402/concordium`, exact scheme) | `src/seller/server.ts`, `src/buyer/procurebot.ts`; the same flow also settles EURC on Base Sepolia and Solana devnet (`@x402/evm`, `@x402/svm`) |
 | Sponsored transactions | `src/facilitator/server.ts`: Kakasa's facilitator pays every network fee |
 | Agent Registry (CIS-8004) + Agent Cards | `src/scripts/build-card.ts`, served at `/.well-known/agent-card.json` |
 | Verified by Concordium badge | `src/lib/badge.ts`: checked by the seller (buyer badge) and the buyer (payee badge) |
-| Protocol-Level Tokens | set `PRICE_ASSET` / `ALLOWED_ASSETS` to a PLT such as USDR (planned) |
+| Protocol-Level Tokens | `INVOICE_ASSET=EURR`: invoices settle in a PLT stablecoin at full value (`src/lib/eur.ts`, `src/lib/plt.ts`), see [Paying in a stablecoin](#paying-in-a-stablecoin-eurr) |
 | MCP | `src/mcp/server.ts` lets Claude or any MCP client drive ProcureBot |
 | Wallet signatures (browser + WalletConnect) | `src/lib/approval.ts`: every Release is signed by an owner account and verified on-chain |
-| CIS-8 external keys | `src/lib/xchain.ts`: verify suppliers on Base, Ethereum or Solana through their Concordium link |
+| CIS-8 external keys | `src/lib/xchain.ts`, `src/lib/payee.ts`: a Base or Solana payee is paid only if its key is CIS-8 linked to an identity-verified Concordium owner; `npm run link-keys` links TenderScout's keys |
 | RegisterData anchoring | `src/lib/anchor.ts`: audit log + receipt hashes written on-chain |
 
 ## Payment locks: five operations, one human decision
@@ -111,8 +131,31 @@ signature against the account's on-chain keys and that the account is an authori
 the audit log.
 
 "Fund" reserves budget in Kakasa's records; it does not move money into an on-chain escrow. Money moves once,
-on release. On testnet each EUR amount settles as a small CCD amount at a fixed demo rate
-(`DEMO_ATOMIC_PER_EUR`, default €1,000 = 0.1 CCD); in production invoices would be paid in a euro stablecoin.
+on release, in the invoice's settlement asset: a euro stablecoin such as EURR at full value (€1,850 = 1,850 EURR),
+or, in demo mode, a small CCD amount at a fixed rate (`DEMO_ATOMIC_PER_EUR`, default €1,000 = 0.1 CCD).
+
+## Paying in a stablecoin (EURR)
+Invoices can settle in any Protocol-Level Token (PLT) at full value. The x402 payment is a sponsored
+`TokenUpdate` transfer, so ProcureBot still needs no CCD for fees, and the facilitator checks ProcureBot's token
+balance before it sponsors anything. Limits stay in EUR: Kakasa converts each payment with the token's EUR value
+(1 for EUR tokens, `ASSET_EUR_<SYMBOL>` for others) and refuses tokens it has no rate for, rather than guessing.
+
+1. **Get test tokens.** There is no public faucet for PLTs. Use a test EURR/USDR supply from the issuer or the
+   hackathon team, or request your own testnet PLT through Concordium's
+   [issuance request form](https://docs.concordium.com/en/mainnet/tutorials/plt/request-plt.html) and mint from its
+   governance account. Send some to the ProcureBot account. If the token uses an allow list, ProcureBot and
+   TenderScout must both be on it.
+2. **Configure.** In `.env`: `INVOICE_ASSET=EURR` (and `INVOICE_ASSET_DECIMALS` if it isn't 6). Add the token to the
+   allowed assets on the owner page (Policy tab) or in `ALLOWED_ASSETS`.
+3. **Check.** `npm run doctor` lists the tokens on the network and checks the token exists, its decimals, the EUR rate,
+   the policy and ProcureBot's balance.
+4. **Restart** the seller and the dashboard. Invoices now show "settles as 1,850 EURR", ProcureBot says "paid as
+   1,850 EURR", the over-cap invoice is refused at 12,500 EURR, and released payments appear on the judge view and the
+   public site with their EURR amount.
+
+Data calls (tenders, benchmarks) keep their own price asset (`PRICE_ASSET`), so you can sell data in CCD and pay
+invoices in EURR. Receipts and locks record the asset of every payment, so earlier CCD payments still count
+correctly towards today's limit.
 
 ## Suppliers on other blockchains
 Agents on Ethereum, Base, Solana, Fetch.ai and other chains can link their key to a Concordium agent
@@ -121,8 +164,45 @@ through the **CIS-8 external key registry** (testnet contract `12801.0`). On the
 or EVM public key, or let the supplier sign once with MetaMask so Kakasa can recover the key. Kakasa calls
 the registry's `owner_of_key` and `agent_by_external_reference` tools, then runs the normal
 Verified by Concordium badge check on the linked agent. A verified supplier can be added to the
-approved list; payment still settles on Concordium to its verified owner account. Settling on the other
-chain (x402 on Base or Solana) is planned. How to link a key: see `docs/cross-chain.md`.
+approved list and paid **on its own chain** (next section) or on Concordium. How to link a key: see `docs/cross-chain.md`.
+
+## Settlement on Base and Solana (EURC)
+A supplier whose agent lives on Base or Solana can be paid there, in Circle's euro stablecoin **EURC**, with the
+same five-step lock, owner limits and wallet-signed Release. The demo has one invoice on each:
+**MTN Uganda, €1,150 on Base Sepolia** and **Corporate Security Services, €3,200 on Solana devnet**.
+
+- **Accountability gate:** before signing, ProcureBot looks the payee's key up in the CIS-8 registry. It pays only if
+  the key is linked (Active) to a Concordium owner that is identity-verified: the agent that references the key has a
+  valid badge, or the owner account already runs a Verified by Concordium agent. Otherwise the payment is refused
+  before any signature exists, with the reason. An EVM address doesn't reveal its public key, so TenderScout
+  publishes it at `/.well-known/payee-keys.json`; ProcureBot accepts it only if it derives to the payee address.
+- **Fees:** the free public x402 facilitator (`https://x402.org/facilitator`) pays the gas, so neither agent needs
+  ETH or SOL. Base uses EIP-3009 `transferWithAuthorization`; Solana uses an SPL transfer with the facilitator as fee payer.
+- **Scale:** testnet faucets give 10 EURC a day, so amounts use a demo scale of **€1,000 = 1 EURC**
+  (`ASSET_EUR_EURC`, set 1 for full value). Limits are still checked in EUR.
+- **Records:** receipts and locks record the chain; the dashboard and judge view link to BaseScan or Solana Explorer, and
+  the judge view checks each Base / Solana payment on its own chain's public RPC.
+- **Isolation:** Base/Solana routes use their own x402 server, so a facilitator outage can't block Concordium payments.
+
+Set it up:
+1. `npm run wallets` creates the test wallets in `.env` (ProcureBot pays, TenderScout gets paid) and prints the addresses.
+2. Get test EURC at https://faucet.circle.com for ProcureBot on **Base Sepolia** and **Solana Devnet**, and once
+   for TenderScout's Solana address (so it has a EURC account to receive into).
+3. `npm run link-keys -- base` and `npm run link-keys -- solana` prove TenderScout's keys and dry-run the CIS-8
+   `register` call; then send each from the dashboard (Policy → *Link TenderScout's keys* → **Send with wallet**)
+   with the browser wallet on TenderScout's owner account (`SELLER_OWNER`).
+4. Add **EURC** to the allowed assets in the Policy tab. If you use an approved-supplier list, verify TenderScout's
+   Base and Solana addresses there and press **Add to approved suppliers**.
+5. `npm run doctor` checks it all (EURC balances, token details, facilitator, CIS-8 links). Restart the seller and dashboard.
+
+## Live public tenders
+TenderScout sells open tenders from **Uganda's Government Procurement Portal (GPP)**, using PPDA's official OCDS open
+data (the source the Open Contracting Partnership's data registry uses; licence ODC-By). `npm run tenders` requests
+the current fiscal year's export, keeps bid notices whose deadline is still ahead and that have no award, sorts them
+into sectors (hospitality, food, health, IT, construction, security, transport, education, supplies, services) and
+saves `data/tenders.json`. The seller also refreshes it in the background every 6 hours and falls back to the last
+copy if GPP is unreachable. `npm run publish:judge` commits the file so the Vercel copy sells the same list.
+Ask the Agent tab "find hospitality tenders".
 
 ## EU AI Act alignment
 Kakasa prepares business-to-business supplier payments, which is not on the AI Act's high-risk list, but it
@@ -227,7 +307,8 @@ Dry-run each transaction with `invokeContract` first, and let the wallet encode 
 contract's embedded schema. Testnet contracts: CIS-8004 `12802.0`, CIS-8 `12801.0`.
 
 ## Path to production
-Mainnet network + registry contract; invoices priced in a stablecoin (USDR) at full value; the facilitator
+Mainnet network + registry contract; invoices priced in a euro stablecoin at full value (EURR on Concordium,
+EURC on Base and Solana for suppliers whose agents live there, still gated by CIS-8 links); the facilitator
 run as a paid service; pilots with organisations in several sectors (starting with hospitality, then
 health, education and NGOs), each with its own buyer agent and spending policy; service providers
 registering their own verified supplier agents; receipts mirrored to storage and periodically
@@ -247,8 +328,17 @@ partner (planned, not built).
 - [x] Cross-chain supplier verification via CIS-8 (Base, Ethereum, Solana)
 - [x] `npm run doctor` and `npm run audit:verify` checks
 
-**Next (final, 9 Dec):** euro stablecoin pricing, settlement on Base and Solana, real supplier and tender data,
-demo video. Invoice, tender and price data in `src/seller/data.ts` is still sample data.
+**Since Checkpoint 1:**
+- [x] Euro stablecoin settlement: invoices pay in EURR (or any PLT) at full value, with limits checked in EUR
+- [x] Settlement on Base Sepolia and Solana devnet in EURC, gated by CIS-8 links to verified Concordium owners
+- [x] Live public tenders from Uganda's Government Procurement Portal (PPDA open data)
+- [x] Invoices name real Entebbe suppliers (illustrative amounts)
+- [ ] First live EURR payment on testnet (needs test EURR in the ProcureBot account)
+- [x] TenderScout's Base Sepolia and Solana devnet keys linked through CIS-8 (23 Nov, table at the top)
+- [x] First live EURC payment on Base Sepolia: MTN Uganda €1,150 (23 Nov)
+- [ ] First live EURC payment on Solana devnet: Corporate Security Services €3,200
+
+**Next (final, 9 Dec):** demo video. Price benchmarks in `src/seller/data.ts` are still sample data.
 
 ---
 

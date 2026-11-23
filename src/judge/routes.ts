@@ -15,13 +15,18 @@ import { credentials } from "@grpc/grpc-js";
 import { ConcordiumGRPCNodeClient } from "@concordium/web-sdk/nodejs";
 import { TransactionHash } from "@concordium/web-sdk";
 import { getExplorerTxUrl } from "@x402/concordium";
+import { chainByNetwork, explorerTx, xchainTxStatus } from "../lib/chains.js";
 import { config } from "../lib/config.js";
 import { verifyAuditEntries, type AuditEntry } from "../lib/audit.js";
 import { verifyReceiptEntries, type Receipt } from "../lib/receipts.js";
 import type { Anchor } from "../lib/anchor.js";
 import type { Lock } from "../lib/locks.js";
+import { fmtAtomic } from "../lib/eur.js";
 
 const APP_NAME = process.env.APP_NAME || "Kakasa";
+// Where the AI agent (owner dashboard) runs. It holds a key, so it isn't on Vercel; set AGENT_URL to a tunnel link to override.
+const AGENT_URL = process.env.AGENT_URL || "http://localhost:4030/#agent";
+const AGENT_URL_LABEL = AGENT_URL.replace(/^https?:\/\//, "").replace(/\/?#.*$/, "");
 const SNAPSHOT = "judge/snapshot.json";
 const PAGE = "src/judge/index.html";
 
@@ -37,7 +42,7 @@ const grpc = () => (client ??= new ConcordiumGRPCNodeClient(config.grpc.host, co
 const toJson = (v: unknown) => JSON.stringify(v, (_k, x) => (typeof x === "bigint" ? x.toString() : x));
 
 /** Look a transaction up on Concordium: finalized? succeeded? (+ the raw summary as text, for data checks) */
-async function onChain(txHash: string) {
+export async function onChain(txHash: string) {
   const st: any = await grpc().getBlockItemStatus(TransactionHash.fromHexString(txHash));
   if (st.status !== "finalized") return { finalized: false, success: false, text: "" };
   const summary = st.outcome?.summary;
@@ -45,10 +50,15 @@ async function onChain(txHash: string) {
   return { finalized: true, success: !failed, text: toJson(summary).toLowerCase(), blockHash: String(st.outcome?.blockHash ?? "") };
 }
 
+/** The records published by the owner (`npm run publish:judge`), or undefined if none yet. */
+export function readSnapshot(): Snapshot | undefined {
+  return existsSync(SNAPSHOT) ? JSON.parse(readFileSync(SNAPSHOT, "utf8")) : undefined;
+}
+
 let cache: { at: number; body: unknown } | undefined;
 async function build() {
-  if (!existsSync(SNAPSHOT)) return { published: false };
-  const s: Snapshot = JSON.parse(readFileSync(SNAPSHOT, "utf8"));
+  const s = readSnapshot();
+  if (!s) return { published: false };
   const auditCheck = verifyAuditEntries(s.audit);
   const receiptCheck = verifyReceiptEntries(s.receipts);
   const auditBySeq = new Map(s.audit.map((e) => [e.seq, e.hash]));
@@ -68,12 +78,15 @@ async function build() {
   }));
 
   const payments = await Promise.all(s.receipts.filter((r) => r.role === "buyer" && r.txHash).map(async (r) => {
+    const x = chainByNetwork(r.network);
+    const base = { seq: r.seq, ts: r.ts, purpose: r.purpose, resource: r.resource, amount: r.amount, asset: r.asset, display: fmtAtomic(r.amount, r.asset || "CCD"), to: r.sellerAccount, toOwner: r.sellerOwner ?? null, chain: x?.name ?? "Concordium", txHash: r.txHash, explorerUrl: r.explorerUrl || explorerTx(r.network, r.txHash!) };
     try {
-      const tx = await onChain(r.txHash!);
-      return { seq: r.seq, ts: r.ts, purpose: r.purpose, resource: r.resource, amount: r.amount, asset: r.asset, to: r.sellerAccount, txHash: r.txHash, explorerUrl: r.explorerUrl, onChain: tx.finalized && tx.success };
+      // Base / Solana payments are checked on their own chain (public RPC); Concordium ones on the node.
+      const tx = x ? await xchainTxStatus(r.network, r.txHash!) : await onChain(r.txHash!);
+      return { ...base, onChain: tx.finalized && tx.success };
     } catch (e) {
-      nodeReachable = false;
-      return { seq: r.seq, ts: r.ts, purpose: r.purpose, resource: r.resource, amount: r.amount, asset: r.asset, to: r.sellerAccount, txHash: r.txHash, explorerUrl: r.explorerUrl, onChain: null };
+      if (!x) nodeReachable = false;
+      return { ...base, onChain: null };
     }
   }));
 
@@ -91,7 +104,7 @@ async function build() {
       lastAnchorAt: lastAnchor?.at ?? null,
     },
     anchors, payments,
-    locks: s.locks.map((l) => ({ id: l.id, invoiceId: l.invoiceId, supplier: l.supplier, category: l.category, description: l.description, amountEur: l.amountEur, status: l.status, checks: l.checks, approval: l.approval ? { account: l.approval.account } : null, txHash: l.txHash, explorerUrl: l.explorerUrl, history: l.history })).reverse(),
+    locks: s.locks.map((l) => ({ id: l.id, invoiceId: l.invoiceId, supplier: l.supplier, category: l.category, description: l.description, amountEur: l.amountEur, settled: l.amount && l.asset ? fmtAtomic(l.amount, l.asset) : null, status: l.status, checks: l.checks, approval: l.approval ? { account: l.approval.account } : null, txHash: l.txHash, explorerUrl: l.explorerUrl, history: l.history })).reverse(),
     audit: [...s.audit].reverse(),
   };
 }
@@ -100,7 +113,7 @@ export function judgeRouter() {
   const r = Router();
   r.get("/judge", (_req, res) => {
     const html = existsSync(PAGE) ? readFileSync(PAGE, "utf8") : readFileSync(new URL("./index.html", import.meta.url), "utf8");
-    res.type("html").send(html.replaceAll("{{APP_NAME}}", APP_NAME));
+    res.type("html").send(html.replaceAll("{{APP_NAME}}", APP_NAME).replaceAll("{{AGENT_URL_LABEL}}", AGENT_URL_LABEL).replaceAll("{{AGENT_URL}}", AGENT_URL));
   });
   r.get("/api/judge", async (_req, res) => {
     try {

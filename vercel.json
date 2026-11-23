@@ -9,7 +9,7 @@
   "functions": {
     "api/index.ts": {
       "maxDuration": 60,
-      "includeFiles": "{data/agent-card.*.json,src/public/index.html,src/ui/cord.css,src/ui/brand/*,src/judge/index.html,judge/snapshot.json}"
+      "includeFiles": "{data/agent-card.*.json,src/public/index.html,src/ui/cord.css,src/ui/brand/*,src/judge/index.html,judge/snapshot.json,data/tenders.json}"
     }
   }
 }

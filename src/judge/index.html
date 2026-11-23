@@ -56,13 +56,14 @@
 <div class="aurora"><div class="grid-lines"></div></div>
 <header class="topbar">
   <div class="wrap">
+    <button class="back-btn" id="back-btn" type="button" aria-label="Go back">&larr; Back</button>
     <a class="brand" href="/">
       <img class="logo-img" src="/assets/brand/kakasa-mark-128.png" alt="" width="38" height="38" />
       {{APP_NAME}}
     </a>
     <span class="net">TESTNET · JUDGE VIEW</span>
     <nav class="top-links collapsible">
-      <a href="#checks">Checks</a><a href="#payments">Payments</a><a href="#locks">Locks</a><a href="#audit">Audit log</a><a href="/">About Kakasa</a><a href="https://github.com/grahamaine/cord-dapp">GitHub</a>
+      <a href="#checks">Checks</a><a href="#payments">Payments</a><a href="#locks">Locks</a><a href="#audit">Audit log</a><a href="/">About Kakasa</a><a class="agent-link" href="{{AGENT_URL}}" target="_blank" rel="noopener">AI agent ↗</a><a href="https://github.com/grahamaine/cord-dapp">GitHub</a>
     </nav>
   </div>
 </header>
@@ -74,6 +75,20 @@
     <p class="lead muted">These are the real records from Kakasa's owner dashboard: every payment lock, every agent decision and every owner approval.
       This page recomputes their hash chains and asks the Concordium node itself whether each anchor and payment is on-chain. It holds no keys and can't move money.</p>
     <div class="verdict" id="verdict"><span class="big">…</span><div><b>Checking against Concordium…</b><span class="muted">This takes a few seconds.</span></div></div>
+  </section>
+
+  <section class="section" id="try-agent" style="padding-top:2.5rem">
+    <div class="card" style="display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between">
+      <div style="max-width:640px">
+        <div class="kicker">Try the AI agent</div>
+        <h3 style="margin:.2rem 0 .4rem">ProcureBot's owner dashboard</h3>
+        <p class="muted" style="margin:0;font-size:.95rem">The agent holds a signing key, so it runs on the owner's computer, not on Vercel. On that computer it's at <code>{{AGENT_URL_LABEL}}</code>. To run it yourself: clone the repo, then <code>npm run facilitator</code>, <code>npm run seller</code> and <code>npm run web</code>.</p>
+      </div>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+        <a class="btn btn-primary" href="{{AGENT_URL}}" target="_blank" rel="noopener">Open the AI agent</a>
+        <a class="btn btn-outline" href="https://github.com/grahamaine/cord-dapp#run-it-testnet" target="_blank" rel="noopener">How to run it</a>
+      </div>
+    </div>
   </section>
 
   <section class="section" id="checks" style="padding-top:2.5rem">
@@ -125,7 +140,7 @@
     </div>
   </section>
 </main>
-<footer class="wrap">{{APP_NAME}} · Concordium "Make your Agents Accountable" hackathon · testnet · amounts are demo EUR, settled as small CCD amounts.</footer>
+<footer class="wrap">{{APP_NAME}} · Concordium "Make your Agents Accountable" hackathon · testnet · invoice amounts are in EUR; early payments settled as small CCD amounts at a demo rate, stablecoin payments at full value.</footer>
 <div class="agency-credit"><a href="https://github.com/grahamaine" target="_blank" rel="noopener"><img src="/assets/brand/thee-agency-mark-64.png" alt="" width="22" height="22"><span>Powered &amp; rendered by <strong>thee <span class="ag">AGENCY</span> Consults (UG) Limited</strong></span></a></div>
 
 <script>
@@ -161,21 +176,21 @@ function render() {
     check(c.auditChain.ok ? "ok" : "bad", "Audit log chain intact", c.auditChain.ok ? `All ${c.auditChain.count} entries link to the one before by SHA-256.` : `Broken at entry #${c.auditChain.brokenAt}.`),
     check(c.receiptChain.ok ? "ok" : "bad", "Receipt chain intact", c.receiptChain.ok ? `All ${c.receiptChain.count} payment receipts link correctly.` : `Broken at receipt #${c.receiptChain.brokenAt}.`),
     check(!c.nodeReachable ? "warn" : c.allAnchorsVerified ? "ok" : "bad", "Anchors match Concordium", !data.anchors.length ? "No anchor published yet." : !c.nodeReachable ? "Node not reachable right now." : c.allAnchorsVerified ? `Each anchor transaction is finalized and its data equals these records' hashes.` : "An anchor doesn't match these records."),
-    check(!c.nodeReachable ? "warn" : c.allPaymentsOnChain ? "ok" : "bad", "Payments are on-chain", !data.payments.length ? "No payments yet." : !c.nodeReachable ? "Node not reachable right now." : c.allPaymentsOnChain ? `Every payment receipt points to a finalized, successful Concordium transaction.` : "A receipt's transaction wasn't found or failed."),
+    check(!c.nodeReachable ? "warn" : c.allPaymentsOnChain ? "ok" : "bad", "Payments are on-chain", !data.payments.length ? "No payments yet." : !c.nodeReachable ? "Node not reachable right now." : c.allPaymentsOnChain ? `Every payment receipt points to a finalized, successful transaction on its chain (Concordium, Base Sepolia or Solana devnet).` : "A receipt's transaction wasn't found or failed."),
     check(unanchored > 0 ? "warn" : "ok", "Coverage", unanchored > 0 ? `${unanchored} newer entr${unanchored === 1 ? "y is" : "ies are"} after the last anchor (still chain-checked, not yet timestamped on-chain).` : "Every entry is covered by an on-chain anchor."),
   ].join("");
   $("#published").textContent = `Snapshot published ${new Date(data.publishedAt).toLocaleString()} from the owner's dashboard · ProcureBot ${short(data.accounts.procurebot)} · limits ${eur(data.policy.maxPerLockEur)} per payment, ${eur(data.policy.dailyLimitEur)} per day · human release ${data.policy.requireHumanRelease ? "required" : "off"}, owner signature ${data.policy.requireOwnerSignature ? "required" : "off"}.`;
 
   $("#pay").innerHTML = data.payments.length ? data.payments.map((p) => `<tr>
-      <td>${p.seq}</td><td>${esc(p.purpose)}<small>${when(p.ts)}</small></td><td class="r">${ccd(p.amount)}</td>
-      <td class="mono">${esc(short(p.to))}</td>
-      <td><span class="chip ${tri(p.onChain)}"><i></i>${p.onChain === true ? "finalized" : p.onChain === false ? "not found" : "unchecked"}</span> ${p.explorerUrl ? `<a href="${esc(p.explorerUrl)}" target="_blank" rel="noopener">CCDExplorer ↗</a>` : ""}</td></tr>`).join("")
+      <td>${p.seq}</td><td>${esc(p.purpose)}<small>${when(p.ts)}</small></td><td class="r">${esc(p.display || ccd(p.amount))}</td>
+      <td class="mono">${esc(short(p.to))}<small>${esc(p.chain || "Concordium")}${p.toOwner ? ` · linked to ${esc(short(p.toOwner))}` : ""}</small></td>
+      <td><span class="chip ${tri(p.onChain)}"><i></i>${p.onChain === true ? "finalized" : p.onChain === false ? "not found" : "unchecked"}</span> ${p.explorerUrl ? `<a href="${esc(p.explorerUrl)}" target="_blank" rel="noopener">${!p.chain || p.chain === "Concordium" ? "CCDExplorer" : p.chain.startsWith("Base") ? "BaseScan" : "Solana Explorer"} ↗</a>` : ""}</td></tr>`).join("")
     : `<tr><td colspan="5" class="empty">No payments yet.</td></tr>`;
 
   $("#locktbl").innerHTML = data.locks.length ? data.locks.map((l) => `<tr>
       <td class="mono">${esc(l.id)}<small>${esc(l.invoiceId)}</small></td>
       <td>${esc(l.supplier)}<small>${esc(l.category)}</small></td>
-      <td class="r">${eur(l.amountEur)}</td>
+      <td class="r">${eur(l.amountEur)}${l.settled ? `<small>${esc(l.settled)}</small>` : ""}</td>
       <td><span class="chip ${l.status === "released" ? "ok" : l.status === "cancelled" ? "mute" : "info"}"><i></i>${esc(l.status === "sent" ? "awaiting release" : l.status)}</span>
         ${l.explorerUrl ? `<small><a href="${esc(l.explorerUrl)}" target="_blank" rel="noopener">payment ↗</a></small>` : ""}</td>
       <td><div class="flow">${(l.history || []).map((h) => `<span class="${h.outcome !== "ok" ? "refused" : h.actor === "owner" ? "owner" : ""}" title="${esc(h.note)}">${esc(WHO[h.actor] || h.actor)}: ${esc(h.op)}${h.outcome !== "ok" ? " ✗" : ""}</span>`).join("")}</div></td></tr>`).join("")
@@ -208,6 +223,21 @@ fetch("/api/judge").then((r) => r.json()).then((d) => {
   if (d.error) throw new Error(d.error);
   data = d; render();
 }).catch((e) => { $("#verdict").className = "verdict bad"; $("#verdict").innerHTML = `<span class="big">✗</span><div><b>Couldn't load the records</b><span class="muted">${esc(e.message)}</span></div>`; });
+</script>
+<script>
+  // Back button: steps back through sections you jumped to on this page, then to the previous Kakasa page,
+  // otherwise goes to the home page (or the top of it).
+  (() => {
+    let hops = 0;
+    const internal = () => { try { return !!document.referrer && new URL(document.referrer).origin === location.origin; } catch { return false; } };
+    document.addEventListener("click", (e) => { const a = e.target.closest && e.target.closest('a[href^="#"]'); if (a && a.getAttribute("href").length > 1) hops++; });
+    addEventListener("popstate", () => { hops = Math.max(0, hops - 1); });
+    document.getElementById("back-btn").addEventListener("click", () => {
+      if (hops > 0 || (internal() && history.length > 1)) history.back();
+      else if (location.pathname !== "/") location.href = "/";
+      else { history.replaceState(null, "", location.pathname); scrollTo({ top: 0, behavior: "smooth" }); }
+    });
+  })();
 </script>
 </body>
 </html>

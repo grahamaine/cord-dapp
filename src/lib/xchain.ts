@@ -2,8 +2,8 @@
  * Cross-chain supplier verification. Agents that live on other blockchains (Ethereum, Base,
  * Solana, Fetch.ai…) can link their key to a Concordium agent through the CIS-8 external key
  * registry. Cord looks the key up, finds the linked Concordium agent and its identity-verified
- * owner, and runs the normal Verified by Concordium badge check. Payment still settles on
- * Concordium, to the linked agent's verified owner account.
+ * owner, and runs the normal Verified by Concordium badge check. A verified supplier can then be paid on
+ * its own chain (EURC on Base Sepolia / Solana devnet, see src/lib/chains.ts) or on Concordium.
  *
  *   EVM (eip155:*)  secp256k1 public key. An address alone doesn't reveal the key, so callers
  *                   pass the public key, or an address + a personal_sign signature we recover from.
@@ -89,7 +89,10 @@ export async function verifyCrossChain(input: XChainInput) {
 
   // 4. Normal Verified by Concordium badge check on the linked agent.
   const badge = agent?.token_address ? await checkBadge(agent.token_address) : null;
-  const verified = Boolean(badge?.verified && binding?.status === "Active");
+  const agentVerified = Boolean(badge?.verified && binding?.status === "Active");
+  // Or: the key is bound (Active) to a Concordium owner that already runs a Verified by Concordium agent.
+  const ownerBadge = !agentVerified && binding?.status === "Active" && binding?.owner ? await checkBadge(binding.owner) : null;
+  const verified = agentVerified || Boolean(ownerBadge?.verified);
   return {
     chain: chain.name,
     namespace: chain.id,
@@ -104,8 +107,10 @@ export async function verifyCrossChain(input: XChainInput) {
     badgeValid: Boolean(badge?.verified),
     badgeIssues: badge?.issues ?? [],
     verified,
-    summary: verified
+    summary: agentVerified
       ? `Verified: ${chain.name} key linked to Concordium agent #${agent.token_id_u64 ?? agent.token_id}, owned by an identity-verified account.`
+      : verified
+      ? `Verified: ${chain.name} key linked through CIS-8 to Concordium account ${binding.owner}, which owns ${ownerBadge!.agents} Verified by Concordium agent${ownerBadge!.agents === 1 ? "" : "s"}.`
       : !binding && !agent
         ? `No Concordium agent is linked to this ${chain.name} key.`
         : `Linked, but the badge check failed: ${(badge?.issues ?? ["key binding not active"]).join("; ")}`,
