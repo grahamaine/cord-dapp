@@ -152,6 +152,22 @@ app.use(["/tenders", "/price-benchmark", "/invoices/:id/pay"], async (req, res, 
   next();
 });
 
+// Log refused payments with their reason, so the seller window explains a 402 after a payment attempt.
+app.use((req, res, next) => {
+  res.on("finish", () => {
+    if (res.statusCode !== 402 || !(req.header("payment-signature") || req.header("x-payment"))) return;
+    for (const h of ["payment-required", "payment-response"]) {
+      const raw = res.getHeader(h);
+      if (!raw) continue;
+      try {
+        const j = JSON.parse(Buffer.from(String(raw), "base64").toString("utf8"));
+        console.warn(`[seller] payment for ${req.originalUrl} refused: ${j.error || j.errorReason || j.invalidReason || "no reason"}${j.errorMessage ? ` (${j.errorMessage})` : ""}`);
+      } catch { /* ignore */ }
+    }
+  });
+  next();
+});
+
 app.use(
   paymentMiddleware(
     {
@@ -197,22 +213,6 @@ if (xchainsOffered.length) app.use(
     xchainServer,
   ),
 );
-
-// Log refused payments with their reason, so the seller window explains a 402 after a payment attempt.
-app.use((req, res, next) => {
-  res.on("finish", () => {
-    if (res.statusCode !== 402 || !(req.header("payment-signature") || req.header("x-payment"))) return;
-    for (const h of ["payment-required", "payment-response"]) {
-      const raw = res.getHeader(h);
-      if (!raw) continue;
-      try {
-        const j = JSON.parse(Buffer.from(String(raw), "base64").toString("utf8"));
-        console.warn(`[seller] payment for ${req.originalUrl} refused: ${j.error || j.errorReason || j.invalidReason || "no reason"}${j.errorMessage ? ` (${j.errorMessage})` : ""}`);
-      } catch { /* ignore */ }
-    }
-  });
-  next();
-});
 
 // Record a receipt when the paid response goes out (settlement header is set by the middleware).
 app.use((req, res, next) => {
