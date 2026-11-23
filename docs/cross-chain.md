@@ -33,5 +33,11 @@ Owner page → **Policy → Suppliers on other blockchains** → pick the chain 
 or EVM public key (or click **Sign with MetaMask** while the supplier's wallet is connected) → **Verify**.
 If the result is *Verified by Concordium*, **Add to approved suppliers** and save the policy.
 
-Payment still settles on Concordium, to the linked agent's verified owner account. Settling directly on
-the supplier's own chain (x402 `exact` on Base USDC or Solana) is the next step.
+Kakasa can then pay the supplier on its own chain, in EURC through x402 `exact` (Base Sepolia, Solana devnet),
+or its verified owner on Concordium. See "Settlement on Base and Solana" in the README.
+
+## Linking TenderScout's own keys (demo)
+`npm run wallets` creates TenderScout's Base and Solana keys; `npm run link-keys -- base` / `-- solana` signs the
+registry's canonical bytes with them, builds the CIS-8 `register` call and dry-runs it; the owner then sends it from
+the dashboard (Policy → *Link TenderScout's keys*). A key bound to an owner account that already runs a
+Verified by Concordium agent counts as verified, without registering a new agent.

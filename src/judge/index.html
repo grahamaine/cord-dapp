@@ -125,7 +125,7 @@
     </div>
   </section>
 </main>
-<footer class="wrap">{{APP_NAME}} · Concordium "Make your Agents Accountable" hackathon · testnet · amounts are demo EUR, settled as small CCD amounts.</footer>
+<footer class="wrap">{{APP_NAME}} · Concordium "Make your Agents Accountable" hackathon · testnet · invoice amounts are in EUR; early payments settled as small CCD amounts at a demo rate, stablecoin payments at full value.</footer>
 
 <script>
 const $ = (s) => document.querySelector(s);
@@ -160,21 +160,21 @@ function render() {
     check(c.auditChain.ok ? "ok" : "bad", "Audit log chain intact", c.auditChain.ok ? `All ${c.auditChain.count} entries link to the one before by SHA-256.` : `Broken at entry #${c.auditChain.brokenAt}.`),
     check(c.receiptChain.ok ? "ok" : "bad", "Receipt chain intact", c.receiptChain.ok ? `All ${c.receiptChain.count} payment receipts link correctly.` : `Broken at receipt #${c.receiptChain.brokenAt}.`),
     check(!c.nodeReachable ? "warn" : c.allAnchorsVerified ? "ok" : "bad", "Anchors match Concordium", !data.anchors.length ? "No anchor published yet." : !c.nodeReachable ? "Node not reachable right now." : c.allAnchorsVerified ? `Each anchor transaction is finalized and its data equals these records' hashes.` : "An anchor doesn't match these records."),
-    check(!c.nodeReachable ? "warn" : c.allPaymentsOnChain ? "ok" : "bad", "Payments are on-chain", !data.payments.length ? "No payments yet." : !c.nodeReachable ? "Node not reachable right now." : c.allPaymentsOnChain ? `Every payment receipt points to a finalized, successful Concordium transaction.` : "A receipt's transaction wasn't found or failed."),
+    check(!c.nodeReachable ? "warn" : c.allPaymentsOnChain ? "ok" : "bad", "Payments are on-chain", !data.payments.length ? "No payments yet." : !c.nodeReachable ? "Node not reachable right now." : c.allPaymentsOnChain ? `Every payment receipt points to a finalized, successful transaction on its chain (Concordium, Base Sepolia or Solana devnet).` : "A receipt's transaction wasn't found or failed."),
     check(unanchored > 0 ? "warn" : "ok", "Coverage", unanchored > 0 ? `${unanchored} newer entr${unanchored === 1 ? "y is" : "ies are"} after the last anchor (still chain-checked, not yet timestamped on-chain).` : "Every entry is covered by an on-chain anchor."),
   ].join("");
   $("#published").textContent = `Snapshot published ${new Date(data.publishedAt).toLocaleString()} from the owner's dashboard · ProcureBot ${short(data.accounts.procurebot)} · limits ${eur(data.policy.maxPerLockEur)} per payment, ${eur(data.policy.dailyLimitEur)} per day · human release ${data.policy.requireHumanRelease ? "required" : "off"}, owner signature ${data.policy.requireOwnerSignature ? "required" : "off"}.`;
 
   $("#pay").innerHTML = data.payments.length ? data.payments.map((p) => `<tr>
-      <td>${p.seq}</td><td>${esc(p.purpose)}<small>${when(p.ts)}</small></td><td class="r">${ccd(p.amount)}</td>
-      <td class="mono">${esc(short(p.to))}</td>
-      <td><span class="chip ${tri(p.onChain)}"><i></i>${p.onChain === true ? "finalized" : p.onChain === false ? "not found" : "unchecked"}</span> ${p.explorerUrl ? `<a href="${esc(p.explorerUrl)}" target="_blank" rel="noopener">CCDExplorer ↗</a>` : ""}</td></tr>`).join("")
+      <td>${p.seq}</td><td>${esc(p.purpose)}<small>${when(p.ts)}</small></td><td class="r">${esc(p.display || ccd(p.amount))}</td>
+      <td class="mono">${esc(short(p.to))}<small>${esc(p.chain || "Concordium")}${p.toOwner ? ` · linked to ${esc(short(p.toOwner))}` : ""}</small></td>
+      <td><span class="chip ${tri(p.onChain)}"><i></i>${p.onChain === true ? "finalized" : p.onChain === false ? "not found" : "unchecked"}</span> ${p.explorerUrl ? `<a href="${esc(p.explorerUrl)}" target="_blank" rel="noopener">${!p.chain || p.chain === "Concordium" ? "CCDExplorer" : p.chain.startsWith("Base") ? "BaseScan" : "Solana Explorer"} ↗</a>` : ""}</td></tr>`).join("")
     : `<tr><td colspan="5" class="empty">No payments yet.</td></tr>`;
 
   $("#locktbl").innerHTML = data.locks.length ? data.locks.map((l) => `<tr>
       <td class="mono">${esc(l.id)}<small>${esc(l.invoiceId)}</small></td>
       <td>${esc(l.supplier)}<small>${esc(l.category)}</small></td>
-      <td class="r">${eur(l.amountEur)}</td>
+      <td class="r">${eur(l.amountEur)}${l.settled ? `<small>${esc(l.settled)}</small>` : ""}</td>
       <td><span class="chip ${l.status === "released" ? "ok" : l.status === "cancelled" ? "mute" : "info"}"><i></i>${esc(l.status === "sent" ? "awaiting release" : l.status)}</span>
         ${l.explorerUrl ? `<small><a href="${esc(l.explorerUrl)}" target="_blank" rel="noopener">payment ↗</a></small>` : ""}</td>
       <td><div class="flow">${(l.history || []).map((h) => `<span class="${h.outcome !== "ok" ? "refused" : h.actor === "owner" ? "owner" : ""}" title="${esc(h.note)}">${esc(WHO[h.actor] || h.actor)}: ${esc(h.op)}${h.outcome !== "ok" ? " ✗" : ""}</span>`).join("")}</div></td></tr>`).join("")

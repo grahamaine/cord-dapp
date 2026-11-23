@@ -3,3 +3,4 @@ dist
 .env
 data/receipts.jsonl
 data/policy.json
+data/cis8-link-*.json

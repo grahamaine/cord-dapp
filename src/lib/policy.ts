@@ -17,7 +17,7 @@ import { dirname } from "node:path";
 import { z } from "zod";
 import { config } from "./config.js";
 import { readReceipts } from "./receipts.js";
-import { atomicToEur } from "./eur.js";
+import { atomicToEur, unpriceable } from "./eur.js";
 
 const eur = z.number().min(0).max(1_000_000_000);
 
@@ -26,7 +26,8 @@ export const PolicySchema = z.object({
   dailyLimitEur: eur,
   allowedAssets: z.array(z.string().min(1)).min(1),
   requireSellerBadge: z.boolean(),
-  approvedSuppliers: z.array(z.object({ account: z.string().min(40), name: z.string().default("") })),
+  // Concordium accounts, or Base / Solana addresses whose keys are CIS-8 linked to a verified owner
+  approvedSuppliers: z.array(z.object({ account: z.string().min(32), name: z.string().default("") })),
   requireHumanRelease: z.boolean().default(true),
   requireOwnerSignature: z.boolean().default(true),
   paused: z.boolean().default(false),
@@ -72,11 +73,14 @@ export function savePolicy(input: unknown, by = "owner"): Policy {
 /** EUR the buyer has paid today (UTC), from its own receipts. */
 export function spentTodayEur(): number {
   const today = new Date().toISOString().slice(0, 10);
-  const atomic = readReceipts()
+  const eur = readReceipts()
     .filter((r) => r.role === "buyer" && r.ts.startsWith(today))
-    .reduce((sum, r) => sum + BigInt(r.amount), 0n);
-  return atomicToEur(atomic);
+    .reduce((sum, r) => sum + (atomicToEur(r.amount, r.asset || "CCD") || 0), 0);
+  return Math.round(eur * 100) / 100;
 }
+
+/** EVM addresses are case-insensitive (checksums); Concordium and Solana addresses are not. */
+const sameAddress = (a: string, b: string) => (a.startsWith("0x") && b.startsWith("0x") ? a.toLowerCase() === b.toLowerCase() : a === b);
 
 /**
  * Checks that need no network. `reservedEur` is budget already set aside by other funded/sent
@@ -84,14 +88,16 @@ export function spentTodayEur(): number {
  */
 export function policyViolation(p: Policy, payTo: string, amountAtomic: string, asset: string, reservedEur = 0): string | undefined {
   if (p.paused) return "the agent is paused by the owner";
-  const amountEur = atomicToEur(amountAtomic);
   if (!p.allowedAssets.includes(asset)) return `asset ${asset} is not allowed (allowed: ${p.allowedAssets.join(", ")})`;
+  const noRate = unpriceable(asset);
+  if (noRate) return `can't check the limits: ${noRate}`;
+  const amountEur = atomicToEur(amountAtomic, asset);
   if (p.maxPerLockEur > 0 && amountEur > p.maxPerLockEur) return `€${amountEur.toLocaleString()} is over the per-payment limit of €${p.maxPerLockEur.toLocaleString()}`;
   if (p.dailyLimitEur > 0) {
     const committed = spentTodayEur() + reservedEur;
     if (committed + amountEur > p.dailyLimitEur)
       return `daily limit reached: €${committed.toLocaleString()} already paid or set aside today, limit €${p.dailyLimitEur.toLocaleString()}`;
   }
-  if (p.approvedSuppliers.length && !p.approvedSuppliers.some((s) => s.account === payTo)) return `payee ${payTo} is not on the approved supplier list`;
+  if (p.approvedSuppliers.length && !p.approvedSuppliers.some((s) => sameAddress(s.account, payTo))) return `payee ${payTo} is not on the approved supplier list`;
   return undefined;
 }

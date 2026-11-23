@@ -9,8 +9,12 @@
 import { Router, type Request } from "express";
 import { existsSync, readFileSync } from "node:fs";
 import { getExplorerTxUrl } from "@x402/concordium";
+import { chainByNetwork, explorerTx } from "../lib/chains.js";
 import { config } from "../lib/config.js";
 import { mountAssets } from "../ui/assets.js";
+import { fmtAtomic, isCcd } from "../lib/eur.js";
+import { tokenBalances } from "../lib/plt.js";
+import { onChain, readSnapshot } from "../judge/routes.js";
 
 const APP_NAME = process.env.APP_NAME || "Kakasa";
 const TESTNET = config.network === "ccd:4221332d34e1694168c2a0c0b3fd0f27";
@@ -76,8 +80,26 @@ async function payments(seller: string, buyers: Set<string>) {
       from: t.details.transferSource,
       to: t.details.transferDestination,
       amount: String(t.details.transferAmount ?? t.subtotal ?? "0"),
+      asset: "CCD",
       explorerUrl: getExplorerTxUrl(config.network, t.transactionHash),
     }));
+}
+
+/**
+ * Stablecoin (PLT) invoice payments. The wallet service above lists CCD transfers; token transfers are taken
+ * from the published records (judge/snapshot.json) and each one is confirmed on Concordium before it is shown.
+ */
+async function stablecoinPayments(seller: string) {
+  const snap = readSnapshot();
+  if (!snap) return [];
+  const rows = snap.receipts.filter((r) => r.role === "buyer" && r.txHash && r.asset && !isCcd(r.asset) && r.sellerAccount === seller);
+  const checked = await Promise.all(rows.map(async (r) => {
+    const tx = await onChain(r.txHash!).catch(() => ({ finalized: false, success: false }));
+    return tx.finalized && tx.success
+      ? { txHash: r.txHash!, time: r.ts, from: r.buyerAccount ?? "", to: r.sellerAccount, amount: r.amount, asset: r.asset, explorerUrl: r.explorerUrl || explorerTx(r.network, r.txHash!), network: r.network, chain: chainByNetwork(r.network)?.name ?? "Concordium" }
+      : null;
+  }));
+  return checked.filter((x) => x !== null);
 }
 
 let cache: { at: number; body: unknown } | undefined;
@@ -93,9 +115,10 @@ async function accounts(agents: any[]) {
     try {
       const b = await getJson(`${WALLET_PROXY}/v0/accBalance/${a.address}`);
       const atomic = String(b?.finalizedBalance?.accountAmount ?? b?.currentBalance?.accountAmount ?? "");
-      return { ...a, balance: atomic || null, explorerUrl: explorer(a.address) };
+      const tokens = await tokenBalances(a.address).catch(() => []);
+      return { ...a, balance: atomic || null, tokens: tokens.map((t) => ({ ...t, display: fmtAtomic(t.amount, t.asset) })), explorerUrl: explorer(a.address) };
     } catch {
-      return { ...a, balance: null, explorerUrl: explorer(a.address) };
+      return { ...a, balance: null, tokens: [], explorerUrl: explorer(a.address) };
     }
   }));
 }
@@ -109,6 +132,7 @@ async function overview() {
   let paymentsError: string | null = null;
   try {
     pays = seller && buyerOwners.size ? await payments(seller, buyerOwners) : [];
+    if (seller) pays = [...pays, ...(await stablecoinPayments(seller))].sort((a, b) => (a.time < b.time ? 1 : -1));
   } catch (e) {
     paymentsError = `payment history unavailable: ${(e as Error).message}`;
   }
@@ -118,10 +142,17 @@ async function overview() {
     testnet: TESTNET,
     registry: { contract: process.env.REGISTRY_CONTRACT || "12802.0" },
     agents,
-    payments: pays,
+    payments: pays.map((p) => ({ ...p, display: fmtAtomic(p.amount, p.asset) })),
     paymentsError,
     accounts: await accounts(agents),
-    totals: { count: pays.length, amount: pays.reduce((s, p) => s + BigInt(p.amount), 0n).toString() },
+    totals: {
+      count: pays.length,
+      // kept for older clients: CCD only
+      amount: pays.filter((p) => isCcd(p.asset)).reduce((s, p) => s + BigInt(p.amount), 0n).toString(),
+      byAsset: Object.entries(
+        pays.reduce<Record<string, bigint>>((acc, p) => ((acc[p.asset] = (acc[p.asset] ?? 0n) + BigInt(p.amount)), acc), {}),
+      ).map(([asset, sum]) => fmtAtomic(sum, asset)),
+    },
     updatedAt: new Date().toISOString(),
   };
   cache = { at: Date.now(), body };

@@ -16,7 +16,9 @@ import { readReceipts, verifyChain } from "../lib/receipts.js";
 import { cancelLock, createLock, fundLock, readLocks, reservedEur, sendLock, LockError, type Lock } from "../lib/locks.js";
 import { verifyCrossChain, CHAINS } from "../lib/xchain.js";
 import { buy } from "../buyer/procurebot.js";
-import { benchmarks, tenders } from "../seller/data.js";
+import { benchmarks } from "../seller/data.js";
+import { TENDER_SECTORS as ALL_SECTORS } from "../lib/tenders.js";
+import { fmtAtomic, isCcd } from "../lib/eur.js";
 
 /** Map free text to a known benchmark item BEFORE paying (the price is charged before lookup). */
 export function matchBenchmarkItem(text: string) {
@@ -24,7 +26,7 @@ export function matchBenchmarkItem(text: string) {
   const keys = Object.keys(benchmarks);
   return keys.find((k) => k === q) ?? keys.find((k) => k.split(/[^a-z]+/).filter((w) => w.length > 2).some((w) => q.includes(w.replace(/s$/, "")))) ?? null;
 }
-export const TENDER_SECTORS = [...new Set(tenders.map((t) => t.sector))];
+export const TENDER_SECTORS: string[] = [...ALL_SECTORS];
 
 export interface ToolDef {
   name: string;
@@ -36,6 +38,7 @@ export interface ToolDef {
 const eur = (n: number) => `€${n.toLocaleString("en-IE", { maximumFractionDigits: 2 })}`;
 const lockView = (l: Lock) => ({
   id: l.id, invoiceId: l.invoiceId, supplier: l.supplier, amountEur: l.amountEur, status: l.status,
+  settles: fmtAtomic(l.amount, l.asset), fullValue: !isCcd(l.asset),
   awaitingRelease: l.status === "sent", checks: l.checks ?? null, lastError: l.lastError ?? null, txHash: l.txHash ?? null,
 });
 
@@ -46,7 +49,7 @@ async function invoices() {
   const locks = readLocks().filter((l) => l.status !== "cancelled");
   return (body.items as any[]).map((i) => {
     const l = locks.find((x) => x.invoiceId === i.id);
-    return { ...i, payTo: body.payTo, asset: body.asset, lock: l ? { id: l.id, status: l.status } : null };
+    return { ...i, payTo: i.payTo ?? body.payTo, asset: i.asset ?? body.asset, network: i.network, payPath: i.payPath, lock: l ? { id: l.id, status: l.status } : null };
   });
 }
 
@@ -148,7 +151,7 @@ export const TOOLS: ToolDef[] = [
   },
   {
     name: "find_tenders",
-    description: `Buy the current list of open public tenders for a sector from TenderScout (a small paid data purchase, within the owner's limits). Sectors: ${[...new Set(["hospitality", "food", "it"])].join(", ")}.`,
+    description: `Buy the current list of open public tenders for a sector from TenderScout (a small paid data purchase, within the owner's limits). Live from Uganda's Government Procurement Portal. Sectors: ${ALL_SECTORS.join(", ")}.`,
     input_schema: { type: "object", properties: { sector: { type: "string" }, purpose: { type: "string" } }, required: ["sector"] },
     run: async ({ sector, purpose }) => {
       if (!TENDER_SECTORS.includes(String(sector).toLowerCase())) return { done: false, reason: `unknown sector "${sector}"; available: ${TENDER_SECTORS.join(", ")}`, nothingPaid: true };

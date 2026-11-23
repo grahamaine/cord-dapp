@@ -70,13 +70,13 @@ export async function builtinReply(message: string): Promise<AgentReply> {
 
   // tenders
   if (/tender/.test(q)) {
-    const alias: Record<string, string> = { hotel: "hospitality", catering: "hospitality", linen: "hospitality", produce: "food", restaurant: "food", wifi: "it", "wi-fi": "it", computer: "it", tech: "it", ict: "it" };
+    const alias: Record<string, string> = { hotel: "hospitality", catering: "hospitality", linen: "hospitality", laundry: "hospitality", produce: "food", restaurant: "food", wifi: "it", "wi-fi": "it", computer: "it", tech: "it", ict: "it", medical: "health", hospital: "health", road: "construction", building: "construction", guard: "security", vehicle: "transport", fuel: "transport", school: "education" };
     const sector = TENDER_SECTORS.find((s) => new RegExp(`\\b${s}\\b`).test(q)) ?? Object.entries(alias).find(([k]) => q.includes(k))?.[1];
     if (!sector) return done(`Which sector? I have tender lists for: ${TENDER_SECTORS.join(", ")}.`, TENDER_SECTORS.map((s) => `Find ${s} tenders`));
     const r = await call(actions, "find_tenders", { sector, purpose: `Agent chat: "${m}"` });
     if (r.done === false || !r.data) return done(`I couldn't buy the tender list: ${r.reason ?? "no data"}`);
     const items = (r.data.items ?? r.data.tenders ?? []).slice(0, 5);
-    return done(`Bought the **${sector}** tender list${r.receipt ? ` (receipt #${r.receipt.seq}, fee sponsored)` : ""}:\n${items.map((t: any) => `• ${t.title} — ${t.entity}, closes ${t.closes} (est. ${t.currency} ${Number(t.estimate).toLocaleString()})`).join("\n") || "No open tenders."}`);
+    return done(`Bought the **${sector}** tender list${r.receipt ? ` (receipt #${r.receipt.seq}, fee sponsored)` : ""}:\n${items.map((t: any) => `• ${t.title} — ${t.entity}, closes ${t.closes} ${t.estimate ? ` (est. ${t.currency} ${Number(t.estimate).toLocaleString()})` : ""}`).join("\n") || "No open tenders in that sector right now."}${r.data.live ? `\n_Live from Uganda's Government Procurement Portal (PPDA open data), fetched ${String(r.data.fetchedAt).slice(0, 10)}._` : ""}`);
   }
 
   // benchmark
@@ -98,7 +98,7 @@ export async function builtinReply(message: string): Promise<AgentReply> {
     if (r.done) {
       const l = r.lock;
       if (!r.steps.length) return done(`**${l.id}** for ${l.supplier} (${eur(l.amountEur)}) is already prepared and ${l.awaitingRelease ? "**awaiting your release** — open **Locks** and press **Release**." : `is ${l.status}.`}`, ["Show my locks", "What's due?"]);
-      return done(`Prepared **${l.id}** for ${l.supplier}: **${eur(l.amountEur)}** (${l.invoiceId}).\n✔ ${r.steps.join(" · ")}\n${l.checks?.badgeVerified ? "✔ Supplier is Verified by Concordium" : "⚠ Supplier not verified (allowed by your policy)"}\n\n👉 **Your turn:** open **Locks** and press **Release** — your wallet will ask you to sign.`, ["Show my locks", "How much budget is left?", "What's due?"]);
+      return done(`Prepared **${l.id}** for ${l.supplier}: **${eur(l.amountEur)}** (${l.invoiceId})${l.fullValue ? `, paid as **${l.settles}**` : ""}.\n✔ ${r.steps.join(" · ")}\n${l.checks?.badgeVerified ? "✔ Supplier is Verified by Concordium" : "⚠ Supplier not verified (allowed by your policy)"}\n\n👉 **Your turn:** open **Locks** and press **Release** — your wallet will ask you to sign.`, ["Show my locks", "How much budget is left?", "What's due?"]);
     }
     if (r.candidates?.length > 1) return done(`More than one invoice matches — which one?\n${r.candidates.map((c: string) => `• ${c}`).join("\n")}`);
     const tip = r.lock && r.lock.status === "created" ? `\nLock **${r.lock.id}** is on hold. You can raise the limit in **Policy**, or say "cancel ${r.lock.id}" to drop it.` : "";

@@ -95,7 +95,7 @@
 
   <div class="page-head">
     <div>
-      <div class="kicker">Owner dashboard · demo EUR</div>
+      <div class="kicker" id="kicker">Owner dashboard · demo EUR</div>
       <h1>Verified supplier payments</h1>
     </div>
     <nav class="tabs" role="tablist">
@@ -214,7 +214,7 @@
 
     <h2 class="h">Suppliers on other blockchains <small>verify an Ethereum, Base or Solana agent through its link to Concordium</small></h2>
     <div class="card">
-      <p class="muted" style="margin:0 0 .4rem">A supplier agent on another chain can link its key to a Concordium agent (CIS-8). Kakasa looks the key up, finds the linked agent and its identity-verified owner, and runs the same badge check. Payment still settles on Concordium, to that verified owner.</p>
+      <p class="muted" style="margin:0 0 .4rem">A supplier agent on another chain can link its key to a Concordium agent or owner (CIS-8). Kakasa looks the key up, finds the identity-verified owner, and runs the same badge check. Verified suppliers can be paid on their own chain in EURC (Base Sepolia, Solana devnet), or on Concordium.</p>
       <div class="row" style="align-items:flex-end">
         <div style="flex:0 0 220px"><label class="f" for="x-chain">Chain</label><select id="x-chain"></select></div>
         <div style="flex:2"><label class="f" for="x-id" id="x-id-label">Address or public key</label><input id="x-id" type="text" placeholder="0x… public key, or Solana address" /></div>
@@ -225,6 +225,7 @@
         <span class="hint" style="margin:0">EVM addresses don't reveal their key: paste the public key, or let the supplier sign once with MetaMask.</span>
       </div>
       <div id="x-result"></div>
+      <div id="x-links" style="margin-top:1rem"></div>
     </div>
   </div>
 
@@ -306,7 +307,15 @@
 const $ = (s) => document.querySelector(s);
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const eur = (n) => "€" + Number(n || 0).toLocaleString("en-IE", { maximumFractionDigits: 2 });
-const ccd = (atomic, asset = "CCD") => { if (atomic == null) return "–"; const n = BigInt(atomic), d = 1000000n, f = (n % d).toString().padStart(6, "0").replace(/0+$/, ""); return `${(n / d).toLocaleString()}${f ? "." + f : ""} ${asset}`; };
+// Decimals per settlement asset (CCD has 6; stablecoins report theirs via /api/overview and /api/accounts).
+const DEC = { CCD: 6 };
+const explorerName = (chain) => !chain || chain === "Concordium" ? "View on CCDExplorer" : chain.startsWith("Base") ? "View on BaseScan" : "View on Solana Explorer";
+const chainTag = (i) => i.chainName && i.chainName !== "Concordium"
+  ? `<small>on <b>${esc(i.chainName)}</b>${i.payeeLink ? ` · ${i.payeeLink.verified ? `<span title="${esc(i.payeeLink.summary)}">CIS-8 linked to verified owner ✓</span>` : `<span title="${esc(i.payeeLink.summary)}">not linked to a verified owner ✗</span>`}` : ""}</small>`
+  : "";
+const ccd = (atomic, asset = "CCD") => { if (atomic == null) return "–"; const dd = DEC[asset] ?? 6, n = BigInt(atomic), d = 10n ** BigInt(dd), f = dd ? (n % d).toString().padStart(dd, "0").replace(/0+$/, "") : ""; return `${(n / d).toLocaleString()}${f ? "." + f : ""} ${asset}`; };
+// How an invoice's on-chain amount relates to its EUR value.
+const settleNote = (asset) => asset === "CCD" ? "on testnet (demo rate)" : "full value, stablecoin";
 const short = (a) => a ? `${a.slice(0, 6)}…${a.slice(-5)}` : "–";
 const when = (ts) => new Date(ts).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 const chip = (cls, text) => `<span class="chip ${cls}"><i></i>${esc(text)}</span>`;
@@ -395,6 +404,7 @@ $("#pause-btn").onclick = async () => {
 
 async function loadOverview() {
   const o = overview = await api("/api/overview");
+  if (o.settlement && o.settlement.invoiceAsset !== "CCD") { DEC[o.settlement.invoiceAsset] = o.settlement.decimals; $("#kicker").textContent = `Owner dashboard · EUR, paid in ${o.settlement.invoiceAsset}`; }
   names = { [o.accounts.buyer]: "ProcureBot", [o.accounts.seller]: "TenderScout", [o.accounts.facilitator]: "Facilitator" };
   $("#net").textContent = o.testnet ? "TESTNET" : o.network;
   renderAgentState();
@@ -433,6 +443,7 @@ async function loadAccounts() {
     $("#accounts").innerHTML = accounts.map((a) => `<div class="card">
       <div class="acct-top"><div class="acct-role">${esc({ buyer: "ProcureBot · buyer", seller: "TenderScout · supplier", facilitator: "Facilitator" }[a.role] || a.role)}</div>${a.role === "facilitator" ? chip("mute", "Pays fees") : badgeChip(a.badge)}</div>
       <div class="bal">${a.missing ? "not set" : a.balance != null ? ccd(a.balance) : "–"}</div>
+      ${(a.tokens || []).map((t) => { DEC[t.asset] = t.decimals; return `<div class="bal" style="font-size:1rem">${ccd(t.amount, t.asset)}</div>`; }).join("")}
       <div class="muted mono" style="font-size:.85rem">${esc(a.address || "add it to .env")}</div>
       ${a.balanceError ? `<div class="hint">${esc(a.balanceError)}</div>` : ""}
       ${a.badge && !a.badge.verified ? `<div class="hint">${esc(a.badge.issues.join("; "))}</div>` : ""}
@@ -471,7 +482,7 @@ async function loadLocks() {
       return `<tr>
         <td>${esc(l.id)}<small>${esc(l.invoiceId)} · ${esc(when(l.createdAt))}</small></td>
         <td>${esc(l.supplier)}<small>${esc(l.category)}</small></td>
-        <td class="r">${eur(l.amountEur)}<small>${ccd(l.amount, l.asset)} on testnet</small></td>
+        <td class="r">${eur(l.amountEur)}<small>${ccd(l.amount, l.asset)} ${settleNote(l.asset)}</small></td>
         <td>${chip(cls, label)}</td>
         <td>${checks}${l.lastError ? `<div class="err">${esc(l.lastError)}</div>` : ""}</td>
         <td><div class="actions">${actions}<button class="btn btn-outline btn-sm" data-trail="${esc(l.id)}">Trail</button></div></td>
@@ -509,7 +520,7 @@ async function lockOp(btn) {
     const msg = {
       fund: `${eur(L.amountEur)} set aside.`,
       send: L.status === "released" ? "Checks passed and auto-released." : "Checks passed. Waiting for your release.",
-      release: `${eur(L.amountEur)} paid to ${esc(L.supplier)}, fee sponsored.${L.approval ? ` Signed by ${esc(short(L.approval.account))}.` : ""} ${L.explorerUrl ? `<a href="${esc(L.explorerUrl)}" target="_blank" rel="noopener">View on CCDExplorer ↗</a>` : ""}`,
+      release: `${eur(L.amountEur)} paid to ${esc(L.supplier)} on ${esc(L.chainName || "Concordium")}, fee sponsored.${L.approval ? ` Signed by ${esc(short(L.approval.account))}.` : ""} ${L.explorerUrl ? `<a href="${esc(L.explorerUrl)}" target="_blank" rel="noopener">${explorerName(L.chainName)} ↗</a>` : ""}`,
       cancel: "Lock cancelled.",
     }[op];
     toast(`<b>${esc(op)} · ${esc(L.id)}</b>${msg}`, "ok");
@@ -526,7 +537,7 @@ async function loadInvoices() {
   try {
     const inv = await api("/api/invoices");
     const open = new Map(locks.filter((l) => l.status !== "cancelled").map((l) => [l.invoiceId, l]));
-    $("#inv-hint").innerHTML = `Payee <span class="mono">${esc(short(inv.payTo))}</span> ${badgeChip(inv.payeeBadge)} · amounts are demo EUR; on testnet each settles as a small ${esc(inv.asset)} amount. In production: a euro stablecoin at full value.`;
+    $("#inv-hint").innerHTML = `Payee <span class="mono">${esc(short(inv.payTo))}</span> ${badgeChip(inv.payeeBadge)} · ${inv.asset === "CCD" ? `amounts are demo EUR; on testnet each settles as a small CCD amount. In production: a euro stablecoin at full value.` : `invoices settle in <b>${esc(inv.asset)}</b> at full value (1 ${esc(inv.asset)} = €${esc(String(inv.settlement?.eurPerToken ?? 1))}).`}`;
     $("#invoices").innerHTML = inv.items.map((i) => {
       const l = open.get(i.id);
       const status = i.status === "paid" ? chip("ok", "Paid") : l ? chip(STATUS[l.status][0], `${l.id} · ${STATUS[l.status][1]}`) : chip("mute", "Open");
@@ -536,7 +547,7 @@ async function loadInvoices() {
         <td>${esc(i.supplier)}<small>${esc(i.category)}</small></td>
         <td>${esc(i.due)}</td>
         <td class="r">${eur(i.amountEur)}</td>
-        <td class="r">${ccd(i.amount, i.asset)}</td>
+        <td class="r">${ccd(i.amount, i.asset)}${chainTag(i)}</td>
         <td>${status}</td>
         <td class="r">${action}</td>
       </tr>`;
@@ -570,7 +581,10 @@ async function loadPolicy() {
   $("#p-sig").checked = policy.requireOwnerSignature !== false;
   loadChains();
   $("#p-saved").textContent = policy.updatedAt ? `Last saved ${when(policy.updatedAt)}` : "Using defaults (€10,000 per lock, €10,000 per day)";
-  if (overview) $("#rate-hint").textContent = `Demo rate: €1,000 settles as ${(Number(overview.demoRate.atomicPerEur) * 1000 / 1e6).toLocaleString()} CCD on testnet. In production, invoices would be paid in a euro stablecoin at full value.`;
+  const st = overview?.settlement;
+  if (st) $("#rate-hint").textContent = st.fullValue
+    ? `Invoices settle in ${st.invoiceAsset} at full value${st.eurPerToken && st.eurPerToken !== 1 ? ` (1 ${st.invoiceAsset} = €${st.eurPerToken})` : ""}. Include ${st.invoiceAsset} in the allowed assets above, or every invoice is refused.${st.rateMissing ? ` Warning: ${st.rateMissing}.` : ""}`
+    : `Demo rate: €1,000 settles as ${(Number(st.atomicPerEur) * 1000 / 1e6).toLocaleString()} CCD on testnet. Set INVOICE_ASSET=EURR in .env to pay invoices in a euro stablecoin at full value.`;
   renderSuppliers();
 }
 $("#s-add").onclick = () => {
@@ -655,7 +669,7 @@ async function openTrail(id) {
     $("#tm-body").innerHTML = `
       <div class="grid g2">
         <div><div class="k muted" style="font-size:.78rem;letter-spacing:.14em;text-transform:uppercase">Invoice</div><div style="color:var(--ink)">${esc(l.invoiceId)} · ${esc(l.supplier)}</div><div class="muted">${esc(l.description)}</div></div>
-        <div><div class="k muted" style="font-size:.78rem;letter-spacing:.14em;text-transform:uppercase">Amount</div><div style="color:var(--ink)">${eur(l.amountEur)}</div><div class="muted">${ccd(l.amount, l.asset)} on testnet · ${chip(STATUS[l.status][0], STATUS[l.status][1])}</div></div>
+        <div><div class="k muted" style="font-size:.78rem;letter-spacing:.14em;text-transform:uppercase">Amount</div><div style="color:var(--ink)">${eur(l.amountEur)}</div><div class="muted">${ccd(l.amount, l.asset)} ${settleNote(l.asset)} · ${chip(STATUS[l.status][0], STATUS[l.status][1])}</div></div>
       </div>
       ${l.approval ? `<div class="notice" style="margin-top:1rem"><div><b>Signed by the owner's wallet</b> ${esc(l.approval.account)}<br><small class="muted">${esc(when(l.approval.at))} · the signed message named this lock, invoice, supplier and amount</small></div></div>` : ""}
       ${l.explorerUrl ? `<div class="notice" style="margin-top:.8rem"><div><b>Settled on Concordium</b> <a href="${esc(l.explorerUrl)}" target="_blank" rel="noopener">${esc(short(l.txHash))} ↗</a></div></div>` : ""}
@@ -814,6 +828,49 @@ async function walletSignOnce(message) {
   throw new Error("No wallet connected");
 }
 
+// TenderScout's Base / Solana keys prepared by `npm run link-keys`: the owner sends the CIS-8 register call.
+async function loadLinks() {
+  const box = $("#x-links"); if (!box) return;
+  let links = [];
+  try { links = (await api("/api/xchain/links")).links; } catch { return; }
+  if (!links.length) { box.innerHTML = ""; return; }
+  box.innerHTML = `<h3 class="h" style="font-size:1rem;margin:.4rem 0">Link TenderScout's keys (CIS-8)</h3>` + links.map((l) => `
+    <div class="acct-top" style="margin:.4rem 0;gap:.6rem;flex-wrap:wrap">
+      <span><b>${esc(l.chainName)}</b> <span class="mono">${esc(short(l.address))}</span> → owner <span class="mono">${esc(short(l.owner))}</span></span>
+      ${l.linked ? chip("ok", "Linked on Concordium") : `<button class="btn btn-outline btn-sm" data-link="${esc(l.chain)}" type="button">Send with wallet</button>`}
+    </div>`).join("") + `<div class="hint">The browser wallet must be connected on the owner account shown. Prepare with <span class="mono">npm run link-keys -- base</span> / <span class="mono">-- solana</span>.</div>`;
+  box.querySelectorAll("[data-link]").forEach((b) => b.onclick = async () => {
+    const l = links.find((x) => x.chain === b.dataset.link);
+    try {
+      if (wallet.kind !== "browser" || !wallet.provider) throw new Error("Connect the Concordium browser wallet first (top right).");
+      if (wallet.account !== l.owner) throw new Error(`Switch the wallet to the owner account ${short(l.owner)}, which must sign this link.`);
+      if (wallet.busy) throw new Error("A wallet request is already open. Finish it in the wallet first.");
+      const sdk = await import("https://esm.sh/@concordium/web-sdk@12");
+      b.disabled = true; wallet.busy = true;
+      toast("<b>Check your wallet</b>Approve the CIS-8 key link.", "");
+      let txHash;
+      try {
+        txHash = await wallet.provider.sendTransaction(
+          l.owner,
+          sdk.AccountTransactionType.Update,
+          {
+            amount: sdk.CcdAmount.zero(),
+            address: sdk.ContractAddress.create(l.contract.index, l.contract.subindex),
+            receiveName: sdk.ReceiveName.fromString(l.receiveName),
+            maxContractExecutionEnergy: sdk.Energy.create(l.maxEnergy),
+          },
+          l.parameters,
+          l.schemaBase64,
+          l.schemaVersion ?? undefined,
+        );
+      } finally { wallet.busy = false; }
+      const r = await post(`/api/xchain/links/${encodeURIComponent(l.chain)}/sent`, { txHash, account: l.owner });
+      toast(`<b>Link sent</b>${esc(l.chainName)} key is being linked. ${r.explorerUrl ? `<a href="${esc(r.explorerUrl)}" target="_blank" rel="noopener">View on CCDExplorer ↗</a>` : ""}`, "ok");
+      setTimeout(loadLinks, 15000);
+    } catch (e) { b.disabled = false; toast(`<b>Couldn't link</b>${esc(e.message || String(e))}`, "bad"); }
+  });
+}
+
 (async function restoreWallet() {
   try {
     const { detectConcordiumProvider } = await import("https://esm.sh/@concordium/browser-wallet-api-helpers@3.3.0");
@@ -829,6 +886,7 @@ async function walletSignOnce(message) {
 // ---------------- cross-chain suppliers ----------------
 let chains = [], lastX = null;
 async function loadChains() {
+  loadLinks();
   if (chains.length) return;
   chains = (await api("/api/xchain/chains")).chains;
   $("#x-chain").innerHTML = chains.map((c) => `<option value="${esc(c.id)}">${esc(c.name)}</option>`).join("");
@@ -844,12 +902,16 @@ async function xVerify(body) {
       <dl><dt>Chain</dt><dd>${esc(r.chain)}</dd><dt>Address</dt><dd>${esc(r.address)}</dd><dt>Key</dt><dd>${esc(r.keyType)} · ${esc(r.publicKeyHex.slice(0, 22))}…</dd>
       <dt>Concordium owner</dt><dd>${esc(r.concordiumOwner || "–")}</dd><dt>Agent</dt><dd>${r.agent ? `#${esc(r.agent.tokenId)} · ${esc(r.agent.status)}` : "–"}</dd>
       ${r.proofScheme ? `<dt>Key proof</dt><dd>${esc(r.proofScheme)}</dd>` : ""}</dl>
-      ${r.verified ? `<div class="row" style="margin-top:.8rem"><button class="btn btn-outline btn-sm" id="x-approve" type="button" style="flex:0 0 auto">Add to approved suppliers</button><span class="hint" style="margin:0">Payments go to the verified Concordium owner account.</span></div>` : ""}
+      ${r.verified ? `<div class="row" style="margin-top:.8rem"><button class="btn btn-outline btn-sm" id="x-approve" type="button" style="flex:0 0 auto">Add to approved suppliers</button><span class="hint" style="margin:0">Kakasa can then pay this supplier in EURC on its own chain, or its owner on Concordium.</span></div>` : ""}
     </div>`;
     const a = $("#x-approve");
     if (a) a.onclick = () => {
-      if (policy.approvedSuppliers.some((s) => s.account === r.concordiumOwner)) return toast("<b>Already listed</b>That owner is already approved.", "bad");
-      policy.approvedSuppliers.push({ account: r.concordiumOwner, name: `${r.chain} agent #${r.agent.tokenId} (${short(r.address)})` });
+      // Approve the supplier's own address on its chain (Kakasa can now pay it there in EURC) and its
+      // linked Concordium owner (for payments on Concordium).
+      const add = [{ account: r.address, name: `${r.chain} address of agent #${r.agent?.tokenId ?? "?"} (owner ${short(r.concordiumOwner)})` }, { account: r.concordiumOwner, name: `${r.chain} agent #${r.agent?.tokenId ?? "?"}: Concordium owner` }]
+        .filter((a) => a.account && !policy.approvedSuppliers.some((s) => s.account.toLowerCase() === a.account.toLowerCase()));
+      if (!add.length) return toast("<b>Already listed</b>That supplier is already approved.", "bad");
+      policy.approvedSuppliers.push(...add);
       renderSuppliers(); toast("<b>Added</b>Press Save policy to apply.", "ok");
     };
   } catch (e) { $("#x-result").innerHTML = `<div class="xres"><span class="bad-text">${esc(e.message)}</span></div>`; }

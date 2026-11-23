@@ -9,6 +9,7 @@
  *   npm run publish:judge             write + commit + push
  *   npm run publish:judge -- --no-push   write only
  */
+import { existsSync } from "node:fs";
 import { execFileSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { config } from "../lib/config.js";
@@ -53,6 +54,8 @@ else if (snapshot.anchors.at(-1)!.auditSeq < snapshot.audit.at(-1)!.seq) console
 if (!process.argv.includes("--no-push")) {
   const git = (...a: string[]) => execFileSync("git", a, { stdio: "inherit" });
   git("add", "judge/snapshot.json");
+  // the live tender list (npm run tenders), so the Vercel copy of TenderScout sells the same tenders
+  if (existsSync("data/tenders.json")) git("add", "data/tenders.json");
   try { git("commit", "-m", `Judge view snapshot ${snapshot.publishedAt}`); } catch { console.log("Nothing new to commit."); }
   git("push");
   console.log("Pushed. Vercel redeploys in about a minute: https://cord-dapp.vercel.app/judge");
