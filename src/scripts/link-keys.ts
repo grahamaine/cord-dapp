@@ -135,28 +135,20 @@ const r1 = fill(regTool.inputSchema, { ...fromCanon, ...sigFields, message_hex: 
 if (process.argv.includes("--debug")) console.log("build_cis8_register inputs:", JSON.stringify(r1.args, null, 2));
 if (r1.missing.length) die(`build_cis8_register needs inputs this script doesn't know: ${r1.missing.join(", ")}.\nRun npm run link-keys -- --schemas and send the output to your developer.`);
 const reg: any = await registryTool("build_cis8_register", r1.args);
-const paramHex = (reg?.hex ?? firstHex(reg) ?? die(`no parameter hex in build_cis8_register's answer: ${JSON.stringify(reg).slice(0, 400)}`)).replace(/^0x/, "");
+if (process.argv.includes("--debug")) console.log("build_cis8_register answer keys:", Object.keys(reg ?? {}).join(", "));
 
-// 3. dry-run on Concordium as the owner
+// 3. what to call: the registry names the contract and entrypoint (e.g. "CIS-8.registerExternalKey")
 const grpc = new ConcordiumGRPCNodeClient(config.grpc.host, config.grpc.port, credentials.createSsl(), { timeout: 20_000 });
-const contract = ContractAddress.create(12801, 0);
+const ca = reg?.contract_address ?? { index: 12801, subindex: 0 };
+const contract = ContractAddress.create(Number(ca.index), Number(ca.subindex ?? 0));
 const info: any = await grpc.getInstanceInfo(contract);
-const contractName = String(info.name.value ?? info.name).replace(/^init_/, "");
-const receiveName = `${contractName}.register`;
-const dry: any = await grpc.invokeContract({
-  contract,
-  method: ReceiveName.fromString(receiveName),
-  parameter: Parameter.fromHexString(paramHex),
-  invoker: AccountAddress.fromBase58(owner),
-});
-if (dry.tag !== "success") die(`the dry run of ${receiveName} failed: ${JSON.stringify(dry.reason ?? dry, (_k, v) => (typeof v === "bigint" ? v.toString() : v)).slice(0, 400)}`);
-const used = Number(dry.usedEnergy?.value ?? dry.usedEnergy ?? 3000);
-const energy = Math.ceil(used * 1.2) + 500;
-console.log(`  ✓ dry run of ${receiveName} succeeded (${used} energy)`);
+const instanceName = String(info.name.value ?? info.name).replace(/^init_/, "");
+const receiveName: string = reg?.receive_name ?? `${instanceName}.register`;
+const [contractName, entrypoint] = receiveName.split(".");
 
-// The browser wallet serializes parameters itself from JSON + the contract's schema. Check that the JSON the
-// registry gave us serializes to exactly the dry-run bytes, so the wallet sends what was tested.
-let parameters: unknown = reg?.schema_json ?? reg?.json ?? reg?.parameters ?? null;
+// The browser wallet serializes JSON parameters with the contract's schema, so encode the registry's
+// parameter_json the same way here and dry-run exactly those bytes.
+let parameters: unknown = reg?.parameter_json ?? reg?.schema_json ?? reg?.parameters ?? null;
 if (typeof parameters === "string") { try { parameters = JSON.parse(parameters); } catch { /* leave as is */ } }
 const source = await grpc.getModuleSource(info.sourceModule);
 const schema = (await getEmbeddedModuleSchema(source))!;
@@ -164,22 +156,33 @@ if (!schema?.buffer) die("the CIS-8 contract has no embedded schema, so the brow
 const schemaBase64 = Buffer.from(schema.buffer).toString("base64");
 // versioned schemas carry their version; older unversioned ones need it passed along
 const schemaVersion = schema.type === "versioned" ? undefined : (schema as any).version;
-let parametersMatch = false;
+let paramHex: string;
 try {
-  const ser = serializeUpdateContractParameters(ContractName.fromString(contractName), EntrypointName.fromString("register"), parameters, schema.buffer, schemaVersion);
-  parametersMatch = Parameter.toHexString(ser) === paramHex;
+  paramHex = Parameter.toHexString(serializeUpdateContractParameters(ContractName.fromString(contractName), EntrypointName.fromString(entrypoint), parameters, schema.buffer, schemaVersion));
 } catch (e) {
-  console.warn(`  ! couldn't serialize the registry's JSON parameters with the contract schema: ${(e as Error).message}`);
+  die(`couldn't encode the registry's parameters with the contract schema: ${(e as Error).message}`);
 }
-if (!parametersMatch) die(`the registry's JSON parameters don't serialize to the tested bytes, so the wallet would send something else.\nRun npm run link-keys -- --schemas and send the output plus this message to your developer.`);
-console.log("  ✓ wallet parameters match the dry-run bytes");
+const givenHex = (reg?.parameter_hex ?? reg?.hex ?? "").replace(/^0x/, "");
+if (givenHex && givenHex !== paramHex!) die("the registry's parameter bytes differ from the schema encoding; send this output to your developer");
+console.log(`  ✓ built ${receiveName} (${paramHex!.length / 2} parameter bytes)`);
+
+const dry: any = await grpc.invokeContract({
+  contract,
+  method: ReceiveName.fromString(receiveName),
+  parameter: Parameter.fromHexString(paramHex!),
+  invoker: AccountAddress.fromBase58(owner),
+});
+if (dry.tag !== "success") die(`the dry run of ${receiveName} failed: ${JSON.stringify(dry.reason ?? dry, (_k, v) => (typeof v === "bigint" ? v.toString() : v)).slice(0, 400)}`);
+const used = Number(dry.usedEnergy?.value ?? dry.usedEnergy ?? 3000);
+const energy = Math.ceil(used * 1.2) + 500;
+console.log(`  ✓ dry run of ${receiveName} succeeded (${used} energy)`);
 
 mkdirSync("data", { recursive: true });
 const file = `data/cis8-link-${chain}.json`;
 writeFileSync(file, JSON.stringify({
   chain, chainName: x.name, address, externalKey, proofScheme, owner,
-  contract: { index: 12801, subindex: 0 }, contractName, receiveName, entrypoint: "register",
-  parameterHex: paramHex, parameters, schemaBase64, schemaVersion: schemaVersion ?? null, maxEnergy: energy,
+  contract: { index: Number(ca.index), subindex: Number(ca.subindex ?? 0) }, contractName, receiveName, entrypoint,
+  parameterHex: paramHex!, parameters, schemaBase64, schemaVersion: schemaVersion ?? null, maxEnergy: energy,
   preparedAt: new Date().toISOString(),
 }, null, 2) + "\n");
 console.log(`\nSaved ${file}. Now send it from the owner's wallet:
