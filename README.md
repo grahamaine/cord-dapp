@@ -29,7 +29,21 @@ receipts (8) chains intact, all 3 anchors match their on-chain data, all 4 payme
 | Audit anchor: entries 1–35, receipts 1–8 | | owner | [c5c36694…](https://ccdexplorer.io/testnet/transaction/c5c36694428de46b6d49d29d00399827ddf4eb347c54b6ab0911ec4b8b79ddca) |
 | Audit anchor: entries 1–36, receipts 1–8 | | owner | [fb3325d2…](https://ccdexplorer.io/testnet/transaction/fb3325d2e26412b6bc1422857c45fb28d32d120aea9e0fa8de52261b4c398af2) |
 
-Every payment was a sponsored transaction (the Kakasa facilitator paid the fee) to a supplier agent that is
+**Live proof on Base and Solana (23 Nov 2026).** TenderScout's Base Sepolia and Solana devnet keys are linked
+through CIS-8 to its identity-verified Concordium owner, and ProcureBot paid a supplier invoice in EURC on Base
+only after checking that link.
+
+| What happened | Amount | Who did it | Transaction |
+|---|---|---|---|
+| TenderScout's Base Sepolia key linked (CIS-8) | | supplier's owner, wallet-signed | [f8d6c932…](https://ccdexplorer.io/testnet/transaction/f8d6c93210790ba53a71b65bb93e0a3932b44ee295c692ac518292d38f352aff) (Concordium) |
+| TenderScout's Solana devnet key linked (CIS-8) | | supplier's owner, wallet-signed | [978a836f…](https://ccdexplorer.io/testnet/transaction/978a836f7057424ff98aa2644e3b2b3ecdbf07455f29e67355c8694398f79525) (Concordium) |
+| MTN Uganda internet invoice paid on **Base Sepolia** | €1,150 = 1.15 EURC | agent prepared, owner signed Release | [0xce929862…](https://sepolia.basescan.org/tx/0xce9298625089a76251949cefc91a914886ecc4bcd8497a5db3770ca5bf9bba7e) (BaseScan) |
+| Corporate Security Services invoice on **Solana devnet** | €3,200 = 3.2 EURC | agent prepared, awaiting owner Release | pending |
+
+The Base payment's gas was paid by the public x402 facilitator, so neither agent holds ETH. See
+[Settlement on Base and Solana](#settlement-on-base-and-solana-eurc).
+
+Every Concordium payment was a sponsored transaction (the Kakasa facilitator paid the fee) to a supplier agent that is
 **Verified by Concordium**. Both agents are verified (see [Live on testnet](#live-on-testnet)).
 
 **Who it's for:** any Ugandan organisation that regularly pays service providers and suppliers —
@@ -291,7 +305,8 @@ Dry-run each transaction with `invokeContract` first, and let the wallet encode 
 contract's embedded schema. Testnet contracts: CIS-8004 `12802.0`, CIS-8 `12801.0`.
 
 ## Path to production
-Mainnet network + registry contract; invoices priced in a stablecoin (USDR) at full value; the facilitator
+Mainnet network + registry contract; invoices priced in a euro stablecoin at full value (EURR on Concordium,
+EURC on Base and Solana for suppliers whose agents live there, still gated by CIS-8 links); the facilitator
 run as a paid service; pilots with organisations in several sectors (starting with hospitality, then
 health, education and NGOs), each with its own buyer agent and spending policy; service providers
 registering their own verified supplier agents; receipts mirrored to storage and periodically
@@ -317,6 +332,8 @@ partner (planned, not built).
 - [x] Live public tenders from Uganda's Government Procurement Portal (PPDA open data)
 - [x] Invoices name real Entebbe suppliers (illustrative amounts)
 - [ ] First live EURR payment on testnet (needs test EURR in the ProcureBot account)
-- [ ] First live EURC payments on Base Sepolia and Solana devnet (needs faucet EURC and the CIS-8 links)
+- [x] TenderScout's Base Sepolia and Solana devnet keys linked through CIS-8 (23 Nov, table at the top)
+- [x] First live EURC payment on Base Sepolia: MTN Uganda €1,150 (23 Nov)
+- [ ] First live EURC payment on Solana devnet: Corporate Security Services €3,200
 
 **Next (final, 9 Dec):** demo video. Price benchmarks in `src/seller/data.ts` are still sample data.
