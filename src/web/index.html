@@ -845,7 +845,13 @@ async function loadLinks() {
       if (wallet.kind !== "browser" || !wallet.provider) throw new Error("Connect the Concordium browser wallet first (top right).");
       if (wallet.account !== l.owner) throw new Error(`Switch the wallet to the owner account ${short(l.owner)}, which must sign this link.`);
       if (wallet.busy) throw new Error("A wallet request is already open. Finish it in the wallet first.");
-      const sdk = await import("https://esm.sh/@concordium/web-sdk@12");
+      const sdk = window.concordiumSDK ?? await new Promise((ok, bad) => {
+        const el = document.createElement("script");
+        el.src = "/assets/concordium-sdk.js";
+        el.onload = () => window.concordiumSDK ? ok(window.concordiumSDK) : bad(new Error("the Concordium SDK loaded but didn't start"));
+        el.onerror = () => bad(new Error("couldn't load the Concordium SDK from the dashboard (run npm install)"));
+        document.head.appendChild(el);
+      });
       b.disabled = true; wallet.busy = true;
       toast("<b>Check your wallet</b>Approve the CIS-8 key link.", "");
       let txHash;

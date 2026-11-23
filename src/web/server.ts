@@ -15,6 +15,7 @@
  */
 import express from "express";
 import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 import { getExplorerTxUrl } from "@x402/concordium";
 import { config } from "../lib/config.js";
 import { checkBadge } from "../lib/badge.js";
@@ -93,6 +94,10 @@ const app = express();
 app.use(express.json({ limit: "100kb" }));
 mountAuth(app, APP_NAME);
 mountAssets(app);
+// The Concordium SDK's prebuilt browser bundle, served from this PC (the CDN copy fails to load in some
+// browsers). Used by the dashboard to send CIS-8 key links through the browser wallet.
+app.get("/assets/concordium-sdk.js", (_req, res) =>
+  res.type("application/javascript").set("cache-control", "public, max-age=86400").sendFile(join(process.cwd(), "node_modules/@concordium/web-sdk/lib/min/concordium.web.min.js")));
 
 const page = () => readFileSync(new URL("./index.html", import.meta.url), "utf8").replaceAll("{{APP_NAME}}", APP_NAME);
 app.get("/", (_req, res) => res.type("html").send(page()));
