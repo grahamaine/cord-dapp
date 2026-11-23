@@ -81,6 +81,9 @@ const norm = (k: string) => k.toLowerCase().replace(/[^a-z0-9]/g, "");
 const known: Record<string, unknown> = {
   externalkey: externalKey, key: externalKey,
   namespace: x.network, keytype: keyType, publickeyhex: publicKeyHex, publickey: publicKeyHex,
+  // the registry's flat names (build_cis8_canonical_bytes / build_cis8_register)
+  externalnamespace: x.network, externalkeynamespace: x.network, externalkeytype: keyType,
+  externalpublickeyhex: publicKeyHex, externalpublickey: publicKeyHex, externaladdress: address,
   owner: owner, concordiumaccount: owner, account: owner, owneraccount: owner, sender: owner, accountaddress: owner,
   proofscheme: proofScheme, scheme: proofScheme,
   contract: { index: 12801, subindex: 0 }, contractaddress: { index: 12801, subindex: 0 },
@@ -120,7 +123,7 @@ console.log(`  ✓ signed ${msgHex.length / 2} canonical bytes with the ${x.name
 // 2. register payload
 const regTool = tool("build_cis8_register");
 const fromCanon = canon && typeof canon === "object" ? Object.fromEntries(Object.entries(canon).filter(([k]) => !/hex|bytes|message|schema/i.test(k))) : {};
-const sigFields = { signature, signature_hex: signature, proof: signature, proof_hex: signature, proof_signature: signature, sig: signature };
+const sigFields = { signature, signature_hex: signature, proof: signature, proof_hex: signature, proof_signature: signature, sig: signature, external_signature_hex: signature, external_signature: signature, proof_bytes_hex: signature, signed_message_hex: signature };
 const r1 = fill(regTool.inputSchema, { ...fromCanon, ...sigFields });
 if (r1.missing.length) die(`build_cis8_register needs inputs this script doesn't know: ${r1.missing.join(", ")}.\nRun npm run link-keys -- --schemas and send the output to your developer.`);
 const reg: any = await registryTool("build_cis8_register", r1.args);
