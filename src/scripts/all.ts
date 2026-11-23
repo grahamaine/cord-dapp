@@ -1,0 +1,130 @@
+/**
+ * npm run all — start Kakasa with one command instead of three windows.
+ *
+ * Starts, in order, the facilitator (:4020), the TenderScout seller (:4021) and the owner dashboard (:4030),
+ * waits for each to answer, then opens the AI agent in your browser. Output from all three is shown here,
+ * labelled. Ctrl+C stops everything.
+ *
+ *   npm run all                 start everything and open http://localhost:4030/#agent
+ *   npm run all -- --remote     also open the private HTTPS link + QR code (phone or judges; needs DASHBOARD_PASSWORD)
+ *   npm run all -- --doctor     run the key/balance checks first
+ *   npm run all -- --no-open    don't open the browser
+ *
+ * Windows PowerShell: use npm.cmd, e.g.  npm.cmd run all -- --remote
+ */
+import { spawn, spawnSync, type ChildProcess } from "node:child_process";
+import { createRequire } from "node:module";
+import "dotenv/config";
+
+const args = new Set(process.argv.slice(2));
+const remote = args.has("--remote");
+const openBrowser = !args.has("--no-open");
+const doctor = args.has("--doctor");
+
+const require = createRequire(import.meta.url);
+const tsx = require.resolve("tsx/cli");
+
+const WEB_PORT = Number(process.env.WEB_PORT || 4030);
+const FACILITATOR_URL = process.env.FACILITATOR_URL || `http://localhost:${process.env.FACILITATOR_PORT || 4020}`;
+const SELLER_URL = process.env.SELLER_URL || `http://localhost:${process.env.SELLER_PORT || 4021}`;
+const WEB_URL = `http://localhost:${WEB_PORT}`;
+
+const COLORS: Record<string, string> = { facilitator: "\x1b[36m", seller: "\x1b[35m", web: "\x1b[32m", remote: "\x1b[33m" };
+const RESET = "\x1b[0m";
+const children = new Map<string, ChildProcess>();
+let stopping = false;
+
+function label(name: string) {
+  return `${COLORS[name] ?? ""}[${name.padEnd(11)}]${RESET}`;
+}
+
+function start(name: string, file: string, { critical = true } = {}) {
+  const child = spawn(process.execPath, [tsx, file], { stdio: ["ignore", "pipe", "pipe"], env: process.env });
+  children.set(name, child);
+  const pipe = (buf: Buffer) => {
+    for (const line of buf.toString().split(/\r?\n/)) if (line.trim()) console.log(`${label(name)} ${line}`);
+  };
+  child.stdout!.on("data", pipe);
+  child.stderr!.on("data", pipe);
+  child.on("exit", (code) => {
+    children.delete(name);
+    if (stopping) return;
+    if (critical) {
+      console.error(`\n✗ ${name} stopped (exit code ${code}). Stopping the others. Check the lines above for the reason.`);
+      stopAll(code || 1);
+    } else console.log(`${label(name)} closed${code ? ` (exit code ${code})` : ""}. The rest keep running.`);
+  });
+  return child;
+}
+
+/** Wait until a URL answers (any HTTP status counts: 401 means the login is on, which is fine). */
+async function waitFor(name: string, url: string, timeoutMs = 60_000) {
+  const until = Date.now() + timeoutMs;
+  while (Date.now() < until) {
+    if (!children.has(name)) return false;
+    try {
+      await fetch(url, { signal: AbortSignal.timeout(3000) });
+      return true;
+    } catch {
+      await new Promise((r) => setTimeout(r, 700));
+    }
+  }
+  return false;
+}
+
+function stopAll(code = 0) {
+  if (stopping) return;
+  stopping = true;
+  for (const c of children.values()) c.kill();
+  setTimeout(() => process.exit(code), 800);
+}
+process.on("SIGINT", () => { console.log("\nStopping Kakasa…"); stopAll(0); });
+process.on("SIGTERM", () => stopAll(0));
+
+function open(url: string) {
+  const [cmd, cmdArgs] =
+    process.platform === "win32" ? ["cmd", ["/c", "start", "", url]] :
+    process.platform === "darwin" ? ["open", [url]] : ["xdg-open", [url]];
+  spawn(cmd, cmdArgs, { stdio: "ignore", detached: true }).on("error", () => {}).unref();
+}
+
+if (doctor) {
+  console.log("Running the checks first (npm run doctor)…\n");
+  const r = spawnSync(process.execPath, [tsx, "src/scripts/doctor.ts"], { stdio: "inherit", env: process.env });
+  if (r.status) {
+    console.error("\n✗ The checks found a problem (see above). Fix it, or start without --doctor.");
+    process.exit(r.status);
+  }
+  console.log("");
+}
+
+const steps: [string, string, string][] = [
+  ["facilitator", "src/facilitator/server.ts", `${FACILITATOR_URL}/healthz`],
+  ["seller", "src/seller/server.ts", `${SELLER_URL}/healthz`],
+  ["web", "src/web/server.ts", `${WEB_URL}/api/session`],
+];
+
+console.log("Starting Kakasa: facilitator → seller → dashboard…\n");
+for (const [name, file, health] of steps) {
+  start(name, file);
+  if (!(await waitFor(name, health))) {
+    if (!stopping) {
+      console.error(`\n✗ ${name} didn't start within 60 seconds (${health}). Stopping.`);
+      stopAll(1);
+    }
+    await new Promise(() => {}); // wait for exit
+  }
+}
+
+const judge = (process.env.JUDGE_PASSWORD || "").length > 0;
+console.log(`
+✓ Kakasa is running
+   AI agent:     ${WEB_URL}/#agent
+   Dashboard:    ${WEB_URL}
+   Facilitator:  ${FACILITATOR_URL}
+   Seller:       ${SELLER_URL}
+   Judge demo:   ${judge ? "on (judges sign in with JUDGE_PASSWORD)" : "off (set JUDGE_PASSWORD in .env to turn it on)"}
+Press Ctrl+C to stop everything.
+`);
+if (openBrowser) open(`${WEB_URL}/#agent`);
+if (remote) start("remote", "src/scripts/remote.ts", { critical: false });

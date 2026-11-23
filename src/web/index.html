@@ -20,6 +20,7 @@
   .tabs { display: inline-flex; flex-wrap: wrap; gap: .3rem; padding: .3rem; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.7); }
   .tab { padding: .5rem 1.2rem; border: 0; border-radius: 999px; background: transparent; color: var(--ink-2); font: 500 .95rem var(--font); letter-spacing: .06em; text-transform: uppercase; cursor: pointer; }
   .tab.on { background: var(--grad); color: #fff; }
+  body.judge #wallet-btn, body.judge #pause-btn, body.judge #a-anchor-btn { display: none !important; }
   .tab:not(.on):hover { background: rgba(34,29,46,.05); }
   .tab .count { display: inline-grid; place-items: center; min-width: 20px; height: 20px; margin-left: .35rem; padding: 0 .35rem; border-radius: 999px; background: var(--warn); color: #fff; font-size: .75rem; }
   h2.h { font-size: 1.25rem; margin: 2.2rem 0 1rem; display: flex; align-items: baseline; gap: .8rem; flex-wrap: wrap; }
@@ -92,6 +93,10 @@
   <div class="notice" role="note">
     <span class="ico" style="margin:0;width:36px;height:36px;font-size:1rem">AI</span>
     <div><b>You're working with an AI purchasing agent.</b> ProcureBot checks suppliers and your limits and prepares payments, but <b>no money moves until a person presses Release</b>. Every step is recorded in a tamper-evident audit log. You can pause the agent at any time.</div>
+  </div>
+  <div class="notice warn hidden" role="note" id="judge-notice" style="margin-top:.8rem">
+    <span class="ico" style="margin:0;width:36px;height:36px;font-size:.8rem">J</span>
+    <div><b>Judge demo mode · testnet.</b> Try the whole flow yourself: on the <b>Locks</b> tab press <b>New demo invoice</b>, then ask the <b>Agent</b> to pay it (or use Create → Fund → Send), and press <b>Release</b>. Releases need no wallet here and are capped at <span id="judge-caps">–</span>; the audit log records them as a judge. The owner's own invoices, policy, pause and anchoring are owner-only.</div>
   </div>
 
   <div class="page-head">
@@ -172,6 +177,11 @@
     </div>
 
     <h2 class="h">Supplier invoices <small>open a lock to start paying one</small></h2>
+    <div class="hidden" id="demo-inv" style="margin:0 0 .8rem;display:flex;gap:.5rem;flex-wrap:wrap;justify-content:flex-start">
+      <button class="btn btn-primary btn-sm" type="button" data-demo="normal">+ New demo invoice</button>
+      <button class="btn btn-outline btn-sm" type="button" data-demo="over-limit" title="€12,000: watch the agent refuse it">+ Over-limit demo invoice</button>
+      <span class="hint" style="margin:0;align-self:center">Fresh small invoices for trying the flow · settle in testnet CCD</span>
+    </div>
     <div class="card stack" style="padding:1rem 1rem .4rem">
       <table>
         <thead><tr><th>Invoice</th><th>Supplier</th><th>Due</th><th class="r">Amount</th><th class="r">Settles as</th><th>Status</th><th></th></tr></thead>
@@ -243,7 +253,7 @@
       <div class="row" style="flex-wrap:wrap;align-items:flex-end">
         <div style="flex:2 1 220px"><label class="f" for="f-q">Search</label><input id="f-q" type="text" placeholder="Lock, invoice, supplier, account, reason…" /></div>
         <div style="flex:1 1 140px"><label class="f" for="f-op">Operation</label><select id="f-op"><option value="">All</option></select></div>
-        <div style="flex:1 1 130px"><label class="f" for="f-actor">Who</label><select id="f-actor"><option value="">All</option><option value="owner">Owner</option><option value="agent">AI agent</option><option value="system">System</option></select></div>
+        <div style="flex:1 1 130px"><label class="f" for="f-actor">Who</label><select id="f-actor"><option value="">All</option><option value="owner">Owner</option><option value="agent">AI agent</option><option value="judge">Judge (demo)</option><option value="system">System</option></select></div>
         <div style="flex:1 1 130px"><label class="f" for="f-out">Outcome</label><select id="f-out"><option value="">All</option><option value="ok">OK</option><option value="refused">Refused</option><option value="error">Error</option></select></div>
         <div style="flex:1 1 150px"><label class="f" for="f-from">From</label><input id="f-from" type="date" /></div>
         <div style="flex:1 1 150px"><label class="f" for="f-to">To</label><input id="f-to" type="date" /></div>
@@ -370,7 +380,33 @@ $("#back-btn").onclick = () => {
 };
 
 $("#logout-btn").onclick = async () => { await fetch("/api/logout", { method: "POST" }).catch(() => {}); location.href = "/login"; };
-api("/api/session").then((s) => { if (!s.auth) $("#logout-btn").classList.add("hidden"); }).catch(() => {});
+// Session: owner or judge (judge demo mode). Judges get the demo invoice buttons and no owner-only controls.
+let session = { role: "owner" };
+const isJudge = () => session.role === "judge";
+api("/api/session").then((s) => {
+  session = s;
+  if (!s.auth) $("#logout-btn").classList.add("hidden");
+  if (s.judgeMode || isJudge()) $("#demo-inv").classList.remove("hidden");
+  if (isJudge()) {
+    document.body.classList.add("judge");
+    $("#net").textContent = "TESTNET · JUDGE DEMO";
+    $("#kicker").textContent = "Judge demo · testnet · demo EUR";
+    $("#judge-notice").classList.remove("hidden");
+    $("#judge-caps").textContent = `${eur(s.judge.perLockEur)} per payment and ${eur(s.judge.dailyEur)} a day`;
+    for (const id of ["#wallet-btn", "#pause-btn", "#a-anchor-btn"]) $(id)?.classList.add("hidden");
+    const save = document.querySelector("#policy button[type=submit]"); if (save) { save.disabled = true; save.title = "Owner only"; }
+    const notice = $(".chat-notice"); if (notice) notice.innerHTML = "You are talking to an AI agent. In judge demo mode it prepares <b>judge demo invoices</b> only; it can't release money — you do that on the Locks tab with <b>Release</b>. Everything it does is in the Audit log.";
+  }
+}).catch(() => {});
+document.querySelectorAll("[data-demo]").forEach((b) => b.onclick = async () => {
+  b.disabled = true;
+  try {
+    const r = await post("/api/invoices/demo", { kind: b.dataset.demo });
+    toast(`<b>Demo invoice ${esc(r.invoice.id)}</b>${esc(r.invoice.supplier)} · ${eur(r.invoice.amountEur)}. Ask the Agent to pay it, or press Open lock.`, "ok");
+    await loadLocksTab();
+  } catch (e) { toast(`<b>Couldn't create a demo invoice</b>${esc(e.message)}`, "bad"); }
+  b.disabled = false;
+});
 
 // ---- ProcureBot chat
 const chat = { history: [], started: false, busy: false };
@@ -430,7 +466,7 @@ async function loadOverview() {
   const o = overview = await api("/api/overview");
   if (o.settlement && o.settlement.invoiceAsset !== "CCD") { DEC[o.settlement.invoiceAsset] = o.settlement.decimals; $("#kicker").textContent = `Owner dashboard · EUR, paid in ${o.settlement.invoiceAsset}`; }
   names = { [o.accounts.buyer]: "ProcureBot", [o.accounts.seller]: "TenderScout", [o.accounts.facilitator]: "Facilitator" };
-  $("#net").textContent = o.testnet ? "TESTNET" : o.network;
+  $("#net").textContent = (o.testnet ? "TESTNET" : o.network) + (isJudge() ? " · JUDGE DEMO" : "");
   renderAgentState();
   const t = o.totals;
   $("#s-released").textContent = eur(t.releasedEur);
@@ -520,7 +556,7 @@ async function loadLocks() {
 const OP_TEXT = {
   fund: (l) => `Set aside ${eur(l.amountEur)} for ${l.supplier}?`,
   send: (l) => `Send lock ${l.id} to the agent? It will check the supplier's badge and your limits. Nothing is paid yet.`,
-  release: (l) => `RELEASE PAYMENT\n\nYou are approving a payment prepared by an AI agent:\n${eur(l.amountEur)} to ${l.supplier} (${l.invoiceId}).\n\nThis signs and settles it on Concordium. It can't be undone.`,
+  release: (l) => `RELEASE PAYMENT${isJudge() ? " (JUDGE DEMO)" : ""}\n\nYou are approving a payment prepared by an AI agent:\n${eur(l.amountEur)} to ${l.supplier} (${l.invoiceId}).\n\n${isJudge() ? "This settles it on Concordium testnet and is recorded as a judge release. " : "This signs and settles it on Concordium. "}It can't be undone.`,
   cancel: (l) => `Cancel lock ${l.id}? Any amount set aside goes back to today's budget.`,
 };
 const lockBusy = new Set();
@@ -532,7 +568,7 @@ async function lockOp(btn) {
   btn.disabled = true; btn.textContent = op === "release" ? "Releasing…" : op === "send" ? "Checking…" : "…";
   try {
     let body = {};
-    if (op === "release" && policy?.requireOwnerSignature !== false && (await walletCfg()).requireOwnerSignature) {
+    if (op === "release" && !isJudge() && policy?.requireOwnerSignature !== false && (await walletCfg()).requireOwnerSignature) {
       if (!wallet.account) { await openWallet(); if (!wallet.account) throw Object.assign(new Error("Connect the owner's wallet to sign the release."), { body: { refused: true } }); }
       const ch = (await post(`/api/locks/${encodeURIComponent(l.id)}/release-challenge`)).lock;
       toast("<b>Check your wallet</b>Sign the approval to release this payment.", "");
@@ -544,7 +580,7 @@ async function lockOp(btn) {
     const msg = {
       fund: `${eur(L.amountEur)} set aside.`,
       send: L.status === "released" ? "Checks passed and auto-released." : "Checks passed. Waiting for your release.",
-      release: `${eur(L.amountEur)} paid to ${esc(L.supplier)} on ${esc(L.chainName || "Concordium")}, fee sponsored.${L.approval ? ` Signed by ${esc(short(L.approval.account))}.` : ""} ${L.explorerUrl ? `<a href="${esc(L.explorerUrl)}" target="_blank" rel="noopener">${explorerName(L.chainName)} ↗</a>` : ""}`,
+      release: `${eur(L.amountEur)} paid to ${esc(L.supplier)} on ${esc(L.chainName || "Concordium")}, fee sponsored.${L.approval ? (L.approval.method === "judge" ? " Approved in judge demo mode." : ` Signed by ${esc(short(L.approval.account))}.`) : ""} ${L.explorerUrl ? `<a href="${esc(L.explorerUrl)}" target="_blank" rel="noopener">${explorerName(L.chainName)} ↗</a>` : ""}`,
       cancel: "Lock cancelled.",
     }[op];
     toast(`<b>${esc(op)} · ${esc(L.id)}</b>${msg}`, "ok");
@@ -565,7 +601,7 @@ async function loadInvoices() {
     $("#invoices").innerHTML = inv.items.map((i) => {
       const l = open.get(i.id);
       const status = i.status === "paid" ? chip("ok", "Paid") : l ? chip(STATUS[l.status][0], `${l.id} · ${STATUS[l.status][1]}`) : chip("mute", "Open");
-      const action = i.status === "paid" || l ? "" : `<button class="btn btn-outline btn-sm" data-create="${esc(i.id)}">Create lock</button>`;
+      const action = i.status === "paid" || l ? "" : isJudge() && !i.id.startsWith("DEMO-") ? `<span class="hint" style="margin:0">Owner only</span>` : `<button class="btn btn-outline btn-sm" data-create="${esc(i.id)}">Create lock</button>`;
       return `<tr>
         <td>${esc(i.id)}<small>${esc(i.description)}</small></td>
         <td>${esc(i.supplier)}<small>${esc(i.category)}</small></td>
@@ -634,7 +670,7 @@ $("#policy").onsubmit = async (e) => {
 
 // ---------------- audit trail ----------------
 let auditData = null;
-const who = (x) => chip(x === "owner" ? "ok" : x === "agent" ? "info" : "mute", x === "owner" ? "Owner" : x === "agent" ? "AI agent" : "System");
+const who = (x) => chip(x === "owner" ? "ok" : x === "agent" ? "info" : x === "judge" ? "warn" : "mute", x === "owner" ? "Owner" : x === "agent" ? "AI agent" : x === "judge" ? "Judge (demo)" : "System");
 const outc = (x) => chip(x === "ok" ? "ok" : x === "refused" ? "warn" : "bad", x);
 async function loadAudit() {
   try {

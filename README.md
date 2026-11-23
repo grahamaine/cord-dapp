@@ -258,6 +258,20 @@ The web server holds the buyer's signing key, so it listens on localhost only.
 
 Without `DASHBOARD_PASSWORD`, any request arriving through a tunnel is refused, so the dashboard can't be exposed by accident.
 
+### Judge demo mode (`JUDGE_PASSWORD`)
+Lets judges try the real agent themselves, on your computer or through the private link, without your wallet:
+1. In `.env`, next to `DASHBOARD_PASSWORD`, set `JUDGE_PASSWORD` (8+ characters, different from the owner password).
+2. `npm run all -- --remote` and send judges the printed link plus the judge password.
+3. Judges sign in and land on the Agent tab. On **Locks** they press **New demo invoice** (or **Over-limit demo
+   invoice** to watch a refusal), ask the Agent to pay it, and press **Release**: a real, fee-sponsored testnet payment.
+
+Guard rails: testnet only; judges work only on judge demo invoices (`DEMO-…`, small amounts in testnet CCD,
+stored in `data/demo-invoices.json`), never your own invoices; judge releases need no wallet but are capped at
+`JUDGE_MAX_PER_LOCK_EUR` (default €2,000) per payment and `JUDGE_DAILY_LIMIT_EUR` (default €5,000) a day, on top of
+every owner limit, badge check and the pause switch; policy, pause/resume, anchoring and CIS-8 key links stay
+owner-only. Every judge action is in the audit log as **Judge (demo)**, and a judge release is recorded as a demo
+approval, not an owner wallet signature.
+
 ## Run it (testnet)
 Requires Node.js 20+. On Windows PowerShell, use `npm.cmd` in place of `npm`, or run
 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` once.
@@ -277,12 +291,14 @@ Requires Node.js 20+. On Windows PowerShell, use `npm.cmd` in place of `npm`, or
 3. **Install:** `npm install`, then `npm run doctor`. It checks that each private key belongs to its account and
    that the accounts hold enough CCD, without printing any key. A facilitator key from the wrong account makes
    payments fail with `submission_failed: Verification failed`.
-4. **Start three services**, each in its own terminal, in this order:
+4. **Start everything with one command:**
    ```
-   npm run facilitator     # :4020, sponsors fees
-   npm run seller          # :4021, supplier agent + invoices
-   npm run web             # :4030, dashboard + owner page
+   npm run all                 # facilitator :4020 → seller :4021 → dashboard :4030, opens the AI agent
+   npm run all -- --remote     # also prints the private phone / judge link + QR code (needs DASHBOARD_PASSWORD)
+   npm run all -- --doctor     # run the key and balance checks first
    ```
+   Output from all three is shown in one window, labelled; Ctrl+C stops everything. (Or start them separately,
+   each in its own terminal, in this order: `npm run facilitator`, `npm run seller`, `npm run web`.)
 5. **Pay.** Open http://localhost:4030, **Connect wallet** (an owner account), then either ask the **Agent** tab
    "pay the plumbing invoice", or go to Locks → Create lock → Fund → Send to agent. Press **Release** and sign in
    your wallet, then **Anchor now** in the Audit log. Or use the CLI:

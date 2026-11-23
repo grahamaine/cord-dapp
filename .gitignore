@@ -4,3 +4,4 @@ dist
 data/receipts.jsonl
 data/policy.json
 data/cis8-link-*.json
+data/demo-invoices.json

@@ -34,7 +34,9 @@ import { anchorNow, anchorData, checkAnchors } from "../lib/anchor.js";
 import { buy, PaymentRefused } from "../buyer/procurebot.js";
 import { mountAssets } from "../ui/assets.js";
 import { builtinReply } from "../agent/builtin.js";
-import { mountAuth, authEnabled } from "./auth.js";
+import { mountAuth, authEnabled, judgeEnabled, roleOf } from "./auth.js";
+import { assertJudgeInvoice, isDemoInvoice, judgeApproval, judgeLimits, judgeReleasedTodayEur } from "../lib/judge.js";
+import { agentContext } from "../agent/tools.js";
 import { claudeEnabled, claudeReply } from "../agent/claude.js";
 
 const APP_NAME = process.env.APP_NAME || "Kakasa";
@@ -188,7 +190,8 @@ app.post("/api/agent/:action(pause|resume)", (req, res) => {
 });
 
 // Wallet connect settings for the owner page (no secrets here: the project id is public).
-app.get("/api/session", (_req, res) => res.json({ auth: authEnabled() }));
+app.get("/api/session", (req, res) =>
+  res.json({ auth: authEnabled(), role: roleOf(req), judgeMode: judgeEnabled(), judge: judgeEnabled() ? { ...judgeLimits(), releasedTodayEur: judgeReleasedTodayEur() } : null }));
 
 // ---- ProcureBot chat: built-in assistant (free) or Claude if ANTHROPIC_API_KEY is set. Never releases.
 app.get("/api/agent/info", (_req, res) => res.json({ mode: claudeEnabled() ? "claude" : "builtin", name: "ProcureBot" }));
@@ -200,12 +203,13 @@ app.post("/api/agent/chat", async (req, res) => {
     .map((m: any) => ({ role: m.role, content: m.content.slice(0, 4000) }));
   try {
     let out;
-    if (claudeEnabled()) {
-      try { out = await claudeReply([...history, { role: "user", content: message }]); }
-      catch (e) { out = await builtinReply(message); out.reply = `(Claude unavailable: ${(e as Error).message.slice(0, 120)} — using the built-in assistant)\n\n` + out.reply; }
-    } else out = await builtinReply(message);
+    out = await agentContext.run({ role: roleOf(req) }, async () => {
+      if (!claudeEnabled()) return builtinReply(message);
+      try { return await claudeReply([...history, { role: "user", content: message }]); }
+      catch (e) { const o = await builtinReply(message); o.reply = `(Claude unavailable: ${(e as Error).message.slice(0, 120)} — using the built-in assistant)\n\n` + o.reply; return o; }
+    });
     const READ_ONLY = new Set(["list_invoices", "list_locks", "budget_status", "audit_summary", "check_supplier", "check_cross_chain_supplier"]);
-    if (out.actions.some((a) => !READ_ONLY.has(a.tool))) audit({ actor: "agent", op: "chat", outcome: "ok", detail: `Owner asked: "${message.slice(0, 120)}" → ${out.actions.map((a) => a.tool).join(", ")}`, data: { mode: out.mode } });
+    if (out.actions.some((a) => !READ_ONLY.has(a.tool))) audit({ actor: "agent", op: "chat", outcome: "ok", detail: `${roleOf(req) === "judge" ? "Judge" : "Owner"} asked: "${message.slice(0, 120)}" → ${out.actions.map((a) => a.tool).join(", ")}`, data: { mode: out.mode } });
     res.json(out);
   } catch (e) {
     res.status(500).json({ error: (e as Error).message });
@@ -336,9 +340,19 @@ const lockRoute = (fn: (req: express.Request) => Promise<unknown> | unknown) => 
 };
 
 app.get("/api/locks", (_req, res) => res.json({ locks: readLocks().map(withExplorer).reverse(), totals: lockTotals() }));
-app.post("/api/locks", lockRoute(async (req) => createLock(await invoiceRef(String(req.body?.invoiceId || "")), "owner")));
-app.post("/api/locks/:id/fund", lockRoute((req) => fundLock(req.params.id, "owner")));
-app.post("/api/locks/:id/send", lockRoute((req) => sendLock(req.params.id, (l) => releaseLock(l.id, "agent", payLock))));
+/** Judges may only act on locks for judge demo invoices. */
+function judgeLock(req: express.Request) {
+  if (roleOf(req) !== "judge") return;
+  const l = readLocks().find((x) => x.id === req.params.id);
+  if (l && !isDemoInvoice(l.invoiceId)) throw new LockError("judges work on judge demo invoices only; this lock belongs to the owner");
+}
+app.post("/api/locks", lockRoute(async (req) => {
+  const role = roleOf(req);
+  if (role === "judge") assertJudgeInvoice(String(req.body?.invoiceId || ""));
+  return createLock(await invoiceRef(String(req.body?.invoiceId || "")), role);
+}));
+app.post("/api/locks/:id/fund", lockRoute((req) => { judgeLock(req); return fundLock(req.params.id, roleOf(req)); }));
+app.post("/api/locks/:id/send", lockRoute((req) => { judgeLock(req); return sendLock(req.params.id, (l) => releaseLock(l.id, "agent", payLock)); }));
 // Owner wallet approval: get a one-time challenge, sign it in the wallet, then release with the signature.
 app.post("/api/locks/:id/release-challenge", lockRoute((req) => {
   const l = readLocks().find((x) => x.id === req.params.id);
@@ -346,10 +360,27 @@ app.post("/api/locks/:id/release-challenge", lockRoute((req) => {
   if (l.status !== "sent") throw new LockError(`lock is ${l.status}, not awaiting release`);
   return createChallenge(l);
 }));
-app.post("/api/locks/:id/release", lockRoute((req) =>
-  releaseLock(req.params.id, "owner", payLock, () => verifyApproval(req.params.id, req.body ?? {})),
-));
-app.post("/api/locks/:id/cancel", lockRoute((req) => cancelLock(req.params.id, "owner", String(req.body?.note || ""))));
+app.post("/api/locks/:id/release", lockRoute((req) => {
+  if (roleOf(req) === "judge") { judgeLock(req); return releaseLock(req.params.id, "judge", payLock, async (l) => judgeApproval(l)); }
+  return releaseLock(req.params.id, "owner", payLock, () => verifyApproval(req.params.id, req.body ?? {}));
+}));
+app.post("/api/locks/:id/cancel", lockRoute((req) => { judgeLock(req); return cancelLock(req.params.id, roleOf(req), String(req.body?.note || "")); }));
+
+// Judge demo: a fresh small invoice (kind "normal") or one over the limits (kind "over-limit"), from the seller.
+app.post("/api/invoices/demo", async (req, res) => {
+  try {
+    const r = await fetch(`${config.seller.url}/invoices/demo`, {
+      method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ kind: req.body?.kind === "over-limit" ? "over-limit" : "normal" }), signal: AbortSignal.timeout(8000),
+    });
+    const body = await r.json().catch(() => ({}));
+    if (!r.ok) return res.status(r.status).json({ error: body.error || `seller HTTP ${r.status}` });
+    audit({ actor: roleOf(req), op: "demo-invoice", outcome: "ok", detail: `Judge demo invoice ${body.invoice.id} created: ${body.invoice.supplier}, €${body.invoice.amountEur.toLocaleString()}` });
+    res.json(body);
+  } catch (e) {
+    res.status(502).json({ error: `seller unreachable at ${config.seller.url}: ${(e as Error).message}` });
+  }
+});
 
 app.listen(PORT, HOST, () => {
   console.log(`${APP_NAME} dashboard on http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`);

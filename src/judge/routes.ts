@@ -104,7 +104,7 @@ async function build() {
       lastAnchorAt: lastAnchor?.at ?? null,
     },
     anchors, payments,
-    locks: s.locks.map((l) => ({ id: l.id, invoiceId: l.invoiceId, supplier: l.supplier, category: l.category, description: l.description, amountEur: l.amountEur, settled: l.amount && l.asset ? fmtAtomic(l.amount, l.asset) : null, status: l.status, checks: l.checks, approval: l.approval ? { account: l.approval.account } : null, txHash: l.txHash, explorerUrl: l.explorerUrl, history: l.history })).reverse(),
+    locks: s.locks.map((l) => ({ id: l.id, invoiceId: l.invoiceId, supplier: l.supplier, category: l.category, description: l.description, amountEur: l.amountEur, settled: l.amount && l.asset ? fmtAtomic(l.amount, l.asset) : null, status: l.status, checks: l.checks, approval: l.approval ? { account: l.approval.account, method: l.approval.method ?? "wallet" } : null, txHash: l.txHash, explorerUrl: l.explorerUrl, history: l.history })).reverse(),
     audit: [...s.audit].reverse(),
   };
 }

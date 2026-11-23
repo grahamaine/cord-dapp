@@ -39,7 +39,7 @@
   .ck h3 { font-size: 1.05rem; margin: 0 0 .2rem; } .ck p { margin: 0; font-size: .92rem; }
   .tbl { overflow-x: auto; }
   .who { font-size: .78rem; letter-spacing: .1em; text-transform: uppercase; }
-  .who.agent { color: var(--violet); } .who.owner { color: var(--ok); } .who.system { color: var(--muted); }
+  .who.agent { color: var(--violet); } .who.owner { color: var(--ok); } .who.system { color: var(--muted); } .who.judge { color: var(--warn); }
   .flow { display: flex; flex-wrap: wrap; gap: .35rem; margin-top: .4rem; }
   .flow span { font-size: .78rem; border-radius: 999px; padding: .08rem .55rem; background: var(--indigo-soft); color: var(--info); }
   .flow span.refused { background: var(--bad-soft); color: var(--bad); }
@@ -107,7 +107,7 @@
   <section class="section" id="locks">
     <div class="kicker">Agent prepares · person releases</div>
     <h2>Payment locks</h2>
-    <p class="muted">Each lock shows who did each step. The AI agent can create, fund and check; only an owner wallet signature releases.</p>
+    <p class="muted">Each lock shows who did each step. The AI agent can create, fund and check; only an owner wallet signature releases (or, for judge demo invoices marked DEMO-, a signed-in judge in capped testnet demo mode).</p>
     <div class="card tbl stack" style="margin-top:1rem"><table><thead><tr><th>Lock</th><th>Supplier</th><th class="r">Amount</th><th>Status</th><th>Steps</th></tr></thead><tbody id="locktbl"></tbody></table></div>
   </section>
 
@@ -150,7 +150,7 @@ const short = (a) => (a && a.length > 16 ? a.slice(0, 6) + "…" + a.slice(-5) :
 const when = (t) => new Date(t).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
 const eur = (n) => "€" + Number(n || 0).toLocaleString("en-IE", { maximumFractionDigits: 2 });
 const ccd = (atomic) => (Number(atomic) / 1e6).toLocaleString(undefined, { maximumFractionDigits: 6 }) + " CCD";
-const WHO = { agent: "AI agent", owner: "Owner", system: "System" };
+const WHO = { agent: "AI agent", owner: "Owner", system: "System", judge: "Judge (demo)" };
 const tri = (v) => (v === true ? "ok" : v === false ? "bad" : "warn");
 const mark = (v) => (v === true ? "✓" : v === false ? "✗" : "?");
 let data;

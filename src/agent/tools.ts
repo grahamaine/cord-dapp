@@ -13,6 +13,8 @@ import { checkBadge } from "../lib/badge.js";
 import { loadPolicy, spentTodayEur } from "../lib/policy.js";
 import { readAudit, verifyAudit } from "../lib/audit.js";
 import { readReceipts, verifyChain } from "../lib/receipts.js";
+import { AsyncLocalStorage } from "node:async_hooks";
+import { isDemoInvoice } from "../lib/judge.js";
 import { cancelLock, createLock, fundLock, readLocks, reservedEur, sendLock, LockError, type Lock } from "../lib/locks.js";
 import { verifyCrossChain, CHAINS } from "../lib/xchain.js";
 import { buy } from "../buyer/procurebot.js";
@@ -27,6 +29,11 @@ export function matchBenchmarkItem(text: string) {
   return keys.find((k) => k === q) ?? keys.find((k) => k.split(/[^a-z]+/).filter((w) => w.length > 2).some((w) => q.includes(w.replace(/s$/, "")))) ?? null;
 }
 export const TENDER_SECTORS: string[] = [...ALL_SECTORS];
+
+/** Who is chatting with the agent. In judge demo mode the agent only prepares and cancels judge demo invoices. */
+export const agentContext = new AsyncLocalStorage<{ role: "owner" | "judge" }>();
+const judging = () => agentContext.getStore()?.role === "judge";
+const JUDGE_ONLY_DEMO = "In judge demo mode I only work on judge demo invoices (ids starting DEMO-). Press “New demo invoice” on the Locks tab, then ask me to pay it.";
 
 export interface ToolDef {
   name: string;
@@ -55,7 +62,7 @@ async function invoices() {
 
 /** Match free text ("laundry", "INV-LAU-1107", "Lakeside") to one invoice. */
 export async function findInvoice(query: string) {
-  const all = await invoices();
+  const all = (await invoices()).filter((i) => !judging() || isDemoInvoice(i.id));
   const q = query.toLowerCase().trim();
   const exact = all.find((i) => i.id.toLowerCase() === q);
   if (exact) return { match: exact, candidates: [exact] };
@@ -89,6 +96,7 @@ export const TOOLS: ToolDef[] = [
     input_schema: { type: "object", properties: { invoice: { type: "string" } }, required: ["invoice"] },
     run: async ({ invoice }) => {
       const { match, candidates } = await findInvoice(String(invoice));
+      if (judging() && !match && !candidates.length) return { done: false, reason: JUDGE_ONLY_DEMO, candidates: [] };
       if (!match) return { done: false, reason: candidates.length ? "more than one invoice matches; be more specific" : "no invoice matches", candidates: candidates.map((c) => `${c.id} ${c.supplier} ${eur(c.amountEur)}`) };
       if (match.status === "paid") return { done: false, reason: `${match.id} is already paid` };
       const steps: string[] = [];
@@ -118,6 +126,8 @@ export const TOOLS: ToolDef[] = [
     description: "Cancel a payment lock before it is released (frees the budget). Needs the lock id and a short reason.",
     input_schema: { type: "object", properties: { lock_id: { type: "string" }, reason: { type: "string" } }, required: ["lock_id", "reason"] },
     run: async ({ lock_id, reason }) => {
+      const target = readLocks().find((l) => l.id === String(lock_id));
+      if (judging() && target && !isDemoInvoice(target.invoiceId)) return { done: false, reason: JUDGE_ONLY_DEMO };
       try { return { done: true, lock: lockView(cancelLock(String(lock_id), "agent", String(reason))) }; }
       catch (e) { return { done: false, reason: (e as Error).message }; }
     },

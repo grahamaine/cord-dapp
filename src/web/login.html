@@ -28,9 +28,9 @@
 <div class="center">
   <form class="card login" id="f">
     <a class="brand" href="#"><img class="logo-img" src="/assets/brand/kakasa-mark-128.png" alt="" width="38" height="38" />{{APP_NAME}}</a>
-    <h1>Owner sign-in</h1>
-    <p class="muted" style="margin:0">ProcureBot's owner dashboard. Releasing a payment still needs your wallet signature.</p>
-    <input id="pw" type="password" autocomplete="current-password" placeholder="Dashboard password" required autofocus />
+    <h1>Sign in</h1>
+    <p class="muted" style="margin:0">ProcureBot's owner dashboard. Owners: releasing a payment still needs your wallet signature. Judges: use the judge password you were given to try the agent in demo mode.</p>
+    <input id="pw" type="password" autocomplete="current-password" placeholder="Owner or judge password" required autofocus />
     <button class="btn btn-primary" type="submit">Sign in</button>
     <div class="err" id="err" role="alert"></div>
   </form>
@@ -43,7 +43,7 @@ document.getElementById("f").onsubmit = async (e) => {
     const r = await fetch("/api/login", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ password: document.getElementById("pw").value }) });
     const b = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(b.error || "Sign-in failed");
-    location.href = "/";
+    location.href = b.role === "judge" ? "/#agent" : "/";
   } catch (x) { err.textContent = x.message; document.getElementById("pw").select(); }
 };
 </script>

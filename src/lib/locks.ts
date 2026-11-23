@@ -47,7 +47,8 @@ export interface Lock {
   txHash?: string;
   explorerUrl?: string;
   receiptSeq?: number;
-  approval?: { account: string; at: string; nonce: string; message: string; signature: unknown };
+  /** method "wallet": owner wallet signature; "judge": judge demo approval (src/lib/judge.ts). Older locks: wallet. */
+  approval?: { account: string; at: string; nonce: string; message: string; signature: unknown; method?: "wallet" | "judge" };
   lastError?: string;
   history: LockEvent[];
 }
@@ -163,14 +164,17 @@ export async function releaseLock(
   requireStatus(lock, "release", ["sent"]);
   const policy = loadPolicy();
   if (policy.paused) refuse(lock, "release", actor, "the agent is paused by the owner");
-  if (policy.requireHumanRelease && actor !== "owner") refuse(lock, "release", actor, "policy requires a human to release payments");
-  if (actor === "owner" && policy.requireOwnerSignature) {
+  const human = actor === "owner" || actor === "judge";
+  if (policy.requireHumanRelease && !human) refuse(lock, "release", actor, "policy requires a human to release payments");
+  // A judge release always needs the judge demo approval (caps, demo invoices only); an owner release needs the wallet signature.
+  if (actor === "judge" || (actor === "owner" && policy.requireOwnerSignature)) {
     if (!approve) refuse(lock, "release", actor, "policy requires the owner's wallet signature; connect your wallet and sign the approval");
     try {
       lock.approval = await approve!(lock);
-      record(lock, "approve", "owner", "ok", `Release signed by owner wallet ${lock.approval!.account}`, { account: lock.approval!.account });
+      if (actor === "judge") record(lock, "approve", "judge", "ok", "Release approved in judge demo mode by a signed-in judge (testnet, capped; not an owner wallet signature)", { account: lock.approval!.account, method: "judge" });
+      else record(lock, "approve", "owner", "ok", `Release signed by owner wallet ${lock.approval!.account}`, { account: lock.approval!.account });
     } catch (e) {
-      refuse(lock, "release", actor, `wallet approval failed: ${(e as Error).message}`);
+      refuse(lock, "release", actor, `${actor === "judge" ? "judge demo approval" : "wallet approval"} failed: ${(e as Error).message}`);
     }
   }
   try {
