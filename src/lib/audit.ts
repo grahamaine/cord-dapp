@@ -9,7 +9,8 @@ import { createHash } from "node:crypto";
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { dirname } from "node:path";
 
-export type Actor = "owner" | "agent" | "system";
+/** judge = a hackathon judge signed in to the dashboard in judge demo mode (see src/lib/judge.ts). */
+export type Actor = "owner" | "agent" | "system" | "judge";
 export interface AuditInput {
   actor: Actor;
   op: string; // create | fund | send | release | cancel | policy | pause | resume | refused

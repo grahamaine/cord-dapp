@@ -1,3 +1,6 @@
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
+import { randomBytes } from "node:crypto";
 import { eurToAtomic, INVOICE_ASSET } from "../lib/eur.js";
 import { XCHAINS, type ChainKey } from "../lib/chains.js";
 
@@ -56,3 +59,46 @@ export const invoices: Invoice[] = [
   inv({ id: "INV-NET-5521", supplier: "MTN Uganda (Business Internet)", category: "Internet & telecoms", description: "Business fibre, December · settles on Base", issued: "2026-11-19", due: "2026-12-01", amountEur: 1150, chain: "base" }),
   inv({ id: "INV-CON-0007", supplier: "Excel Construction Ltd", category: "Construction", description: "Kitchen refurbishment, phase 1 (over the €10,000 cap)", issued: "2026-11-19", due: "2026-12-15", amountEur: 12500 }),
 ];
+
+/**
+ * Judge demo invoices: small, fresh invoices created on demand from the owner dashboard so judges can run the
+ * whole flow (create → fund → send → release) without using up the invoices above. They always settle on
+ * Concordium in CCD at the demo rate (tiny testnet amounts). Stored in data/demo-invoices.json on the owner's
+ * computer; never created on Vercel.
+ */
+const demoPath = () => process.env.DEMO_INVOICES_PATH || "data/demo-invoices.json";
+const DEMO_SUPPLIERS = [
+  { supplier: "Mother Laundry", category: "Laundry", description: "Extra linen run (judge demo)" },
+  { supplier: "Pure Grow Africa", category: "Food supply", description: "Fruit top-up (judge demo)" },
+  { supplier: "Airport Taxi Services (Entebbe)", category: "Transport", description: "Two airport transfers (judge demo)" },
+  { supplier: "Handymen Uganda", category: "Maintenance", description: "Door lock repair (judge demo)" },
+];
+export function demoInvoices(): Invoice[] {
+  if (!existsSync(demoPath())) return [];
+  try { return JSON.parse(readFileSync(demoPath(), "utf8")); } catch { return []; }
+}
+/** kind "normal": €150–€900, within every limit. kind "over-limit": €12,000, so judges can watch the agent refuse it. */
+export function createDemoInvoice(kind: "normal" | "over-limit" = "normal"): Invoice {
+  const all = demoInvoices();
+  const s = DEMO_SUPPLIERS[all.length % DEMO_SUPPLIERS.length];
+  const today = new Date();
+  const due = new Date(today.getTime() + 7 * 86_400_000);
+  const amountEur = kind === "over-limit" ? 12_000 : 150 + 50 * Math.floor(Math.random() * 16);
+  const invoice: Invoice = {
+    id: `DEMO-${randomBytes(2).toString("hex").toUpperCase()}`,
+    supplier: kind === "over-limit" ? "Excel Construction Ltd" : s.supplier,
+    category: kind === "over-limit" ? "Construction" : s.category,
+    description: kind === "over-limit" ? "Large refurbishment (judge demo, over the €10,000 cap)" : s.description,
+    issued: today.toISOString().slice(0, 10),
+    due: due.toISOString().slice(0, 10),
+    amountEur,
+    asset: "CCD",
+    amount: eurToAtomic(amountEur, "CCD"),
+    chain: "concordium",
+  };
+  mkdirSync(dirname(demoPath()), { recursive: true });
+  writeFileSync(demoPath(), JSON.stringify([...all, invoice].slice(-50), null, 2) + "\n");
+  return invoice;
+}
+/** The fixed invoices plus any judge demo invoices. */
+export const allInvoices = (): Invoice[] => (process.env.VERCEL ? invoices : [...invoices, ...demoInvoices()]);

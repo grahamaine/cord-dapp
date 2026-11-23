@@ -66,7 +66,7 @@ export async function verifyApproval(lockId: string, input: { nonce?: string; ac
   const info = await grpc().getAccountInfo(AccountAddress.fromBase58(account));
   const ok = await verifyMessageSignature(c.message, signature, info);
   if (!ok) throw new Error("wallet signature is not valid for this approval");
-  return { account, nonce: input.nonce!, message: c.message, signature, at: new Date().toISOString() };
+  return { account, nonce: input.nonce!, message: c.message, signature, at: new Date().toISOString(), method: "wallet" as const };
 }
 
 /** Test helper: verify against a provided account info (no network). */

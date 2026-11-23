@@ -9,6 +9,7 @@
     "node": ">=20"
   },
   "scripts": {
+    "all": "tsx src/scripts/all.ts",
     "facilitator": "tsx src/facilitator/server.ts",
     "seller": "tsx src/seller/server.ts",
     "buyer": "tsx src/buyer/cli.ts",

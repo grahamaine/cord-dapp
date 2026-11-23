@@ -16,7 +16,7 @@ import { XCHAINS, XCHAIN_FACILITATOR_URL, invoicePayPath, networkOf, sellerEvmPu
 import { config } from "../lib/config.js";
 import { checkBadge } from "../lib/badge.js";
 import { appendReceipt, readReceipts } from "../lib/receipts.js";
-import { benchmarks, invoices, tenders } from "./data.js";
+import { allInvoices, benchmarks, createDemoInvoice, tenders } from "./data.js";
 import { currentTenders } from "../lib/tenders.js";
 import { assetSpec, eurToAtomic, fmtAtomic, isCcd, settlementInfo } from "../lib/eur.js";
 import { publicRouter } from "../public/routes.js";
@@ -39,7 +39,7 @@ if (xchainsOffered.includes("solana")) xchainServer.register(XCHAINS.solana.netw
 /** TenderScout's receiving address on a chain ("" if that chain isn't offered). */
 const payToOn = (chain: ChainKey) => (chain === "concordium" ? payTo : sellerXAddress[chain]());
 
-const findInvoice = (id: string) => invoices.find((i) => i.id === id);
+const findInvoice = (id: string) => allInvoices().find((i) => i.id === id);
 const basePayPath = (id: string) => `/invoices/${id}/pay`;
 /** An invoice is paid once a settled receipt exists for one of its pay URLs (the receipt log is the source of truth). */
 function invoicePayment(id: string) {
@@ -104,7 +104,7 @@ app.get("/invoices", (_req, res) =>
     payTo,
     asset: config.seller.invoiceAsset,
     settlement: settlementInfo(),
-    items: invoices
+    items: allInvoices()
       // An invoice on a chain TenderScout has no address on can't be paid: show it on Concordium instead.
       .map((inv) => (inv.chain !== "concordium" && !payToOn(inv.chain) ? { ...inv, chain: "concordium" as const, asset: config.seller.invoiceAsset, amount: eurToAtomic(inv.amountEur, config.seller.invoiceAsset) } : inv))
       .map((inv) => {
@@ -124,6 +124,17 @@ app.use("/invoices/:id/pay", (req, res, next) => {
   const expected = inv.chain !== "concordium" && !payToOn(inv.chain) ? "concordium" : inv.chain;
   if (chain !== expected) return res.status(409).json({ error: "wrong_chain", message: `invoice ${inv.id} settles on ${expected}`, payPath: invoicePayPath(inv.id, expected) });
   next();
+});
+
+// Judge demo: a fresh small invoice (or an over-limit one), created by the owner dashboard on this computer.
+// Only answers requests from this computer, and never on Vercel.
+const loopback = (ip = "") => ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1";
+app.post("/invoices/demo", express.json(), (req, res) => {
+  if (process.env.VERCEL || !loopback(req.socket.remoteAddress)) return res.status(403).json({ error: "demo invoices can only be created from the owner's computer" });
+  const kind = req.body?.kind === "over-limit" ? "over-limit" : "normal";
+  const inv = createDemoInvoice(kind);
+  console.log(`[seller] judge demo invoice ${inv.id}: ${inv.supplier}, EUR ${inv.amountEur}`);
+  res.json({ ok: true, invoice: { ...inv, payTo, network: networkOf(inv.chain), payPath: invoicePayPath(inv.id, inv.chain), status: "open" } });
 });
 
 // Public: Agent Card (hash-anchored on-chain in the CIS-8004 registry)

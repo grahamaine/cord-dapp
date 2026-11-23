@@ -7,6 +7,10 @@
  * - Without a password, requests that arrive through a tunnel are refused outright, so the dashboard
  *   can never be exposed by accident.
  * Releasing money still needs the owner's wallet signature on top of this login.
+ *
+ * Judge demo mode: set JUDGE_PASSWORD too (8+ characters, different from DASHBOARD_PASSWORD). Signing in with
+ * it gives a "judge" session: the whole flow on demo invoices, capped releases without the owner's wallet, and
+ * no access to owner-only actions (policy, pause/resume, anchoring, CIS-8 key links). See src/lib/judge.ts.
  */
 import type express from "express";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
@@ -16,12 +20,25 @@ import { audit } from "../lib/audit.js";
 const COOKIE = "cord_session";
 const SESSION_MS = 12 * 60 * 60 * 1000;
 const MAX_FAILS = 5, LOCK_MS = 15 * 60 * 1000;
-const sessions = new Map<string, number>(); // token -> expiry
+export type Role = "owner" | "judge";
+const sessions = new Map<string, { exp: number; role: Role }>(); // token -> expiry + role
 const fails = new Map<string, { n: number; until: number }>();
 const GLOBAL_MAX = 20; let globalFails: number[] = []; // timestamps of recent wrong passwords from anywhere
 
 export const password = () => process.env.DASHBOARD_PASSWORD || "";
 export const authEnabled = () => password().length > 0;
+const judgePassword = () => process.env.JUDGE_PASSWORD || "";
+/** Judge demo mode is on when the owner login is on and a separate JUDGE_PASSWORD (8+ characters) is set. */
+export const judgeEnabled = () => authEnabled() && judgePassword().length >= 8 && judgePassword() !== password();
+
+/** Owner-only actions a judge session may not use. */
+const OWNER_ONLY: [string, RegExp][] = [
+  ["PUT", /^\/api\/policy$/],
+  ["POST", /^\/api\/agent\/(pause|resume)$/],
+  ["POST", /^\/api\/audit\/anchor$/],
+  ["POST", /^\/api\/xchain\/links\//],
+  ["POST", /^\/api\/locks\/[^/]+\/release-challenge$/],
+];
 
 const viaTunnel = (req: express.Request) => Boolean(req.headers["cf-connecting-ip"] || req.headers["x-forwarded-for"]);
 const clientIp = (req: express.Request) => String(req.headers["cf-connecting-ip"] || req.socket.remoteAddress || "unknown");
@@ -32,12 +49,18 @@ function tokenOf(req: express.Request) {
   const m = String(req.headers.cookie || "").match(new RegExp(`(?:^|;\\s*)${COOKIE}=([a-f0-9]{64})`));
   return m?.[1];
 }
-function validSession(req: express.Request) {
+function sessionOf(req: express.Request) {
   const t = tokenOf(req);
-  if (!t) return false;
-  const exp = sessions.get(t);
-  if (!exp || exp < Date.now()) { if (t) sessions.delete(t); return false; }
-  return true;
+  if (!t) return undefined;
+  const s = sessions.get(t);
+  if (!s || s.exp < Date.now()) { sessions.delete(t); return undefined; }
+  return s;
+}
+const validSession = (req: express.Request) => Boolean(sessionOf(req));
+/** Who is using the dashboard. Without the login (this computer only) it is always the owner. */
+export function roleOf(req: express.Request): Role {
+  if (!authEnabled()) return "owner";
+  return sessionOf(req)?.role ?? "owner";
 }
 function setCookie(res: express.Response, req: express.Request, value: string, maxAgeMs: number) {
   res.setHeader("Set-Cookie", `${COOKIE}=${value}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${Math.floor(maxAgeMs / 1000)}${isHttps(req) ? "; Secure" : ""}`);
@@ -55,7 +78,12 @@ export function mountAuth(app: express.Express, appName: string) {
       return next();
     }
     if (req.path === "/login" || req.path === "/api/login" || req.path.startsWith("/assets/")) return next();
-    if (validSession(req)) return next();
+    const s = sessionOf(req);
+    if (s) {
+      if (s.role === "judge" && OWNER_ONLY.some(([m, re]) => req.method === m && re.test(req.path)))
+        return res.status(403).json({ error: "Judge demo: only the owner can do this.", refused: true });
+      return next();
+    }
     if (req.path.startsWith("/api/")) return res.status(401).json({ error: "Please sign in again.", login: true });
     return res.redirect(302, "/login");
   });
@@ -72,8 +100,9 @@ export function mountAuth(app: express.Express, appName: string) {
     globalFails = globalFails.filter((t) => t > Date.now() - LOCK_MS);
     if (globalFails.length >= GLOBAL_MAX) return res.status(429).json({ error: "Too many wrong passwords recently. Sign-in is paused for 15 minutes." });
     const given = String(req.body?.password ?? "");
-    const ok = given.length > 0 && timingSafeEqual(sha(given), sha(password()));
-    if (!ok) {
+    const isOwner = given.length > 0 && timingSafeEqual(sha(given), sha(password()));
+    const isJudge = !isOwner && judgeEnabled() && given.length > 0 && timingSafeEqual(sha(given), sha(judgePassword()));
+    if (!isOwner && !isJudge) {
       const n = (f && f.until < Date.now() && f.n >= MAX_FAILS ? 0 : f?.n ?? 0) + 1;
       fails.set(ip, { n, until: n >= MAX_FAILS ? Date.now() + LOCK_MS : 0 });
       globalFails.push(Date.now());
@@ -82,10 +111,11 @@ export function mountAuth(app: express.Express, appName: string) {
     }
     fails.delete(ip);
     const token = randomBytes(32).toString("hex");
-    sessions.set(token, Date.now() + SESSION_MS);
+    const role: Role = isJudge ? "judge" : "owner";
+    sessions.set(token, { exp: Date.now() + SESSION_MS, role });
     setCookie(res, req, token, SESSION_MS);
-    audit({ actor: "owner", op: "login", outcome: "ok", detail: `Owner signed in to the dashboard from ${viaTunnel(req) ? "the remote link" : "this computer"} (${ip})` });
-    res.json({ ok: true });
+    audit({ actor: role, op: "login", outcome: "ok", detail: `${isJudge ? "Judge (demo mode)" : "Owner"} signed in to the dashboard from ${viaTunnel(req) ? "the remote link" : "this computer"} (${ip})` });
+    res.json({ ok: true, role });
   });
 
   app.post("/api/logout", (req, res) => {
