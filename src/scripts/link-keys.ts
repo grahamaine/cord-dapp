@@ -97,7 +97,14 @@ function fill(schema: any, extra: Record<string, unknown> = {}) {
   for (const [k, p] of Object.entries<any>(props)) {
     if (k === "network") continue; // added by registryTool
     const v = pool[norm(k)];
-    if (v !== undefined) out[k] = v;
+    const isObj = p?.type === "object" && p?.properties;
+    if (isObj && !(v && typeof v === "object")) {
+      // nested input (e.g. proof: { scheme, signature_hex }): fill it from the same pool
+      const inner = fill(p, extra);
+      if (Object.keys(inner.args).length) out[k] = inner.args;
+      missing.push(...inner.missing.map((m) => `${k}.${m}`));
+      if (!Object.keys(inner.args).length && (schema.required ?? []).includes(k)) missing.push(`${k} (${p?.description ?? "object"})`);
+    } else if (v !== undefined) out[k] = v;
     else if ((schema.required ?? []).includes(k)) missing.push(`${k} (${p?.description ?? p?.type ?? "?"})`);
   }
   return { args: out, missing };
@@ -124,7 +131,8 @@ console.log(`  ✓ signed ${msgHex.length / 2} canonical bytes with the ${x.name
 const regTool = tool("build_cis8_register");
 const fromCanon = canon && typeof canon === "object" ? Object.fromEntries(Object.entries(canon).filter(([k]) => !/hex|bytes|message|schema/i.test(k))) : {};
 const sigFields = { signature, signature_hex: signature, proof: signature, proof_hex: signature, proof_signature: signature, sig: signature, external_signature_hex: signature, external_signature: signature, proof_bytes_hex: signature, signed_message_hex: signature };
-const r1 = fill(regTool.inputSchema, { ...fromCanon, ...sigFields });
+const r1 = fill(regTool.inputSchema, { ...fromCanon, ...sigFields, message_hex: msgHex, canonical_bytes_hex: msgHex, bytes_hex: msgHex });
+if (process.argv.includes("--debug")) console.log("build_cis8_register inputs:", JSON.stringify(r1.args, null, 2));
 if (r1.missing.length) die(`build_cis8_register needs inputs this script doesn't know: ${r1.missing.join(", ")}.\nRun npm run link-keys -- --schemas and send the output to your developer.`);
 const reg: any = await registryTool("build_cis8_register", r1.args);
 const paramHex = (reg?.hex ?? firstHex(reg) ?? die(`no parameter hex in build_cis8_register's answer: ${JSON.stringify(reg).slice(0, 400)}`)).replace(/^0x/, "");
