@@ -73,6 +73,7 @@
 <div class="aurora"><div class="grid-lines"></div></div>
 <header class="topbar">
   <div class="wrap">
+    <button class="back-btn" id="back-btn" type="button" aria-label="Go back">&larr; Back</button>
     <span class="brand">
       <img class="logo-img" src="/assets/brand/kakasa-mark-128.png" alt="" width="38" height="38" />
       {{APP_NAME}}
@@ -343,7 +344,30 @@ function showTab(name) {
   if (name === "policy") loadPolicy();
   if (name === "audit") loadAudit();
 }
-document.querySelectorAll(".tab").forEach((b) => b.onclick = () => showTab(b.dataset.tab));
+// Tabs are kept in browser history so Back (the button or the browser's) returns to the previous tab.
+const TABS = ["dash", "agent", "locks", "policy", "audit"];
+let currentTab = "dash", tabHops = 0;
+function goTab(name) {
+  if (name === currentTab) return showTab(name);
+  history.pushState({ tab: name }, "", "#" + name);
+  tabHops++; currentTab = name; showTab(name);
+}
+document.querySelectorAll(".tab").forEach((b) => b.onclick = () => goTab(b.dataset.tab));
+addEventListener("popstate", (e) => {
+  const t = (e.state && e.state.tab) || location.hash.slice(1);
+  tabHops = Math.max(0, tabHops - 1);
+  currentTab = TABS.includes(t) ? t : "dash"; showTab(currentTab);
+});
+// Links such as http://localhost:4030/#agent open straight on that tab.
+{ const t = location.hash.slice(1); if (TABS.includes(t)) { currentTab = t; history.replaceState({ tab: t }, "", "#" + t); showTab(t); } else history.replaceState({ tab: "dash" }, "", location.pathname); }
+$("#back-btn").onclick = () => {
+  if (tabHops > 0) return history.back();
+  let internal = false;
+  try { internal = !!document.referrer && new URL(document.referrer).origin === location.origin && new URL(document.referrer).pathname !== "/login"; } catch {}
+  if (internal && history.length > 1) return history.back();
+  if (currentTab !== "dash") { currentTab = "dash"; history.replaceState({ tab: "dash" }, "", location.pathname); return showTab("dash"); }
+  scrollTo({ top: 0, behavior: "smooth" });
+};
 
 $("#logout-btn").onclick = async () => { await fetch("/api/logout", { method: "POST" }).catch(() => {}); location.href = "/login"; };
 api("/api/session").then((s) => { if (!s.auth) $("#logout-btn").classList.add("hidden"); }).catch(() => {});
@@ -358,7 +382,7 @@ function chatAdd(role, text, actions = []) {
   d.innerHTML = md(text) + (actions.length ? `<div class="acts">${actions.map((a) => `<span>⚙ ${a.result?.done === false ? "tried: " : ""}${TOOL_LABEL[a.tool] || a.tool}</span>`).join("")}</div>` : "");
   if (role !== "user" && /\bLocks\b/.test(text) && actions.some((a) => a.tool === "prepare_payment" && a.result?.done)) {
     const b = document.createElement("button"); b.className = "btn btn-outline btn-sm"; b.textContent = "Open Locks to release →"; b.type = "button"; b.style.marginTop = ".6rem";
-    b.onclick = () => showTab("locks"); d.appendChild(b);
+    b.onclick = () => goTab("locks"); d.appendChild(b);
   }
   $("#chat-log").appendChild(d); $("#chat-log").scrollTop = 1e9;
   return d;

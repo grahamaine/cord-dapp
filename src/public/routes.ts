@@ -17,6 +17,9 @@ import { tokenBalances } from "../lib/plt.js";
 import { onChain, readSnapshot } from "../judge/routes.js";
 
 const APP_NAME = process.env.APP_NAME || "Kakasa";
+// Where the AI agent (owner dashboard) runs. It holds a key, so it isn't on Vercel; set AGENT_URL to a tunnel link to override.
+const AGENT_URL = process.env.AGENT_URL || "http://localhost:4030/#agent";
+const AGENT_URL_LABEL = AGENT_URL.replace(/^https?:\/\//, "").replace(/\/?#.*$/, "");
 const TESTNET = config.network === "ccd:4221332d34e1694168c2a0c0b3fd0f27";
 const WALLET_PROXY = process.env.WALLET_PROXY || (TESTNET ? "https://wallet-proxy.testnet.concordium.com" : "https://wallet-proxy.mainnet.concordium.software");
 
@@ -163,7 +166,7 @@ const wantsHtml = (req: Request) => req.accepts(["json", "html"]) === "html";
 // Read relative to the project root (works locally and in the Vercel bundle via includeFiles).
 const PAGE_PATH = "src/public/index.html";
 const page = () =>
-  (existsSync(PAGE_PATH) ? readFileSync(PAGE_PATH, "utf8") : readFileSync(new URL("./index.html", import.meta.url), "utf8")).replaceAll("{{APP_NAME}}", APP_NAME);
+  (existsSync(PAGE_PATH) ? readFileSync(PAGE_PATH, "utf8") : readFileSync(new URL("./index.html", import.meta.url), "utf8")).replaceAll("{{APP_NAME}}", APP_NAME).replaceAll("{{AGENT_URL_LABEL}}", AGENT_URL_LABEL).replaceAll("{{AGENT_URL}}", AGENT_URL);
 
 export function publicRouter() {
   const r = Router();

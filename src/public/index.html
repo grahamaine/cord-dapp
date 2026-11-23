@@ -58,13 +58,14 @@
 <div class="aurora"><div class="grid-lines"></div></div>
 <header class="topbar">
   <div class="wrap">
+    <button class="back-btn" id="back-btn" type="button" aria-label="Go back">&larr; Back</button>
     <a class="brand" href="/">
       <img class="logo-img" src="/assets/brand/kakasa-mark-128.png" alt="" width="38" height="38" />
       {{APP_NAME}}
     </a>
     <span class="net" id="net">TESTNET</span>
     <nav class="top-links collapsible">
-      <a href="#how">How it works</a><a href="#locks">Locks</a><a href="#ai-act">EU AI Act</a><a href="#live">Live agents</a><a href="/judge">Judge view</a><a href="https://github.com/grahamaine/cord-dapp">GitHub</a>
+      <a href="#how">How it works</a><a href="#locks">Locks</a><a href="#ai-act">EU AI Act</a><a href="#live">Live agents</a><a href="/judge">Judge view</a><a class="agent-link" href="{{AGENT_URL}}" target="_blank" rel="noopener">AI agent ↗</a><a href="https://github.com/grahamaine/cord-dapp">GitHub</a>
     </nav>
   </div>
 </header>
@@ -78,6 +79,7 @@
       <div class="cta">
         <a class="btn btn-primary" href="#live">See the live agents</a>
         <a class="btn btn-outline" href="/judge">Verify the records</a>
+        <a class="btn btn-outline" href="{{AGENT_URL}}" target="_blank" rel="noopener" title="Runs on the owner's computer ({{AGENT_URL_LABEL}})">Open the AI agent</a>
         <a class="btn btn-outline" href="https://github.com/grahamaine/cord-dapp">View the code</a>
       </div>
     </div>
@@ -265,6 +267,21 @@ async function load() {
 }
 load();
 setInterval(load, 30000);
+</script>
+<script>
+  // Back button: steps back through sections you jumped to on this page, then to the previous Kakasa page,
+  // otherwise goes to the home page (or the top of it).
+  (() => {
+    let hops = 0;
+    const internal = () => { try { return !!document.referrer && new URL(document.referrer).origin === location.origin; } catch { return false; } };
+    document.addEventListener("click", (e) => { const a = e.target.closest && e.target.closest('a[href^="#"]'); if (a && a.getAttribute("href").length > 1) hops++; });
+    addEventListener("popstate", () => { hops = Math.max(0, hops - 1); });
+    document.getElementById("back-btn").addEventListener("click", () => {
+      if (hops > 0 || (internal() && history.length > 1)) history.back();
+      else if (location.pathname !== "/") location.href = "/";
+      else { history.replaceState(null, "", location.pathname); scrollTo({ top: 0, behavior: "smooth" }); }
+    });
+  })();
 </script>
 </body>
 </html>
