@@ -17,6 +17,7 @@ import { cancelLock, createLock, fundLock, readLocks, reservedEur, sendLock, Loc
 import { verifyCrossChain, CHAINS } from "../lib/xchain.js";
 import { buy } from "../buyer/procurebot.js";
 import { benchmarks, tenders } from "../seller/data.js";
+import { fmtAtomic, isCcd } from "../lib/eur.js";
 
 /** Map free text to a known benchmark item BEFORE paying (the price is charged before lookup). */
 export function matchBenchmarkItem(text: string) {
@@ -36,6 +37,7 @@ export interface ToolDef {
 const eur = (n: number) => `€${n.toLocaleString("en-IE", { maximumFractionDigits: 2 })}`;
 const lockView = (l: Lock) => ({
   id: l.id, invoiceId: l.invoiceId, supplier: l.supplier, amountEur: l.amountEur, status: l.status,
+  settles: fmtAtomic(l.amount, l.asset), fullValue: !isCcd(l.asset),
   awaitingRelease: l.status === "sent", checks: l.checks ?? null, lastError: l.lastError ?? null, txHash: l.txHash ?? null,
 });
 
@@ -46,7 +48,7 @@ async function invoices() {
   const locks = readLocks().filter((l) => l.status !== "cancelled");
   return (body.items as any[]).map((i) => {
     const l = locks.find((x) => x.invoiceId === i.id);
-    return { ...i, payTo: body.payTo, asset: body.asset, lock: l ? { id: l.id, status: l.status } : null };
+    return { ...i, payTo: body.payTo, asset: i.asset ?? body.asset, lock: l ? { id: l.id, status: l.status } : null };
   });
 }
 

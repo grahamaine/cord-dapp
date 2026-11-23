@@ -82,7 +82,7 @@ https://agent-registry-mcp.concordium.com/v1/badge-check/JyP9U3BHQRbFTuQx4N1Gn
 | Sponsored transactions | `src/facilitator/server.ts`: Kakasa's facilitator pays every network fee |
 | Agent Registry (CIS-8004) + Agent Cards | `src/scripts/build-card.ts`, served at `/.well-known/agent-card.json` |
 | Verified by Concordium badge | `src/lib/badge.ts`: checked by the seller (buyer badge) and the buyer (payee badge) |
-| Protocol-Level Tokens | set `PRICE_ASSET` / `ALLOWED_ASSETS` to a PLT such as USDR (planned) |
+| Protocol-Level Tokens | `INVOICE_ASSET=EURR`: invoices settle in a PLT stablecoin at full value (`src/lib/eur.ts`, `src/lib/plt.ts`), see [Paying in a stablecoin](#paying-in-a-stablecoin-eurr) |
 | MCP | `src/mcp/server.ts` lets Claude or any MCP client drive ProcureBot |
 | Wallet signatures (browser + WalletConnect) | `src/lib/approval.ts`: every Release is signed by an owner account and verified on-chain |
 | CIS-8 external keys | `src/lib/xchain.ts`: verify suppliers on Base, Ethereum or Solana through their Concordium link |
@@ -109,8 +109,31 @@ signature against the account's on-chain keys and that the account is an authori
 the audit log.
 
 "Fund" reserves budget in Kakasa's records; it does not move money into an on-chain escrow. Money moves once,
-on release. On testnet each EUR amount settles as a small CCD amount at a fixed demo rate
-(`DEMO_ATOMIC_PER_EUR`, default €1,000 = 0.1 CCD); in production invoices would be paid in a euro stablecoin.
+on release, in the invoice's settlement asset: a euro stablecoin such as EURR at full value (€1,850 = 1,850 EURR),
+or, in demo mode, a small CCD amount at a fixed rate (`DEMO_ATOMIC_PER_EUR`, default €1,000 = 0.1 CCD).
+
+## Paying in a stablecoin (EURR)
+Invoices can settle in any Protocol-Level Token (PLT) at full value. The x402 payment is a sponsored
+`TokenUpdate` transfer, so ProcureBot still needs no CCD for fees, and the facilitator checks ProcureBot's token
+balance before it sponsors anything. Limits stay in EUR: Kakasa converts each payment with the token's EUR value
+(1 for EUR tokens, `ASSET_EUR_<SYMBOL>` for others) and refuses tokens it has no rate for, rather than guessing.
+
+1. **Get test tokens.** There is no public faucet for PLTs. Use a test EURR/USDR supply from the issuer or the
+   hackathon team, or request your own testnet PLT through Concordium's
+   [issuance request form](https://docs.concordium.com/en/mainnet/tutorials/plt/request-plt.html) and mint from its
+   governance account. Send some to the ProcureBot account. If the token uses an allow list, ProcureBot and
+   TenderScout must both be on it.
+2. **Configure.** In `.env`: `INVOICE_ASSET=EURR` (and `INVOICE_ASSET_DECIMALS` if it isn't 6). Add the token to the
+   allowed assets on the owner page (Policy tab) or in `ALLOWED_ASSETS`.
+3. **Check.** `npm run doctor` lists the tokens on the network and checks the token exists, its decimals, the EUR rate,
+   the policy and ProcureBot's balance.
+4. **Restart** the seller and the dashboard. Invoices now show "settles as 1,850 EURR", ProcureBot says "paid as
+   1,850 EURR", the over-cap invoice is refused at 12,500 EURR, and released payments appear on the judge view and the
+   public site with their EURR amount.
+
+Data calls (tenders, benchmarks) keep their own price asset (`PRICE_ASSET`), so you can sell data in CCD and pay
+invoices in EURR. Receipts and locks record the asset of every payment, so earlier CCD payments still count
+correctly towards today's limit.
 
 ## Suppliers on other blockchains
 Agents on Ethereum, Base, Solana, Fetch.ai and other chains can link their key to a Concordium agent
@@ -245,5 +268,9 @@ partner (planned, not built).
 - [x] Cross-chain supplier verification via CIS-8 (Base, Ethereum, Solana)
 - [x] `npm run doctor` and `npm run audit:verify` checks
 
-**Next (final, 9 Dec):** euro stablecoin pricing, settlement on Base and Solana, real supplier and tender data,
-demo video. Invoice, tender and price data in `src/seller/data.ts` is still sample data.
+**Since Checkpoint 1:**
+- [x] Euro stablecoin settlement: invoices pay in EURR (or any PLT) at full value, with limits checked in EUR
+- [ ] First live EURR payment on testnet (needs test EURR in the ProcureBot account)
+
+**Next (final, 9 Dec):** settlement on Base and Solana, real supplier and tender data, demo video. Invoice, tender
+and price data in `src/seller/data.ts` is still sample data.

@@ -14,7 +14,7 @@ import { AccountAddress, buildBasicAccountSigner } from "@concordium/web-sdk";
 import { config } from "../lib/config.js";
 import { checkBadge } from "../lib/badge.js";
 import { loadPolicy, policyViolation, type Policy } from "../lib/policy.js";
-import { eurToAtomic } from "../lib/eur.js";
+import { eurToAtomic, unpriceable } from "../lib/eur.js";
 import { appendReceipt, type Receipt } from "../lib/receipts.js";
 
 export interface PurchaseResult {
@@ -48,7 +48,9 @@ function getPaidFetch(policy: Policy) {
     allowedAssets: policy.allowedAssets.map((asset) => ({
       network: config.network,
       asset,
-      maxAmountPerPayment: policy.maxPerLockEur > 0 ? eurToAtomic(policy.maxPerLockEur) : "1000000000000000",
+      // Per-asset cap in that asset's atomic units. An asset with no EUR rate gets no x402 cap here;
+      // the pre-payment hook below refuses it with a plain reason instead.
+      maxAmountPerPayment: policy.maxPerLockEur > 0 && !unpriceable(asset) ? eurToAtomic(policy.maxPerLockEur, asset) : "1000000000000000000000",
     })),
   });
 
@@ -133,6 +135,9 @@ function explain402(res: Response, data: unknown): string {
   const hint: Record<string, string> = {
     insufficient_funds: "the ProcureBot account doesn't have enough test CCD — top it up from the testnet faucet",
     preflight_insufficient_funds: "the ProcureBot account doesn't have enough test CCD — top it up from the testnet faucet",
+    preflight_insufficient_token_funds: "the ProcureBot account doesn't hold enough of the invoice's stablecoin — top it up from the token issuer",
+    preflight_missing_token_balance: "the ProcureBot account doesn't hold this stablecoin at all — get some from the token issuer first",
+    token_decimals_lookup_failed: "the token doesn't exist on this network — check INVOICE_ASSET in .env (run npm run doctor)",
   };
   const key = Object.keys(hint).find((k) => reason.includes(k));
   return [reason, key ? `(${hint[key]})` : "", body].filter(Boolean).join(" ") ||

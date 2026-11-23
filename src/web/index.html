@@ -95,7 +95,7 @@
 
   <div class="page-head">
     <div>
-      <div class="kicker">Owner dashboard · demo EUR</div>
+      <div class="kicker" id="kicker">Owner dashboard · demo EUR</div>
       <h1>Verified supplier payments</h1>
     </div>
     <nav class="tabs" role="tablist">
@@ -306,7 +306,11 @@
 const $ = (s) => document.querySelector(s);
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const eur = (n) => "€" + Number(n || 0).toLocaleString("en-IE", { maximumFractionDigits: 2 });
-const ccd = (atomic, asset = "CCD") => { if (atomic == null) return "–"; const n = BigInt(atomic), d = 1000000n, f = (n % d).toString().padStart(6, "0").replace(/0+$/, ""); return `${(n / d).toLocaleString()}${f ? "." + f : ""} ${asset}`; };
+// Decimals per settlement asset (CCD has 6; stablecoins report theirs via /api/overview and /api/accounts).
+const DEC = { CCD: 6 };
+const ccd = (atomic, asset = "CCD") => { if (atomic == null) return "–"; const dd = DEC[asset] ?? 6, n = BigInt(atomic), d = 10n ** BigInt(dd), f = dd ? (n % d).toString().padStart(dd, "0").replace(/0+$/, "") : ""; return `${(n / d).toLocaleString()}${f ? "." + f : ""} ${asset}`; };
+// How an invoice's on-chain amount relates to its EUR value.
+const settleNote = (asset) => asset === "CCD" ? "on testnet (demo rate)" : "full value, stablecoin";
 const short = (a) => a ? `${a.slice(0, 6)}…${a.slice(-5)}` : "–";
 const when = (ts) => new Date(ts).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
 const chip = (cls, text) => `<span class="chip ${cls}"><i></i>${esc(text)}</span>`;
@@ -395,6 +399,7 @@ $("#pause-btn").onclick = async () => {
 
 async function loadOverview() {
   const o = overview = await api("/api/overview");
+  if (o.settlement && o.settlement.invoiceAsset !== "CCD") { DEC[o.settlement.invoiceAsset] = o.settlement.decimals; $("#kicker").textContent = `Owner dashboard · EUR, paid in ${o.settlement.invoiceAsset}`; }
   names = { [o.accounts.buyer]: "ProcureBot", [o.accounts.seller]: "TenderScout", [o.accounts.facilitator]: "Facilitator" };
   $("#net").textContent = o.testnet ? "TESTNET" : o.network;
   renderAgentState();
@@ -433,6 +438,7 @@ async function loadAccounts() {
     $("#accounts").innerHTML = accounts.map((a) => `<div class="card">
       <div class="acct-top"><div class="acct-role">${esc({ buyer: "ProcureBot · buyer", seller: "TenderScout · supplier", facilitator: "Facilitator" }[a.role] || a.role)}</div>${a.role === "facilitator" ? chip("mute", "Pays fees") : badgeChip(a.badge)}</div>
       <div class="bal">${a.missing ? "not set" : a.balance != null ? ccd(a.balance) : "–"}</div>
+      ${(a.tokens || []).map((t) => { DEC[t.asset] = t.decimals; return `<div class="bal" style="font-size:1rem">${ccd(t.amount, t.asset)}</div>`; }).join("")}
       <div class="muted mono" style="font-size:.85rem">${esc(a.address || "add it to .env")}</div>
       ${a.balanceError ? `<div class="hint">${esc(a.balanceError)}</div>` : ""}
       ${a.badge && !a.badge.verified ? `<div class="hint">${esc(a.badge.issues.join("; "))}</div>` : ""}
@@ -471,7 +477,7 @@ async function loadLocks() {
       return `<tr>
         <td>${esc(l.id)}<small>${esc(l.invoiceId)} · ${esc(when(l.createdAt))}</small></td>
         <td>${esc(l.supplier)}<small>${esc(l.category)}</small></td>
-        <td class="r">${eur(l.amountEur)}<small>${ccd(l.amount, l.asset)} on testnet</small></td>
+        <td class="r">${eur(l.amountEur)}<small>${ccd(l.amount, l.asset)} ${settleNote(l.asset)}</small></td>
         <td>${chip(cls, label)}</td>
         <td>${checks}${l.lastError ? `<div class="err">${esc(l.lastError)}</div>` : ""}</td>
         <td><div class="actions">${actions}<button class="btn btn-outline btn-sm" data-trail="${esc(l.id)}">Trail</button></div></td>
@@ -526,7 +532,7 @@ async function loadInvoices() {
   try {
     const inv = await api("/api/invoices");
     const open = new Map(locks.filter((l) => l.status !== "cancelled").map((l) => [l.invoiceId, l]));
-    $("#inv-hint").innerHTML = `Payee <span class="mono">${esc(short(inv.payTo))}</span> ${badgeChip(inv.payeeBadge)} · amounts are demo EUR; on testnet each settles as a small ${esc(inv.asset)} amount. In production: a euro stablecoin at full value.`;
+    $("#inv-hint").innerHTML = `Payee <span class="mono">${esc(short(inv.payTo))}</span> ${badgeChip(inv.payeeBadge)} · ${inv.asset === "CCD" ? `amounts are demo EUR; on testnet each settles as a small CCD amount. In production: a euro stablecoin at full value.` : `invoices settle in <b>${esc(inv.asset)}</b> at full value (1 ${esc(inv.asset)} = €${esc(String(inv.settlement?.eurPerToken ?? 1))}).`}`;
     $("#invoices").innerHTML = inv.items.map((i) => {
       const l = open.get(i.id);
       const status = i.status === "paid" ? chip("ok", "Paid") : l ? chip(STATUS[l.status][0], `${l.id} · ${STATUS[l.status][1]}`) : chip("mute", "Open");
@@ -570,7 +576,10 @@ async function loadPolicy() {
   $("#p-sig").checked = policy.requireOwnerSignature !== false;
   loadChains();
   $("#p-saved").textContent = policy.updatedAt ? `Last saved ${when(policy.updatedAt)}` : "Using defaults (€10,000 per lock, €10,000 per day)";
-  if (overview) $("#rate-hint").textContent = `Demo rate: €1,000 settles as ${(Number(overview.demoRate.atomicPerEur) * 1000 / 1e6).toLocaleString()} CCD on testnet. In production, invoices would be paid in a euro stablecoin at full value.`;
+  const st = overview?.settlement;
+  if (st) $("#rate-hint").textContent = st.fullValue
+    ? `Invoices settle in ${st.invoiceAsset} at full value${st.eurPerToken && st.eurPerToken !== 1 ? ` (1 ${st.invoiceAsset} = €${st.eurPerToken})` : ""}. Include ${st.invoiceAsset} in the allowed assets above, or every invoice is refused.${st.rateMissing ? ` Warning: ${st.rateMissing}.` : ""}`
+    : `Demo rate: €1,000 settles as ${(Number(st.atomicPerEur) * 1000 / 1e6).toLocaleString()} CCD on testnet. Set INVOICE_ASSET=EURR in .env to pay invoices in a euro stablecoin at full value.`;
   renderSuppliers();
 }
 $("#s-add").onclick = () => {
@@ -655,7 +664,7 @@ async function openTrail(id) {
     $("#tm-body").innerHTML = `
       <div class="grid g2">
         <div><div class="k muted" style="font-size:.78rem;letter-spacing:.14em;text-transform:uppercase">Invoice</div><div style="color:var(--ink)">${esc(l.invoiceId)} · ${esc(l.supplier)}</div><div class="muted">${esc(l.description)}</div></div>
-        <div><div class="k muted" style="font-size:.78rem;letter-spacing:.14em;text-transform:uppercase">Amount</div><div style="color:var(--ink)">${eur(l.amountEur)}</div><div class="muted">${ccd(l.amount, l.asset)} on testnet · ${chip(STATUS[l.status][0], STATUS[l.status][1])}</div></div>
+        <div><div class="k muted" style="font-size:.78rem;letter-spacing:.14em;text-transform:uppercase">Amount</div><div style="color:var(--ink)">${eur(l.amountEur)}</div><div class="muted">${ccd(l.amount, l.asset)} ${settleNote(l.asset)} · ${chip(STATUS[l.status][0], STATUS[l.status][1])}</div></div>
       </div>
       ${l.approval ? `<div class="notice" style="margin-top:1rem"><div><b>Signed by the owner's wallet</b> ${esc(l.approval.account)}<br><small class="muted">${esc(when(l.approval.at))} · the signed message named this lock, invoice, supplier and amount</small></div></div>` : ""}
       ${l.explorerUrl ? `<div class="notice" style="margin-top:.8rem"><div><b>Settled on Concordium</b> <a href="${esc(l.explorerUrl)}" target="_blank" rel="noopener">${esc(short(l.txHash))} ↗</a></div></div>` : ""}

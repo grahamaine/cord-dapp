@@ -22,7 +22,8 @@ import { readReceipts, verifyChain, type Receipt } from "../lib/receipts.js";
 import { loadPolicy, savePolicy, spentTodayEur } from "../lib/policy.js";
 import { audit, readAudit, verifyAudit } from "../lib/audit.js";
 import { createLock, fundLock, sendLock, releaseLock, cancelLock, readLocks, lockTotals, LockError, type Lock } from "../lib/locks.js";
-import { atomicToEur, ATOMIC_PER_EUR } from "../lib/eur.js";
+import { atomicToEur, settlementInfo } from "../lib/eur.js";
+import { tokenBalances } from "../lib/plt.js";
 import { createChallenge, ownerAccounts, verifyApproval } from "../lib/approval.js";
 import { CHAINS, verifyCrossChain } from "../lib/xchain.js";
 import { anchorNow, anchorData, checkAnchors } from "../lib/anchor.js";
@@ -115,8 +116,12 @@ app.get("/api/overview", async (_req, res) => {
     payments: rows,
     totals: {
       payments: rows.filter((r) => r.txHash).length,
-      paid: rows.reduce((s, r) => s + BigInt(r.amount), 0n).toString(),
-      paidEur: atomicToEur(rows.reduce((s, r) => s + BigInt(r.amount), 0n)),
+      paidByAsset: rows.reduce<Record<string, string>>((acc, r) => {
+        const a = r.asset || "CCD";
+        acc[a] = (BigInt(acc[a] ?? "0") + BigInt(r.amount)).toString();
+        return acc;
+      }, {}),
+      paidEur: Math.round(rows.reduce((s, r) => s + (atomicToEur(r.amount, r.asset || "CCD") || 0), 0) * 100) / 100,
       spentTodayEur: spentTodayEur(),
       dailyLimitEur: policy.dailyLimitEur,
       maxPerLockEur: policy.maxPerLockEur,
@@ -124,7 +129,7 @@ app.get("/api/overview", async (_req, res) => {
     },
     policy: { paused: policy.paused, requireHumanRelease: policy.requireHumanRelease },
     audit: verifyAudit(),
-    demoRate: { atomicPerEur: ATOMIC_PER_EUR.toString() },
+    settlement: settlementInfo(),
   });
 });
 
@@ -132,15 +137,17 @@ app.get("/api/accounts", async (_req, res) => {
   const out = await Promise.all(
     Object.entries(accounts).map(async ([role, address]) => {
       if (!address) return { role, address, missing: true };
-      const [bal, badge] = await Promise.all([
+      const [bal, badge, tokens] = await Promise.all([
         getJson(`${WALLET_PROXY}/v0/accBalance/${address}`),
         role === "facilitator" ? Promise.resolve(null) : checkBadge(address),
+        tokenBalances(address).catch(() => null),
       ]);
       const b = bal.body?.finalizedBalance ?? bal.body?.currentBalance;
       return {
         role,
         address,
         balance: b?.accountAmount ?? null,
+        tokens, // PLT stablecoin balances, e.g. [{ asset: "EURR", amount, decimals }]
         balanceError: bal.ok ? null : `wallet proxy HTTP ${bal.status}`,
         badge: badge ? { verified: badge.verified, agents: badge.agents, issues: badge.issues } : null,
       };
@@ -271,7 +278,7 @@ async function invoiceRef(id: string) {
   if (!r.ok) throw new LockError(`seller unreachable at ${config.seller.url}`, false);
   const i = (r.body.items ?? []).find((x: any) => x.id === id);
   if (!i) throw new LockError(`unknown invoice ${id}`);
-  return { ...i, payTo: r.body.payTo, asset: r.body.asset };
+  return { ...i, payTo: r.body.payTo, asset: i.asset ?? r.body.asset };
 }
 const withExplorer = (l: Lock) => ({ ...l, explorerUrl: l.explorerUrl || (l.txHash ? getExplorerTxUrl(config.network, l.txHash) : undefined) });
 

@@ -20,6 +20,7 @@ import { verifyAuditEntries, type AuditEntry } from "../lib/audit.js";
 import { verifyReceiptEntries, type Receipt } from "../lib/receipts.js";
 import type { Anchor } from "../lib/anchor.js";
 import type { Lock } from "../lib/locks.js";
+import { fmtAtomic } from "../lib/eur.js";
 
 const APP_NAME = process.env.APP_NAME || "Kakasa";
 const SNAPSHOT = "judge/snapshot.json";
@@ -37,7 +38,7 @@ const grpc = () => (client ??= new ConcordiumGRPCNodeClient(config.grpc.host, co
 const toJson = (v: unknown) => JSON.stringify(v, (_k, x) => (typeof x === "bigint" ? x.toString() : x));
 
 /** Look a transaction up on Concordium: finalized? succeeded? (+ the raw summary as text, for data checks) */
-async function onChain(txHash: string) {
+export async function onChain(txHash: string) {
   const st: any = await grpc().getBlockItemStatus(TransactionHash.fromHexString(txHash));
   if (st.status !== "finalized") return { finalized: false, success: false, text: "" };
   const summary = st.outcome?.summary;
@@ -45,10 +46,15 @@ async function onChain(txHash: string) {
   return { finalized: true, success: !failed, text: toJson(summary).toLowerCase(), blockHash: String(st.outcome?.blockHash ?? "") };
 }
 
+/** The records published by the owner (`npm run publish:judge`), or undefined if none yet. */
+export function readSnapshot(): Snapshot | undefined {
+  return existsSync(SNAPSHOT) ? JSON.parse(readFileSync(SNAPSHOT, "utf8")) : undefined;
+}
+
 let cache: { at: number; body: unknown } | undefined;
 async function build() {
-  if (!existsSync(SNAPSHOT)) return { published: false };
-  const s: Snapshot = JSON.parse(readFileSync(SNAPSHOT, "utf8"));
+  const s = readSnapshot();
+  if (!s) return { published: false };
   const auditCheck = verifyAuditEntries(s.audit);
   const receiptCheck = verifyReceiptEntries(s.receipts);
   const auditBySeq = new Map(s.audit.map((e) => [e.seq, e.hash]));
@@ -70,10 +76,10 @@ async function build() {
   const payments = await Promise.all(s.receipts.filter((r) => r.role === "buyer" && r.txHash).map(async (r) => {
     try {
       const tx = await onChain(r.txHash!);
-      return { seq: r.seq, ts: r.ts, purpose: r.purpose, resource: r.resource, amount: r.amount, asset: r.asset, to: r.sellerAccount, txHash: r.txHash, explorerUrl: r.explorerUrl, onChain: tx.finalized && tx.success };
+      return { seq: r.seq, ts: r.ts, purpose: r.purpose, resource: r.resource, amount: r.amount, asset: r.asset, display: fmtAtomic(r.amount, r.asset || "CCD"), to: r.sellerAccount, txHash: r.txHash, explorerUrl: r.explorerUrl, onChain: tx.finalized && tx.success };
     } catch (e) {
       nodeReachable = false;
-      return { seq: r.seq, ts: r.ts, purpose: r.purpose, resource: r.resource, amount: r.amount, asset: r.asset, to: r.sellerAccount, txHash: r.txHash, explorerUrl: r.explorerUrl, onChain: null };
+      return { seq: r.seq, ts: r.ts, purpose: r.purpose, resource: r.resource, amount: r.amount, asset: r.asset, display: fmtAtomic(r.amount, r.asset || "CCD"), to: r.sellerAccount, txHash: r.txHash, explorerUrl: r.explorerUrl, onChain: null };
     }
   }));
 
@@ -91,7 +97,7 @@ async function build() {
       lastAnchorAt: lastAnchor?.at ?? null,
     },
     anchors, payments,
-    locks: s.locks.map((l) => ({ id: l.id, invoiceId: l.invoiceId, supplier: l.supplier, category: l.category, description: l.description, amountEur: l.amountEur, status: l.status, checks: l.checks, approval: l.approval ? { account: l.approval.account } : null, txHash: l.txHash, explorerUrl: l.explorerUrl, history: l.history })).reverse(),
+    locks: s.locks.map((l) => ({ id: l.id, invoiceId: l.invoiceId, supplier: l.supplier, category: l.category, description: l.description, amountEur: l.amountEur, settled: l.amount && l.asset ? fmtAtomic(l.amount, l.asset) : null, status: l.status, checks: l.checks, approval: l.approval ? { account: l.approval.account } : null, txHash: l.txHash, explorerUrl: l.explorerUrl, history: l.history })).reverse(),
     audit: [...s.audit].reverse(),
   };
 }

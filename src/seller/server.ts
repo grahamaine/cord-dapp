@@ -14,6 +14,7 @@ import { config } from "../lib/config.js";
 import { checkBadge } from "../lib/badge.js";
 import { appendReceipt, readReceipts } from "../lib/receipts.js";
 import { benchmarks, invoices, tenders } from "./data.js";
+import { fmtAtomic, isCcd, settlementInfo } from "../lib/eur.js";
 import { publicRouter } from "../public/routes.js";
 import { judgeRouter } from "../judge/routes.js";
 
@@ -60,17 +61,18 @@ app.get("/", (_req, res) =>
 );
 
 app.get("/healthz", (_req, res) =>
-  res.json({ ok: true, agent: "TenderScout", payTo, badge: config.seller.badge || null, requireBuyerBadge: config.seller.requireBuyerBadge, network: config.network }),
+  res.json({ ok: true, agent: "TenderScout", payTo, invoiceAsset: config.seller.invoiceAsset, dataAsset: config.seller.asset, badge: config.seller.badge || null, requireBuyerBadge: config.seller.requireBuyerBadge, network: config.network }),
 );
 
 // Public: open supplier invoices and their payment status.
 app.get("/invoices", (_req, res) =>
   res.json({
     payTo,
-    asset: config.seller.asset,
+    asset: config.seller.invoiceAsset,
+    settlement: settlementInfo(),
     items: invoices.map((inv) => {
       const r = invoicePayment(inv.id);
-      return { ...inv, payTo, asset: config.seller.asset, status: r ? "paid" : "open", paidTx: r?.txHash ?? null, paidAt: r?.ts ?? null };
+      return { ...inv, payTo, status: r ? "paid" : "open", paidTx: r?.txHash ?? null, paidAt: r?.ts ?? null };
     }),
   }),
 );
@@ -116,7 +118,10 @@ app.use(
       "GET /tenders": route(config.seller.priceTenders, "Open public tenders by sector (Uganda)"),
       "GET /price-benchmark": route(config.seller.priceBenchmark, "Supplier price benchmark for an item"),
       "GET /invoices/:id/pay": route(
-        (ctx) => ({ amount: findInvoice(invoiceIdFromPath(ctx.path))?.amount ?? "0", asset: config.seller.asset }),
+        (ctx) => {
+          const inv = findInvoice(invoiceIdFromPath(ctx.path));
+          return { amount: inv?.amount ?? "0", asset: inv?.asset ?? config.seller.invoiceAsset };
+        },
         "Settle a supplier invoice",
       ),
     },
@@ -138,10 +143,9 @@ app.use((req, res, next) => {
         buyerBadge: res.locals.buyerBadge,
         sellerAccount: payTo,
         sellerBadge: config.seller.badge || undefined,
-        amount: req.path.startsWith("/invoices/")
-          ? findInvoice(invoiceIdFromPath(req.path))?.amount ?? "0"
-          : req.path === "/tenders" ? config.seller.priceTenders : config.seller.priceBenchmark,
-        asset: config.seller.asset,
+        ...(req.path.startsWith("/invoices/")
+          ? (({ amount, asset }) => ({ amount, asset }))(findInvoice(invoiceIdFromPath(req.path)) ?? { amount: "0", asset: config.seller.invoiceAsset })
+          : { amount: req.path === "/tenders" ? config.seller.priceTenders : config.seller.priceBenchmark, asset: config.seller.asset }),
         network: config.network,
         txHash: settle.transaction,
       });
@@ -159,7 +163,7 @@ app.get("/tenders", (req, res) => {
 
 app.get("/invoices/:id/pay", (req, res) => {
   const inv = findInvoice(req.params.id)!;
-  res.json({ invoice: inv.id, supplier: inv.supplier, status: "paid", amountEur: inv.amountEur, settled: { amount: inv.amount, asset: config.seller.asset } });
+  res.json({ invoice: inv.id, supplier: inv.supplier, status: "paid", amountEur: inv.amountEur, settled: { amount: inv.amount, asset: inv.asset, display: fmtAtomic(inv.amount, inv.asset), fullValue: !isCcd(inv.asset) } });
 });
 
 app.get("/price-benchmark", (req, res) => {
