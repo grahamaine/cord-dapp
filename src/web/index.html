@@ -966,5 +966,6 @@ loadOverview().catch((e) => toast(`<b>Could not load dashboard</b>${esc(e.messag
 loadAccounts();
 setInterval(() => loadOverview().then(() => { if (!$("#tab-locks").classList.contains("hidden")) renderBudget(); }).catch(() => {}), 15000);
 </script>
+<div class="agency-credit"><a href="https://github.com/grahamaine" target="_blank" rel="noopener"><img src="/assets/brand/thee-agency-mark-64.png" alt="" width="22" height="22"><span>Powered &amp; rendered by <strong>thee <span class="ag">AGENCY</span> Consults (UG) Limited</strong></span></a></div>
 </body>
 </html>
