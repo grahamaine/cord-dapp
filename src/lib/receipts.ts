@@ -17,6 +17,8 @@ export interface ReceiptInput {
   buyerBadge?: string;
   sellerAccount: string;
   sellerBadge?: string;
+  /** Base / Solana payments: the Concordium account the payee's key is CIS-8 linked to. */
+  sellerOwner?: string;
   amount: string;
   asset: string;
   network: string;

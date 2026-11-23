@@ -9,6 +9,7 @@
 import { Router, type Request } from "express";
 import { existsSync, readFileSync } from "node:fs";
 import { getExplorerTxUrl } from "@x402/concordium";
+import { chainByNetwork, explorerTx } from "../lib/chains.js";
 import { config } from "../lib/config.js";
 import { mountAssets } from "../ui/assets.js";
 import { fmtAtomic, isCcd } from "../lib/eur.js";
@@ -95,7 +96,7 @@ async function stablecoinPayments(seller: string) {
   const checked = await Promise.all(rows.map(async (r) => {
     const tx = await onChain(r.txHash!).catch(() => ({ finalized: false, success: false }));
     return tx.finalized && tx.success
-      ? { txHash: r.txHash!, time: r.ts, from: r.buyerAccount ?? "", to: r.sellerAccount, amount: r.amount, asset: r.asset, explorerUrl: r.explorerUrl || getExplorerTxUrl(config.network, r.txHash!) }
+      ? { txHash: r.txHash!, time: r.ts, from: r.buyerAccount ?? "", to: r.sellerAccount, amount: r.amount, asset: r.asset, explorerUrl: r.explorerUrl || explorerTx(r.network, r.txHash!), network: r.network, chain: chainByNetwork(r.network)?.name ?? "Concordium" }
       : null;
   }));
   return checked.filter((x) => x !== null);

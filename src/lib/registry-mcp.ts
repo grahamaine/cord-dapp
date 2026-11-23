@@ -37,3 +37,11 @@ export async function registryTool<T = any>(name: string, args: Record<string, u
   if (!text || text === "null") return null;
   try { return JSON.parse(text); } catch { return text as T; }
 }
+
+/** The registry's tool definitions (name, description, inputSchema), from MCP tools/list. */
+export async function registryListTools(): Promise<{ name: string; description?: string; inputSchema?: any }[]> {
+  const sid = await ensureSession();
+  const { json } = await rpc({ jsonrpc: "2.0", id: Date.now(), method: "tools/list", params: {} }, sid);
+  if (json?.error) throw new Error(`registry tools/list: ${json.error.message}`);
+  return json?.result?.tools ?? [];
+}

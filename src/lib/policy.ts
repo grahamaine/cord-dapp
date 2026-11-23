@@ -26,7 +26,8 @@ export const PolicySchema = z.object({
   dailyLimitEur: eur,
   allowedAssets: z.array(z.string().min(1)).min(1),
   requireSellerBadge: z.boolean(),
-  approvedSuppliers: z.array(z.object({ account: z.string().min(40), name: z.string().default("") })),
+  // Concordium accounts, or Base / Solana addresses whose keys are CIS-8 linked to a verified owner
+  approvedSuppliers: z.array(z.object({ account: z.string().min(32), name: z.string().default("") })),
   requireHumanRelease: z.boolean().default(true),
   requireOwnerSignature: z.boolean().default(true),
   paused: z.boolean().default(false),
@@ -78,6 +79,9 @@ export function spentTodayEur(): number {
   return Math.round(eur * 100) / 100;
 }
 
+/** EVM addresses are case-insensitive (checksums); Concordium and Solana addresses are not. */
+const sameAddress = (a: string, b: string) => (a.startsWith("0x") && b.startsWith("0x") ? a.toLowerCase() === b.toLowerCase() : a === b);
+
 /**
  * Checks that need no network. `reservedEur` is budget already set aside by other funded/sent
  * locks today, so funding can't over-commit the daily limit. Returns a reason if refused.
@@ -94,6 +98,6 @@ export function policyViolation(p: Policy, payTo: string, amountAtomic: string, 
     if (committed + amountEur > p.dailyLimitEur)
       return `daily limit reached: €${committed.toLocaleString()} already paid or set aside today, limit €${p.dailyLimitEur.toLocaleString()}`;
   }
-  if (p.approvedSuppliers.length && !p.approvedSuppliers.some((s) => s.account === payTo)) return `payee ${payTo} is not on the approved supplier list`;
+  if (p.approvedSuppliers.length && !p.approvedSuppliers.some((s) => sameAddress(s.account, payTo))) return `payee ${payTo} is not on the approved supplier list`;
   return undefined;
 }

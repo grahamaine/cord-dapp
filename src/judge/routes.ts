@@ -15,6 +15,7 @@ import { credentials } from "@grpc/grpc-js";
 import { ConcordiumGRPCNodeClient } from "@concordium/web-sdk/nodejs";
 import { TransactionHash } from "@concordium/web-sdk";
 import { getExplorerTxUrl } from "@x402/concordium";
+import { chainByNetwork, explorerTx, xchainTxStatus } from "../lib/chains.js";
 import { config } from "../lib/config.js";
 import { verifyAuditEntries, type AuditEntry } from "../lib/audit.js";
 import { verifyReceiptEntries, type Receipt } from "../lib/receipts.js";
@@ -74,12 +75,15 @@ async function build() {
   }));
 
   const payments = await Promise.all(s.receipts.filter((r) => r.role === "buyer" && r.txHash).map(async (r) => {
+    const x = chainByNetwork(r.network);
+    const base = { seq: r.seq, ts: r.ts, purpose: r.purpose, resource: r.resource, amount: r.amount, asset: r.asset, display: fmtAtomic(r.amount, r.asset || "CCD"), to: r.sellerAccount, toOwner: r.sellerOwner ?? null, chain: x?.name ?? "Concordium", txHash: r.txHash, explorerUrl: r.explorerUrl || explorerTx(r.network, r.txHash!) };
     try {
-      const tx = await onChain(r.txHash!);
-      return { seq: r.seq, ts: r.ts, purpose: r.purpose, resource: r.resource, amount: r.amount, asset: r.asset, display: fmtAtomic(r.amount, r.asset || "CCD"), to: r.sellerAccount, txHash: r.txHash, explorerUrl: r.explorerUrl, onChain: tx.finalized && tx.success };
+      // Base / Solana payments are checked on their own chain (public RPC); Concordium ones on the node.
+      const tx = x ? await xchainTxStatus(r.network, r.txHash!) : await onChain(r.txHash!);
+      return { ...base, onChain: tx.finalized && tx.success };
     } catch (e) {
-      nodeReachable = false;
-      return { seq: r.seq, ts: r.ts, purpose: r.purpose, resource: r.resource, amount: r.amount, asset: r.asset, display: fmtAtomic(r.amount, r.asset || "CCD"), to: r.sellerAccount, txHash: r.txHash, explorerUrl: r.explorerUrl, onChain: null };
+      if (!x) nodeReachable = false;
+      return { ...base, onChain: null };
     }
   }));
 

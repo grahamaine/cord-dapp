@@ -38,7 +38,7 @@ export const config = {
     privateKey: () => env("CCD_PRIVATE_KEY"),
     badge: opt("BUYER_BADGE"),
     maxPayment: BigInt(opt("MAX_PAYMENT", "1000000")),
-    allowedAssets: opt("ALLOWED_ASSETS", "CCD,EURR,USDR").split(",").map((a) => a.trim()).filter(Boolean),
+    allowedAssets: opt("ALLOWED_ASSETS", "CCD,EURR,USDR,EURC").split(",").map((a) => a.trim()).filter(Boolean),
     requireSellerBadge: bool("REQUIRE_SELLER_BADGE", true),
   },
   receiptsPath: opt("RECEIPTS_PATH", process.env.VERCEL ? "/tmp/receipts.jsonl" : "data/receipts.jsonl"),

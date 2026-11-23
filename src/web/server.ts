@@ -14,7 +14,7 @@
  * Do not expose it publicly without adding authentication.
  */
 import express from "express";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { getExplorerTxUrl } from "@x402/concordium";
 import { config } from "../lib/config.js";
 import { checkBadge } from "../lib/badge.js";
@@ -26,6 +26,9 @@ import { atomicToEur, settlementInfo } from "../lib/eur.js";
 import { tokenBalances } from "../lib/plt.js";
 import { createChallenge, ownerAccounts, verifyApproval } from "../lib/approval.js";
 import { CHAINS, verifyCrossChain } from "../lib/xchain.js";
+import { chainByNetwork, explorerTx } from "../lib/chains.js";
+import { verifyPayee } from "../lib/payee.js";
+import { registryTool } from "../lib/registry-mcp.js";
 import { anchorNow, anchorData, checkAnchors } from "../lib/anchor.js";
 import { buy, PaymentRefused } from "../buyer/procurebot.js";
 import { mountAssets } from "../ui/assets.js";
@@ -61,7 +64,7 @@ function payments(receipts: Receipt[]) {
     const key = r.txHash || `seq-${r.seq}`;
     const row = byTx.get(key) ?? {
       txHash: r.txHash ?? null,
-      explorerUrl: r.explorerUrl || (r.txHash ? getExplorerTxUrl(r.network as `${string}:${string}`, r.txHash) : null),
+      explorerUrl: r.explorerUrl || (r.txHash ? explorerTx(r.network, r.txHash) : null),
       ts: r.ts,
       resource: r.resource,
       amount: r.amount,
@@ -214,6 +217,25 @@ app.get("/api/wallet/config", (_req, res) =>
   }),
 );
 
+// TenderScout's Base / Solana keys, prepared by `npm run link-keys`, waiting for the owner's wallet to send the
+// CIS-8 register call. Each entry also says whether the key is linked on-chain yet.
+app.get("/api/xchain/links", async (_req, res) => {
+  const links = [];
+  for (const chain of ["base", "solana"]) {
+    const file = `data/cis8-link-${chain}.json`;
+    if (!existsSync(file)) continue;
+    const l = JSON.parse(readFileSync(file, "utf8"));
+    const onChain = await registryTool("owner_of_key", { external_key: l.externalKey }).catch(() => null);
+    links.push({ ...l, linked: onChain?.status === "Active", linkedOwner: onChain?.owner ?? null });
+  }
+  res.json({ links });
+});
+app.post("/api/xchain/links/:chain/sent", (req, res) => {
+  const { txHash, account } = req.body ?? {};
+  audit({ actor: "owner", op: "xchain-link", outcome: "ok", detail: `CIS-8 key link for TenderScout on ${req.params.chain} sent by ${account}: ${txHash}`, data: { chain: req.params.chain, txHash, account } });
+  res.json({ ok: true, explorerUrl: txHash ? getExplorerTxUrl(config.network, txHash) : null });
+});
+
 // Cross-chain suppliers: verify an agent from another blockchain via its CIS-8 link to Concordium.
 app.get("/api/xchain/chains", (_req, res) => res.json({ chains: CHAINS }));
 app.post("/api/xchain/verify", async (req, res) => {
@@ -257,7 +279,7 @@ app.get("/api/locks/:id/trail", (req, res) => {
   const lock = readLocks().find((l) => l.id === req.params.id);
   if (!lock) return res.status(404).json({ error: `unknown lock ${req.params.id}` });
   const events = readAudit().filter((e) => e.lockId === lock.id);
-  const payPath = `/invoices/${lock.invoiceId}/pay`;
+  const payPath = lock.payPath || `/invoices/${lock.invoiceId}/pay`;
   const receipts = readReceipts().filter((r) => (lock.txHash && r.txHash === lock.txHash) || r.resource.split("?")[0].endsWith(payPath));
   const lastSeq = Math.max(0, ...events.map((e) => e.seq));
   const anchoredBy = lastSeq ? checkAnchors().find((a) => a.auditSeq >= lastSeq) ?? null : null;
@@ -268,7 +290,17 @@ app.get("/api/invoices", async (_req, res) => {
   const r = await getJson(`${config.seller.url}/invoices`);
   if (!r.ok) return res.status(502).json({ error: `seller unreachable at ${config.seller.url}`, detail: r.body });
   const badge = r.body.payTo ? await checkBadge(r.body.payTo) : null;
-  const items = (r.body.items ?? []).map((i: any) => ({ ...i, paidExplorerUrl: i.paidTx ? getExplorerTxUrl(config.network, i.paidTx) : null }));
+  const items = await Promise.all((r.body.items ?? []).map(async (i: any) => {
+    const x = chainByNetwork(i.network);
+    // Base / Solana payees: show whether their key is CIS-8 linked to a verified Concordium owner.
+    const link = x && i.status !== "paid" ? await verifyPayee(i.network, i.payTo).catch(() => null) : null;
+    return {
+      ...i,
+      chainName: x?.name ?? "Concordium",
+      payeeLink: link ? { verified: link.verified, owner: link.owner, summary: link.summary } : null,
+      paidExplorerUrl: i.paidTx ? explorerTx(i.paidNetwork ?? i.network, i.paidTx) : null,
+    };
+  }));
   res.json({ ...r.body, items, payeeBadge: badge ? { verified: badge.verified, agents: badge.agents, issues: badge.issues } : null });
 });
 
@@ -278,13 +310,13 @@ async function invoiceRef(id: string) {
   if (!r.ok) throw new LockError(`seller unreachable at ${config.seller.url}`, false);
   const i = (r.body.items ?? []).find((x: any) => x.id === id);
   if (!i) throw new LockError(`unknown invoice ${id}`);
-  return { ...i, payTo: r.body.payTo, asset: i.asset ?? r.body.asset };
+  return { ...i, payTo: i.payTo ?? r.body.payTo, asset: i.asset ?? r.body.asset, network: i.network, payPath: i.payPath };
 }
-const withExplorer = (l: Lock) => ({ ...l, explorerUrl: l.explorerUrl || (l.txHash ? getExplorerTxUrl(config.network, l.txHash) : undefined) });
+const withExplorer = (l: Lock) => ({ ...l, chainName: chainByNetwork(l.network)?.name ?? "Concordium", explorerUrl: l.explorerUrl || (l.txHash ? explorerTx(l.network, l.txHash) : undefined) });
 
 /** Release = the only place money moves: a sponsored x402 payment through ProcureBot. */
 async function payLock(lock: Lock, reservedOtherEur: number) {
-  const r = await buy(`${config.seller.url}/invoices/${encodeURIComponent(lock.invoiceId)}/pay`, `Lock ${lock.id}: pay ${lock.invoiceId} (${lock.supplier})`, { reservedEur: reservedOtherEur });
+  const r = await buy(`${config.seller.url}${lock.payPath || `/invoices/${encodeURIComponent(lock.invoiceId)}/pay`}`, `Lock ${lock.id}: pay ${lock.invoiceId} (${lock.supplier})`, { reservedEur: reservedOtherEur });
   return { txHash: r.receipt?.txHash, explorerUrl: r.receipt?.explorerUrl, receiptSeq: r.receipt?.seq };
 }
 

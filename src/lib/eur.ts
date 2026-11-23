@@ -37,7 +37,9 @@ export function assetSpec(asset: string): AssetSpec {
     process.env[`ASSET_DECIMALS_${sym}`] || (sym === INVOICE_ASSET.toUpperCase() ? process.env.INVOICE_ASSET_DECIMALS : "") || 6,
   );
   const rateEnv = process.env[`ASSET_EUR_${sym}`];
-  const eurPerToken = rateEnv ? Number(rateEnv) : sym.startsWith("EUR") ? 1 : null;
+  // EURC (Base / Solana testnet settlement) defaults to a demo scale: 1 EURC = EUR 1,000, so the
+  // faucet's 10 EURC a day covers several invoices. Set ASSET_EUR_EURC=1 for full value.
+  const eurPerToken = rateEnv ? Number(rateEnv) : sym === "EURC" ? 1000 : sym.startsWith("EUR") ? 1 : null;
   return { asset, decimals, eurPerToken: eurPerToken && eurPerToken > 0 ? eurPerToken : null, demo: false };
 }
 

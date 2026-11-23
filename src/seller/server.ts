@@ -10,27 +10,51 @@ import { existsSync, readFileSync } from "node:fs";
 import { paymentMiddleware, x402ResourceServer } from "@x402/express";
 import { HTTPFacilitatorClient } from "@x402/core/server";
 import { ExactConcordiumScheme } from "@x402/concordium/exact/server";
+import { ExactEvmScheme } from "@x402/evm/exact/server";
+import { ExactSvmScheme } from "@x402/svm/exact/server";
+import { XCHAINS, XCHAIN_FACILITATOR_URL, invoicePayPath, networkOf, sellerEvmPublicKey, sellerXAddress, type ChainKey } from "../lib/chains.js";
 import { config } from "../lib/config.js";
 import { checkBadge } from "../lib/badge.js";
 import { appendReceipt, readReceipts } from "../lib/receipts.js";
 import { benchmarks, invoices, tenders } from "./data.js";
-import { fmtAtomic, isCcd, settlementInfo } from "../lib/eur.js";
+import { currentTenders } from "../lib/tenders.js";
+import { assetSpec, eurToAtomic, fmtAtomic, isCcd, settlementInfo } from "../lib/eur.js";
 import { publicRouter } from "../public/routes.js";
 import { judgeRouter } from "../judge/routes.js";
 
 const payTo = config.seller.payTo();
+
+// Base / Solana are offered only when TenderScout has a receiving address there (SELLER_EVM_ADDRESS,
+// SELLER_SOLANA_ADDRESS). Their fees are paid by the x402 facilitator for those chains.
+const xchainsOffered = (["base", "solana"] as const).filter((k) => sellerXAddress[k]());
+// Two separate resource servers, so an outage of the public facilitator can never block Concordium payments.
 const resourceServer = new x402ResourceServer(new HTTPFacilitatorClient({ url: config.facilitator.url })).register(
   config.network,
   new ExactConcordiumScheme(),
 );
+const xchainServer = new x402ResourceServer(new HTTPFacilitatorClient({ url: XCHAIN_FACILITATOR_URL }));
+if (xchainsOffered.includes("base")) xchainServer.register(XCHAINS.base.network, new ExactEvmScheme());
+if (xchainsOffered.includes("solana")) xchainServer.register(XCHAINS.solana.network, new ExactSvmScheme());
 
-const invoicePath = (id: string) => `/invoices/${id}/pay`;
+/** TenderScout's receiving address on a chain ("" if that chain isn't offered). */
+const payToOn = (chain: ChainKey) => (chain === "concordium" ? payTo : sellerXAddress[chain]());
+
 const findInvoice = (id: string) => invoices.find((i) => i.id === id);
-/** An invoice is paid once a settled receipt exists for its pay URL (the receipt log is the source of truth). */
+const basePayPath = (id: string) => `/invoices/${id}/pay`;
+/** An invoice is paid once a settled receipt exists for one of its pay URLs (the receipt log is the source of truth). */
 function invoicePayment(id: string) {
-  return readReceipts().find((r) => r.role === "seller" && r.resource.split("?")[0] === invoicePath(id));
+  const base = basePayPath(id);
+  return readReceipts().find((r) => {
+    if (r.role !== "seller") return false;
+    const path = r.resource.split("?")[0];
+    return path === base || path === `${base}/base` || path === `${base}/solana`;
+  });
 }
 const invoiceIdFromPath = (path: string) => decodeURIComponent(path.split("/")[2] ?? "");
+const chainFromPath = (path: string): ChainKey => {
+  const seg = path.split("?")[0].split("/")[4];
+  return seg === "base" || seg === "solana" ? seg : "concordium";
+};
 
 const route = (amount: string | ((ctx: { path: string }) => { amount: string; asset: string }), description: string) => ({
   accepts: {
@@ -57,11 +81,21 @@ app.get("/", (_req, res) =>
     free: ["GET /invoices", "GET /healthz"],
     card: "/.well-known/agent-card.json",
     facilitator: config.facilitator.url,
+    chains: { concordium: payTo, ...Object.fromEntries(xchainsOffered.map((k) => [k, sellerXAddress[k]()])) },
   }),
 );
 
+// Public keys behind TenderScout's non-Concordium receiving addresses, so buyers can look them up in the
+// CIS-8 external key registry (an EVM address alone doesn't reveal its key; a Solana address is its key).
+app.get("/.well-known/payee-keys.json", (_req, res) => {
+  const keys: Record<string, { address: string; publicKey?: string }> = {};
+  if (xchainsOffered.includes("base")) keys[XCHAINS.base.network] = { address: sellerXAddress.base(), publicKey: sellerEvmPublicKey() || undefined };
+  if (xchainsOffered.includes("solana")) keys[XCHAINS.solana.network] = { address: sellerXAddress.solana() };
+  res.json({ agent: "TenderScout", keys });
+});
+
 app.get("/healthz", (_req, res) =>
-  res.json({ ok: true, agent: "TenderScout", payTo, invoiceAsset: config.seller.invoiceAsset, dataAsset: config.seller.asset, badge: config.seller.badge || null, requireBuyerBadge: config.seller.requireBuyerBadge, network: config.network }),
+  res.json({ ok: true, agent: "TenderScout", payTo, xchains: Object.fromEntries(xchainsOffered.map((k) => [k, sellerXAddress[k]()])), invoiceAsset: config.seller.invoiceAsset, dataAsset: config.seller.asset, badge: config.seller.badge || null, requireBuyerBadge: config.seller.requireBuyerBadge, network: config.network }),
 );
 
 // Public: open supplier invoices and their payment status.
@@ -70,10 +104,13 @@ app.get("/invoices", (_req, res) =>
     payTo,
     asset: config.seller.invoiceAsset,
     settlement: settlementInfo(),
-    items: invoices.map((inv) => {
-      const r = invoicePayment(inv.id);
-      return { ...inv, payTo, status: r ? "paid" : "open", paidTx: r?.txHash ?? null, paidAt: r?.ts ?? null };
-    }),
+    items: invoices
+      // An invoice on a chain TenderScout has no address on can't be paid: show it on Concordium instead.
+      .map((inv) => (inv.chain !== "concordium" && !payToOn(inv.chain) ? { ...inv, chain: "concordium" as const, asset: config.seller.invoiceAsset, amount: eurToAtomic(inv.amountEur, config.seller.invoiceAsset) } : inv))
+      .map((inv) => {
+        const r = invoicePayment(inv.id);
+        return { ...inv, payTo: payToOn(inv.chain), network: networkOf(inv.chain), payPath: invoicePayPath(inv.id, inv.chain), status: r ? "paid" : "open", paidTx: r?.txHash ?? null, paidAt: r?.ts ?? null, paidNetwork: r?.network ?? null };
+      }),
   }),
 );
 
@@ -83,6 +120,9 @@ app.use("/invoices/:id/pay", (req, res, next) => {
   if (!inv) return res.status(404).json({ error: "unknown_invoice" });
   const r = invoicePayment(inv.id);
   if (r) return res.status(409).json({ error: "already_paid", tx: r.txHash, paidAt: r.ts });
+  const chain = chainFromPath(req.originalUrl);
+  const expected = inv.chain !== "concordium" && !payToOn(inv.chain) ? "concordium" : inv.chain;
+  if (chain !== expected) return res.status(409).json({ error: "wrong_chain", message: `invoice ${inv.id} settles on ${expected}`, payPath: invoicePayPath(inv.id, expected) });
   next();
 });
 
@@ -115,17 +155,46 @@ app.use(["/tenders", "/price-benchmark", "/invoices/:id/pay"], async (req, res, 
 app.use(
   paymentMiddleware(
     {
-      "GET /tenders": route(config.seller.priceTenders, "Open public tenders by sector (Uganda)"),
+      "GET /tenders": route(config.seller.priceTenders, "Open public tenders by sector, live from Uganda's Government Procurement Portal (PPDA open data)"),
       "GET /price-benchmark": route(config.seller.priceBenchmark, "Supplier price benchmark for an item"),
       "GET /invoices/:id/pay": route(
         (ctx) => {
           const inv = findInvoice(invoiceIdFromPath(ctx.path));
-          return { amount: inv?.amount ?? "0", asset: inv?.asset ?? config.seller.invoiceAsset };
+          // an invoice whose chain isn't offered falls back to Concordium in INVOICE_ASSET
+          const onConcordium = inv && inv.chain !== "concordium";
+          return onConcordium
+            ? { amount: eurToAtomic(inv.amountEur, config.seller.invoiceAsset), asset: config.seller.invoiceAsset }
+            : { amount: inv?.amount ?? "0", asset: inv?.asset ?? config.seller.invoiceAsset };
         },
         "Settle a supplier invoice",
       ),
     },
     resourceServer,
+  ),
+);
+
+// Base Sepolia / Solana devnet invoices: EURC through the public x402 facilitator.
+if (xchainsOffered.length) app.use(
+  paymentMiddleware(
+    {
+      ...Object.fromEntries(xchainsOffered.map((k) => {
+        const x = XCHAINS[k];
+        return [`GET /invoices/:id/pay/${k}`, {
+          accepts: {
+            scheme: "exact",
+            network: x.network,
+            payTo: sellerXAddress[k](),
+            price: (ctx: { path: string }) => {
+              const inv = findInvoice(invoiceIdFromPath(ctx.path));
+              return { amount: inv?.amount ?? "0", asset: x.token, ...(x.eip712 ? { extra: { ...x.eip712, assetTransferMethod: "eip3009" } } : {}) };
+            },
+          },
+          description: `Settle a supplier invoice in EURC on ${x.name}`,
+          mimeType: "application/json",
+        }];
+      })),
+    },
+    xchainServer,
   ),
 );
 
@@ -141,12 +210,15 @@ app.use((req, res, next) => {
         resource: req.originalUrl,
         buyerAccount: settle.payer,
         buyerBadge: res.locals.buyerBadge,
-        sellerAccount: payTo,
+        sellerAccount: payToOn(chainFromPath(req.originalUrl)),
         sellerBadge: config.seller.badge || undefined,
         ...(req.path.startsWith("/invoices/")
-          ? (({ amount, asset }) => ({ amount, asset }))(findInvoice(invoiceIdFromPath(req.path)) ?? { amount: "0", asset: config.seller.invoiceAsset })
+          ? (({ amount, asset, amountEur, chain }) =>
+              chain !== "concordium" && chainFromPath(req.originalUrl) === "concordium"
+                ? { amount: eurToAtomic(amountEur, config.seller.invoiceAsset), asset: config.seller.invoiceAsset }
+                : { amount, asset })(findInvoice(invoiceIdFromPath(req.path)) ?? { amount: "0", asset: config.seller.invoiceAsset, amountEur: 0, chain: "concordium" as ChainKey })
           : { amount: req.path === "/tenders" ? config.seller.priceTenders : config.seller.priceBenchmark, asset: config.seller.asset }),
-        network: config.network,
+        network: networkOf(chainFromPath(req.originalUrl)),
         txHash: settle.transaction,
       });
     } catch (e) {
@@ -158,12 +230,17 @@ app.use((req, res, next) => {
 
 app.get("/tenders", (req, res) => {
   const sector = String(req.query.sector ?? "").toLowerCase();
-  res.json({ source: "TenderScout (sample data)", items: sector ? tenders.filter((t) => t.sector === sector) : tenders });
+  const set = currentTenders(tenders);
+  const items = sector ? set.items.filter((t) => t.sector === sector) : set.items;
+  res.json({ source: set.source, live: set.live, fiscalYear: set.fiscalYear, fetchedAt: set.fetchedAt || null, sector: sector || null, count: items.length, items: items.slice(0, Number(req.query.limit ?? 50)) });
 });
 
-app.get("/invoices/:id/pay", (req, res) => {
+app.get(["/invoices/:id/pay", "/invoices/:id/pay/:chain"], (req, res) => {
   const inv = findInvoice(req.params.id)!;
-  res.json({ invoice: inv.id, supplier: inv.supplier, status: "paid", amountEur: inv.amountEur, settled: { amount: inv.amount, asset: inv.asset, display: fmtAtomic(inv.amount, inv.asset), fullValue: !isCcd(inv.asset) } });
+  const chain = chainFromPath(req.originalUrl);
+  const asset = chain === inv.chain ? inv.asset : config.seller.invoiceAsset;
+  const amount = chain === inv.chain ? inv.amount : eurToAtomic(inv.amountEur, asset);
+  res.json({ invoice: inv.id, supplier: inv.supplier, status: "paid", amountEur: inv.amountEur, chain, settled: { amount, asset, display: fmtAtomic(amount, asset), fullValue: !isCcd(asset) && !assetSpec(asset).demo && assetSpec(asset).eurPerToken === 1 } });
 });
 
 app.get("/price-benchmark", (req, res) => {
@@ -173,6 +250,8 @@ app.get("/price-benchmark", (req, res) => {
   res.json({ item, currency: "UGX", ...b });
 });
 
-if (!process.env.VERCEL) app.listen(config.seller.port, () =>
-  console.log(`TenderScout seller on :${config.seller.port}, payTo ${payTo}, buyer badge required: ${config.seller.requireBuyerBadge}`),
-);
+if (!process.env.VERCEL) app.listen(config.seller.port, () => {
+  console.log(`TenderScout seller on :${config.seller.port}, payTo ${payTo}, buyer badge required: ${config.seller.requireBuyerBadge}`);
+  for (const k of xchainsOffered) console.log(`  also paid on ${XCHAINS[k].name} in EURC at ${sellerXAddress[k]()} (facilitator ${XCHAIN_FACILITATOR_URL})`);
+  if (xchainsOffered.includes("base") && !sellerEvmPublicKey()) console.warn("  ! SELLER_EVM_PUBLIC_KEY is empty: buyers can't verify the Base address. Run npm run wallets.");
+});

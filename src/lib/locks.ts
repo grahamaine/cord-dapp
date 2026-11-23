@@ -19,7 +19,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import { randomBytes } from "node:crypto";
 import { audit, type Actor } from "./audit.js";
-import { checkBadge } from "./badge.js";
+import { verifyPayee } from "./payee.js";
+import { chainByNetwork } from "./chains.js";
 import { loadPolicy, policyViolation } from "./policy.js";
 import { atomicToEur, fmtAtomic } from "./eur.js";
 
@@ -35,10 +36,14 @@ export interface Lock {
   amountEur: number;
   amount: string; // atomic units of `asset` settled on-chain (full value for a stablecoin, demo rate for CCD)
   asset: string;
+  /** CAIP-2 network the payment settles on (Concordium, Base Sepolia or Solana devnet). Older locks: Concordium. */
+  network?: string;
+  /** URL path on the seller that pays this invoice on that network. */
+  payPath?: string;
   status: LockStatus;
   createdAt: string;
   updatedAt: string;
-  checks?: { at: string; badgeVerified: boolean; badgeIssues: string[]; policy: string | null };
+  checks?: { at: string; badgeVerified: boolean; badgeIssues: string[]; policy: string | null; linkedOwner?: string | null; link?: string };
   txHash?: string;
   explorerUrl?: string;
   receiptSeq?: number;
@@ -46,7 +51,7 @@ export interface Lock {
   lastError?: string;
   history: LockEvent[];
 }
-export interface InvoiceRef { id: string; supplier: string; category: string; description: string; payTo: string; amountEur: number; amount: string; asset: string; status?: string }
+export interface InvoiceRef { id: string; supplier: string; category: string; description: string; payTo: string; amountEur: number; amount: string; asset: string; network?: string; payPath?: string; status?: string }
 
 export class LockError extends Error {
   constructor(message: string, public refused = true) { super(message); }
@@ -108,10 +113,10 @@ export function createLock(inv: InvoiceRef, actor: Actor = "owner"): Lock {
   const lock: Lock = {
     id: `LCK-${randomBytes(3).toString("hex").toUpperCase()}`,
     invoiceId: inv.id, supplier: inv.supplier, category: inv.category, description: inv.description,
-    payTo: inv.payTo, amountEur: inv.amountEur, amount: inv.amount, asset: inv.asset,
+    payTo: inv.payTo, amountEur: inv.amountEur, amount: inv.amount, asset: inv.asset, network: inv.network, payPath: inv.payPath,
     status: "created", createdAt: now, updatedAt: now, history: [],
   };
-  record(lock, "create", actor, "ok", `Lock opened for ${inv.id} (${inv.supplier}), €${inv.amountEur.toLocaleString()}`);
+  record(lock, "create", actor, "ok", `Lock opened for ${inv.id} (${inv.supplier}), €${inv.amountEur.toLocaleString()}${chainByNetwork(inv.network) ? `, settles on ${chainByNetwork(inv.network)!.name}` : ""}`);
   saveLock(lock);
   return lock;
 }
@@ -133,14 +138,16 @@ export async function sendLock(id: string, release: (lock: Lock) => Promise<Lock
   requireStatus(lock, "send", ["funded"]);
   const policy = loadPolicy();
   const reason = policyViolation(policy, lock.payTo, lock.amount, lock.asset, reservedEur(lock.id));
-  const badge = await checkBadge(lock.payTo);
-  lock.checks = { at: new Date().toISOString(), badgeVerified: badge.verified, badgeIssues: badge.issues, policy: reason ?? null };
+  const x = chainByNetwork(lock.network);
+  const badge = await verifyPayee(lock.network, lock.payTo);
+  lock.checks = { at: new Date().toISOString(), badgeVerified: badge.verified, badgeIssues: badge.issues, policy: reason ?? null, ...(x ? { linkedOwner: badge.owner, link: badge.summary } : {}) };
   if (reason) refuse(lock, "send", "agent", reason);
-  if (policy.requireSellerBadge && !badge.verified) refuse(lock, "send", "agent", `payee has no valid Verified by Concordium agent: ${badge.issues.join("; ")}`);
+  if (policy.requireSellerBadge && !badge.verified)
+    refuse(lock, "send", "agent", x ? `${x.name} payee is not linked to a Verified by Concordium owner: ${badge.summary}` : `payee has no valid Verified by Concordium agent: ${badge.issues.join("; ")}`);
   lock.status = "sent";
   lock.lastError = undefined;
   record(lock, "send", "agent", "ok",
-    `Checks passed: payee ${badge.verified ? "Verified by Concordium" : "not verified (allowed by policy)"}, within limits. ${policy.requireHumanRelease ? "Awaiting human release." : "Auto-release allowed by policy."}`,
+    `Checks passed: payee ${badge.verified ? (x ? `on ${x.name}, CIS-8 linked to Verified by Concordium owner ${badge.owner}` : "Verified by Concordium") : "not verified (allowed by policy)"}, within limits. ${policy.requireHumanRelease ? "Awaiting human release." : "Auto-release allowed by policy."}`,
     { badgeVerified: badge.verified });
   saveLock(lock);
   return policy.requireHumanRelease ? lock : release(lock);
@@ -173,7 +180,7 @@ export async function releaseLock(
     lock.explorerUrl = r.explorerUrl;
     lock.receiptSeq = r.receiptSeq;
     lock.lastError = undefined;
-    record(lock, "release", actor, "ok", `Released by ${actor}: €${lock.amountEur.toLocaleString()} settled on Concordium as ${fmtAtomic(lock.amount, lock.asset)} (fee sponsored)`, { txHash: r.txHash });
+    record(lock, "release", actor, "ok", `Released by ${actor}: €${lock.amountEur.toLocaleString()} settled on ${chainByNetwork(lock.network)?.name ?? "Concordium"} as ${fmtAtomic(lock.amount, lock.asset)} (fee sponsored)`, { txHash: r.txHash });
     saveLock(lock);
     return lock;
   } catch (e) {
