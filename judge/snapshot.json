@@ -1,7 +1,7 @@
 {
  "kind": "cord-judge-snapshot",
  "version": 1,
- "publishedAt": "2026-11-23T08:18:55.965Z",
+ "publishedAt": "2026-11-24T07:36:52.986Z",
  "network": "ccd:4221332d34e1694168c2a0c0b3fd0f27",
  "accounts": {
   "procurebot": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
@@ -216,9 +216,9 @@
    "amountEur": 12500,
    "amount": "1250000",
    "asset": "CCD",
-   "status": "created",
+   "status": "cancelled",
    "createdAt": "2026-11-20T11:38:06.235Z",
-   "updatedAt": "2026-11-23T08:16:39.598Z",
+   "updatedAt": "2026-11-23T08:48:28.307Z",
    "history": [
     {
      "op": "create",
@@ -240,6 +240,13 @@
      "actor": "owner",
      "outcome": "refused",
      "note": "€12,500 is over the per-payment limit of €10,000"
+    },
+    {
+     "op": "cancel",
+     "at": "2026-11-23T08:48:28.307Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Cancelled"
     }
    ],
    "lastError": "€12,500 is over the per-payment limit of €10,000"
@@ -531,6 +538,310 @@
    "txHash": "0xce9298625089a76251949cefc91a914886ecc4bcd8497a5db3770ca5bf9bba7e",
    "explorerUrl": "https://sepolia.basescan.org/tx/0xce9298625089a76251949cefc91a914886ecc4bcd8497a5db3770ca5bf9bba7e",
    "receiptSeq": 11
+  },
+  {
+   "id": "LCK-EFA35A",
+   "invoiceId": "INV-SEC-1130",
+   "supplier": "Corporate Security Services (U) Ltd",
+   "category": "Security",
+   "description": "Site security, November (4 guards) · settles on Solana",
+   "payTo": "GDmQ2WahUCmVJ529aDUoRTtBehXnj3Q8Sv1RYGRU737R",
+   "amountEur": 3200,
+   "amount": "3200000",
+   "asset": "EURC",
+   "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+   "payPath": "/invoices/INV-SEC-1130/pay/solana",
+   "status": "cancelled",
+   "createdAt": "2026-11-23T08:36:56.374Z",
+   "updatedAt": "2026-11-23T08:47:14.621Z",
+   "history": [
+    {
+     "op": "create",
+     "at": "2026-11-23T08:36:56.687Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Lock opened for INV-SEC-1130 (Corporate Security Services (U) Ltd), €3,200, settles on Solana devnet"
+    },
+    {
+     "op": "fund",
+     "at": "2026-11-23T08:36:56.706Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "€3,200 set aside against today's budget"
+    },
+    {
+     "op": "send",
+     "at": "2026-11-23T08:37:00.506Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Checks passed: payee on Solana devnet, CIS-8 linked to Verified by Concordium owner 3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8, within limits. Awaiting human release."
+    },
+    {
+     "op": "cancel",
+     "at": "2026-11-23T08:47:14.621Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Cancelled; €3,200 returned to today's budget"
+    }
+   ],
+   "checks": {
+    "at": "2026-11-23T08:37:00.506Z",
+    "badgeVerified": true,
+    "badgeIssues": [],
+    "policy": null,
+    "linkedOwner": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+    "link": "Verified: Solana devnet key linked through CIS-8 to Concordium account 3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8, which owns 1 Verified by Concordium agent."
+   }
+  },
+  {
+   "id": "LCK-DBAF37",
+   "invoiceId": "INV-SEC-1130",
+   "supplier": "Corporate Security Services (U) Ltd",
+   "category": "Security",
+   "description": "Site security, November (4 guards) · settles on Solana",
+   "payTo": "GDmQ2WahUCmVJ529aDUoRTtBehXnj3Q8Sv1RYGRU737R",
+   "amountEur": 3200,
+   "amount": "3200000",
+   "asset": "EURC",
+   "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+   "payPath": "/invoices/INV-SEC-1130/pay/solana",
+   "status": "cancelled",
+   "createdAt": "2026-11-23T09:01:02.654Z",
+   "updatedAt": "2026-11-23T10:00:16.684Z",
+   "history": [
+    {
+     "op": "create",
+     "at": "2026-11-23T09:01:02.852Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Lock opened for INV-SEC-1130 (Corporate Security Services (U) Ltd), €3,200, settles on Solana devnet"
+    },
+    {
+     "op": "fund",
+     "at": "2026-11-23T09:01:02.997Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "€3,200 set aside against today's budget"
+    },
+    {
+     "op": "send",
+     "at": "2026-11-23T09:01:04.524Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Checks passed: payee on Solana devnet, CIS-8 linked to Verified by Concordium owner 3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8, within limits. Awaiting human release."
+    },
+    {
+     "op": "approve",
+     "at": "2026-11-23T09:01:13.609Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Release signed by owner wallet 39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd"
+    },
+    {
+     "op": "release",
+     "at": "2026-11-23T09:01:27.095Z",
+     "actor": "owner",
+     "outcome": "error",
+     "note": "402 from http://localhost:4021/invoices/INV-SEC-1130/pay/solana: payment rejected without a reason; check the seller and facilitator windows for the error"
+    },
+    {
+     "op": "cancel",
+     "at": "2026-11-23T10:00:16.684Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Cancelled; €3,200 returned to today's budget"
+    }
+   ],
+   "checks": {
+    "at": "2026-11-23T09:01:04.524Z",
+    "badgeVerified": true,
+    "badgeIssues": [],
+    "policy": null,
+    "linkedOwner": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+    "link": "Verified: Solana devnet key linked through CIS-8 to Concordium account 3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8, which owns 1 Verified by Concordium agent."
+   },
+   "approval": {
+    "account": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+    "nonce": "4a3590568644b8ac728da7d5",
+    "message": "Kakasa · release approval\nLock: LCK-DBAF37\nInvoice: INV-SEC-1130\nSupplier: Corporate Security Services (U) Ltd\nAmount: EUR 3,200 (demo)\nPayee: GDmQ2WahUCmVJ529aDUoRTtBehXnj3Q8Sv1RYGRU737R\nNetwork: testnet\nNonce: 4a3590568644b8ac728da7d5\nExpires: 2026-11-23T09:06:09.934Z\nI approve this payment prepared by an AI agent.",
+    "signature": {
+     "0": {
+      "0": "b20e1232edd993d78609660ffc6003db0a3436ddf3f5df5d54892a9182c9ad400d98b9e381355f3eaa45584ef5aa546aeb95fd71e28a7eb83bab9c4c7c538603"
+     }
+    },
+    "at": "2026-11-23T09:01:13.609Z"
+   },
+   "lastError": "402 from http://localhost:4021/invoices/INV-SEC-1130/pay/solana: payment rejected without a reason; check the seller and facilitator windows for the error"
+  },
+  {
+   "id": "LCK-E24619",
+   "invoiceId": "INV-SEC-1130",
+   "supplier": "Corporate Security Services (U) Ltd",
+   "category": "Security",
+   "description": "Site security, November (4 guards) · settles on Solana",
+   "payTo": "GDmQ2WahUCmVJ529aDUoRTtBehXnj3Q8Sv1RYGRU737R",
+   "amountEur": 3200,
+   "amount": "3200000",
+   "asset": "EURC",
+   "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+   "payPath": "/invoices/INV-SEC-1130/pay/solana",
+   "status": "cancelled",
+   "createdAt": "2026-11-23T10:23:33.919Z",
+   "updatedAt": "2026-11-24T05:58:36.525Z",
+   "history": [
+    {
+     "op": "create",
+     "at": "2026-11-23T10:23:34.721Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Lock opened for INV-SEC-1130 (Corporate Security Services (U) Ltd), €3,200, settles on Solana devnet"
+    },
+    {
+     "op": "fund",
+     "at": "2026-11-23T10:23:35.149Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "€3,200 set aside against today's budget"
+    },
+    {
+     "op": "send",
+     "at": "2026-11-23T10:23:39.808Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Checks passed: payee on Solana devnet, CIS-8 linked to Verified by Concordium owner 3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8, within limits. Awaiting human release."
+    },
+    {
+     "op": "approve",
+     "at": "2026-11-23T10:24:28.955Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Release signed by owner wallet 39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd"
+    },
+    {
+     "op": "release",
+     "at": "2026-11-23T10:24:50.268Z",
+     "actor": "owner",
+     "outcome": "error",
+     "note": "402 from http://localhost:4021/invoices/INV-SEC-1130/pay/solana: settlement_pending: Solana error #8100002; Decode this error by running `npx @solana/errors decode -- 8100002 'X19jb2RlPTgxMDAwMDImaGVhZGVycz0lNUJvYmplY3QlMjBIZWFkZXJzJTVEJm1lc3NhZ2U9VG9vJTIwTWFueSUyMFJlcXVlc3RzJnN0YXR1c0NvZGU9NDI5'`"
+    },
+    {
+     "op": "cancel",
+     "at": "2026-11-24T05:58:36.525Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Cancelled: cancelled from agent chat; €3,200 returned to today's budget"
+    }
+   ],
+   "checks": {
+    "at": "2026-11-23T10:23:39.808Z",
+    "badgeVerified": true,
+    "badgeIssues": [],
+    "policy": null,
+    "linkedOwner": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+    "link": "Verified: Solana devnet key linked through CIS-8 to Concordium account 3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8, which owns 1 Verified by Concordium agent."
+   },
+   "approval": {
+    "account": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+    "nonce": "e1e7fd58f12edabd3266c73a",
+    "message": "Kakasa · release approval\nLock: LCK-E24619\nInvoice: INV-SEC-1130\nSupplier: Corporate Security Services (U) Ltd\nAmount: EUR 3,200 (demo)\nPayee: GDmQ2WahUCmVJ529aDUoRTtBehXnj3Q8Sv1RYGRU737R\nNetwork: testnet\nNonce: e1e7fd58f12edabd3266c73a\nExpires: 2026-11-23T10:29:13.793Z\nI approve this payment prepared by an AI agent.",
+    "signature": {
+     "0": {
+      "0": "c808913e394d88c0fa27bc6d208e0c6ce5b71079b1dc6e19b2ec4ab8ec94bd0cdb4ba7c142a8f677c2d2840eff6fef770bddfd92d4f333b05ab15b9b51b66b03"
+     }
+    },
+    "at": "2026-11-23T10:24:28.955Z"
+   },
+   "lastError": "402 from http://localhost:4021/invoices/INV-SEC-1130/pay/solana: settlement_pending: Solana error #8100002; Decode this error by running `npx @solana/errors decode -- 8100002 'X19jb2RlPTgxMDAwMDImaGVhZGVycz0lNUJvYmplY3QlMjBIZWFkZXJzJTVEJm1lc3NhZ2U9VG9vJTIwTWFueSUyMFJlcXVlc3RzJnN0YXR1c0NvZGU9NDI5'`"
+  },
+  {
+   "id": "LCK-D39793",
+   "invoiceId": "INV-SEC-1130",
+   "supplier": "Corporate Security Services (U) Ltd",
+   "category": "Security",
+   "description": "Site security, November (4 guards) · settles on Solana",
+   "payTo": "GDmQ2WahUCmVJ529aDUoRTtBehXnj3Q8Sv1RYGRU737R",
+   "amountEur": 3200,
+   "amount": "3200000",
+   "asset": "EURC",
+   "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+   "payPath": "/invoices/INV-SEC-1130/pay/solana",
+   "status": "released",
+   "createdAt": "2026-11-24T05:59:00.354Z",
+   "updatedAt": "2026-11-24T07:26:07.571Z",
+   "history": [
+    {
+     "op": "create",
+     "at": "2026-11-24T05:59:00.884Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Lock opened for INV-SEC-1130 (Corporate Security Services (U) Ltd), €3,200, settles on Solana devnet"
+    },
+    {
+     "op": "fund",
+     "at": "2026-11-24T05:59:00.923Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "€3,200 set aside against today's budget"
+    },
+    {
+     "op": "send",
+     "at": "2026-11-24T05:59:02.546Z",
+     "actor": "agent",
+     "outcome": "ok",
+     "note": "Checks passed: payee on Solana devnet, CIS-8 linked to Verified by Concordium owner 3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8, within limits. Awaiting human release."
+    },
+    {
+     "op": "approve",
+     "at": "2026-11-24T06:08:25.253Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Release signed by owner wallet 39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd"
+    },
+    {
+     "op": "release",
+     "at": "2026-11-24T06:08:35.806Z",
+     "actor": "owner",
+     "outcome": "error",
+     "note": "402 from http://localhost:4021/invoices/INV-SEC-1130/pay/solana: invalid_exact_svm_transaction_simulation_failed {\"error\":\"invalid_exact_svm_transaction_simulation_failed\"}"
+    },
+    {
+     "op": "approve",
+     "at": "2026-11-24T07:26:02.409Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Release signed by owner wallet 39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd"
+    },
+    {
+     "op": "release",
+     "at": "2026-11-24T07:26:07.571Z",
+     "actor": "owner",
+     "outcome": "ok",
+     "note": "Released by owner: €3,200 settled on Solana devnet as 3.2 EURC (fee sponsored)"
+    }
+   ],
+   "checks": {
+    "at": "2026-11-24T05:59:02.546Z",
+    "badgeVerified": true,
+    "badgeIssues": [],
+    "policy": null,
+    "linkedOwner": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+    "link": "Verified: Solana devnet key linked through CIS-8 to Concordium account 3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8, which owns 1 Verified by Concordium agent."
+   },
+   "approval": {
+    "account": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+    "nonce": "2cec588b72bc25c9212144eb",
+    "message": "Kakasa · release approval\nLock: LCK-D39793\nInvoice: INV-SEC-1130\nSupplier: Corporate Security Services (U) Ltd\nAmount: EUR 3,200 (demo)\nPayee: GDmQ2WahUCmVJ529aDUoRTtBehXnj3Q8Sv1RYGRU737R\nNetwork: testnet\nNonce: 2cec588b72bc25c9212144eb\nExpires: 2026-11-24T07:30:57.638Z\nI approve this payment prepared by an AI agent.",
+    "signature": {
+     "0": {
+      "0": "69bb24bc5d8b9a3d2a77a7c382973909e06f0fd0a727aa2e7ea7aa1c306ba91098f17d9a186eef094d2514f02a2ff3a420a23c0169eda4276eb1bceccddf4607"
+     }
+    },
+    "at": "2026-11-24T07:26:02.409Z",
+    "method": "wallet"
+   },
+   "txHash": "bo7HQW1E1fMQ2iyjJHeUswZU9mqyEv52icX28jAEMfJcXKL3Sseaq6wM2RZeWrpykLcjg8zyVfwSqEGdjq1bHXk",
+   "explorerUrl": "https://explorer.solana.com/tx/bo7HQW1E1fMQ2iyjJHeUswZU9mqyEv52icX28jAEMfJcXKL3Sseaq6wM2RZeWrpykLcjg8zyVfwSqEGdjq1bHXk?cluster=devnet",
+   "receiptSeq": 14
   }
  ],
  "audit": [
@@ -1419,6 +1730,481 @@
    "ts": "2026-11-23T08:16:39.599Z",
    "prevHash": "313bc18062652647dd369c4f3afbb6ce876e1dd1a14691ddc5309a4257ae353e",
    "hash": "49cd83fb3a54d0b16a040960f406e5de13741a45d9c13fc11fbff8787bc33aff"
+  },
+  {
+   "actor": "agent",
+   "op": "create",
+   "lockId": "LCK-EFA35A",
+   "outcome": "ok",
+   "detail": "Lock opened for INV-SEC-1130 (Corporate Security Services (U) Ltd), €3,200, settles on Solana devnet",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "created"
+   },
+   "seq": 59,
+   "ts": "2026-11-23T08:36:56.689Z",
+   "prevHash": "49cd83fb3a54d0b16a040960f406e5de13741a45d9c13fc11fbff8787bc33aff",
+   "hash": "c088b8101b9dc0f4be47dac5de32e43f0166c3a74d1c59a5cb1d26fb9d91f1b6"
+  },
+  {
+   "actor": "agent",
+   "op": "fund",
+   "lockId": "LCK-EFA35A",
+   "outcome": "ok",
+   "detail": "€3,200 set aside against today's budget",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "funded"
+   },
+   "seq": 60,
+   "ts": "2026-11-23T08:36:56.709Z",
+   "prevHash": "c088b8101b9dc0f4be47dac5de32e43f0166c3a74d1c59a5cb1d26fb9d91f1b6",
+   "hash": "abf6826b7bb6e4e290a0e81ee452fe61c9c22950dbee6938374e5ca0949efa93"
+  },
+  {
+   "actor": "agent",
+   "op": "send",
+   "lockId": "LCK-EFA35A",
+   "outcome": "ok",
+   "detail": "Checks passed: payee on Solana devnet, CIS-8 linked to Verified by Concordium owner 3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8, within limits. Awaiting human release.",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "sent",
+    "badgeVerified": true
+   },
+   "seq": 61,
+   "ts": "2026-11-23T08:37:00.512Z",
+   "prevHash": "abf6826b7bb6e4e290a0e81ee452fe61c9c22950dbee6938374e5ca0949efa93",
+   "hash": "4d9ad47c9176d0ac29a00f7979ec085f777da59e295fcade6e7f2ab77b5d033b"
+  },
+  {
+   "actor": "agent",
+   "op": "chat",
+   "outcome": "ok",
+   "detail": "Owner asked: \"pay the security invoice\" → prepare_payment",
+   "data": {
+    "mode": "builtin"
+   },
+   "seq": 62,
+   "ts": "2026-11-23T08:37:00.803Z",
+   "prevHash": "4d9ad47c9176d0ac29a00f7979ec085f777da59e295fcade6e7f2ab77b5d033b",
+   "hash": "7b9acaffd0245eab42311695522dabd27a4b8381b9198517c243d5300e62a92a"
+  },
+  {
+   "actor": "owner",
+   "op": "policy",
+   "outcome": "ok",
+   "detail": "Policy saved (no changes)",
+   "data": {
+    "maxPerLockEur": 10000,
+    "dailyLimitEur": 10000,
+    "requireSellerBadge": true,
+    "requireHumanRelease": true,
+    "approvedSuppliers": 0
+   },
+   "seq": 63,
+   "ts": "2026-11-23T08:46:36.466Z",
+   "prevHash": "7b9acaffd0245eab42311695522dabd27a4b8381b9198517c243d5300e62a92a",
+   "hash": "3dc38fe819b4d3e2343157891360d51f724a9d8c81360363713b6a295d4c4262"
+  },
+  {
+   "actor": "owner",
+   "op": "cancel",
+   "lockId": "LCK-EFA35A",
+   "outcome": "ok",
+   "detail": "Cancelled; €3,200 returned to today's budget",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "cancelled"
+   },
+   "seq": 64,
+   "ts": "2026-11-23T08:47:14.718Z",
+   "prevHash": "3dc38fe819b4d3e2343157891360d51f724a9d8c81360363713b6a295d4c4262",
+   "hash": "67e68ad90dcda545efbbe97d23636b9a7c0206c0144194ca6a2f206da7e7dfc9"
+  },
+  {
+   "actor": "owner",
+   "op": "cancel",
+   "lockId": "LCK-310091",
+   "outcome": "ok",
+   "detail": "Cancelled",
+   "data": {
+    "invoiceId": "INV-CON-0007",
+    "amountEur": 12500,
+    "status": "cancelled"
+   },
+   "seq": 65,
+   "ts": "2026-11-23T08:48:28.312Z",
+   "prevHash": "67e68ad90dcda545efbbe97d23636b9a7c0206c0144194ca6a2f206da7e7dfc9",
+   "hash": "40e402238c0869c61fe7fe403493c1f3747c81f164a69f46005faedee2308532"
+  },
+  {
+   "actor": "agent",
+   "op": "create",
+   "lockId": "LCK-DBAF37",
+   "outcome": "ok",
+   "detail": "Lock opened for INV-SEC-1130 (Corporate Security Services (U) Ltd), €3,200, settles on Solana devnet",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "created"
+   },
+   "seq": 66,
+   "ts": "2026-11-23T09:01:02.856Z",
+   "prevHash": "40e402238c0869c61fe7fe403493c1f3747c81f164a69f46005faedee2308532",
+   "hash": "5cbabc6baa7c814b9b30da6eb7a258d98abd1d4d8d30f4afd3528406ab419b6f"
+  },
+  {
+   "actor": "agent",
+   "op": "fund",
+   "lockId": "LCK-DBAF37",
+   "outcome": "ok",
+   "detail": "€3,200 set aside against today's budget",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "funded"
+   },
+   "seq": 67,
+   "ts": "2026-11-23T09:01:03.000Z",
+   "prevHash": "5cbabc6baa7c814b9b30da6eb7a258d98abd1d4d8d30f4afd3528406ab419b6f",
+   "hash": "0a3aa15c4b8ae23ab693bf9dbc21df73d144cb539004dfcea14938b2adf520c8"
+  },
+  {
+   "actor": "agent",
+   "op": "send",
+   "lockId": "LCK-DBAF37",
+   "outcome": "ok",
+   "detail": "Checks passed: payee on Solana devnet, CIS-8 linked to Verified by Concordium owner 3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8, within limits. Awaiting human release.",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "sent",
+    "badgeVerified": true
+   },
+   "seq": 68,
+   "ts": "2026-11-23T09:01:04.526Z",
+   "prevHash": "0a3aa15c4b8ae23ab693bf9dbc21df73d144cb539004dfcea14938b2adf520c8",
+   "hash": "4b139e047db3c041458a9caf97f02147c45bdf9208c0d3882d5cc835bf99def1"
+  },
+  {
+   "actor": "agent",
+   "op": "chat",
+   "outcome": "ok",
+   "detail": "Owner asked: \"pay security invoice\" → prepare_payment",
+   "data": {
+    "mode": "builtin"
+   },
+   "seq": 69,
+   "ts": "2026-11-23T09:01:04.616Z",
+   "prevHash": "4b139e047db3c041458a9caf97f02147c45bdf9208c0d3882d5cc835bf99def1",
+   "hash": "8931e4b0e779a087c7f822d25579871c51b1b2b3366618f6137b880d00a81bf9"
+  },
+  {
+   "actor": "owner",
+   "op": "approve",
+   "lockId": "LCK-DBAF37",
+   "outcome": "ok",
+   "detail": "Release signed by owner wallet 39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "sent",
+    "account": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd"
+   },
+   "seq": 70,
+   "ts": "2026-11-23T09:01:13.617Z",
+   "prevHash": "8931e4b0e779a087c7f822d25579871c51b1b2b3366618f6137b880d00a81bf9",
+   "hash": "5d82bf7588e958c5665b83cc8de021d5e09ab0485695f510b3fb63417a61c543"
+  },
+  {
+   "actor": "owner",
+   "op": "release",
+   "lockId": "LCK-DBAF37",
+   "outcome": "error",
+   "detail": "402 from http://localhost:4021/invoices/INV-SEC-1130/pay/solana: payment rejected without a reason; check the seller and facilitator windows for the error",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "sent"
+   },
+   "seq": 71,
+   "ts": "2026-11-23T09:01:27.100Z",
+   "prevHash": "5d82bf7588e958c5665b83cc8de021d5e09ab0485695f510b3fb63417a61c543",
+   "hash": "ec78cc43d0dc5f8d349d3615277301cde3fca82e16f270013e808efc31b68ac9"
+  },
+  {
+   "actor": "owner",
+   "op": "cancel",
+   "lockId": "LCK-DBAF37",
+   "outcome": "ok",
+   "detail": "Cancelled; €3,200 returned to today's budget",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "cancelled"
+   },
+   "seq": 72,
+   "ts": "2026-11-23T10:00:16.714Z",
+   "prevHash": "ec78cc43d0dc5f8d349d3615277301cde3fca82e16f270013e808efc31b68ac9",
+   "hash": "06e318641c6e190fc75d9e7879515566e2e8cf6c6d3e5464976b560220981fa4"
+  },
+  {
+   "actor": "agent",
+   "op": "create",
+   "lockId": "LCK-E24619",
+   "outcome": "ok",
+   "detail": "Lock opened for INV-SEC-1130 (Corporate Security Services (U) Ltd), €3,200, settles on Solana devnet",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "created"
+   },
+   "seq": 73,
+   "ts": "2026-11-23T10:23:34.725Z",
+   "prevHash": "06e318641c6e190fc75d9e7879515566e2e8cf6c6d3e5464976b560220981fa4",
+   "hash": "e5c7eeba9896211ec145e5f07f3afc2b6f534da87b3570c1b754e6723563810f"
+  },
+  {
+   "actor": "agent",
+   "op": "fund",
+   "lockId": "LCK-E24619",
+   "outcome": "ok",
+   "detail": "€3,200 set aside against today's budget",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "funded"
+   },
+   "seq": 74,
+   "ts": "2026-11-23T10:23:35.154Z",
+   "prevHash": "e5c7eeba9896211ec145e5f07f3afc2b6f534da87b3570c1b754e6723563810f",
+   "hash": "6271f98fe248660addfec54f368682fe7b39c58ad27477aba4223cfce7bc1256"
+  },
+  {
+   "actor": "agent",
+   "op": "send",
+   "lockId": "LCK-E24619",
+   "outcome": "ok",
+   "detail": "Checks passed: payee on Solana devnet, CIS-8 linked to Verified by Concordium owner 3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8, within limits. Awaiting human release.",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "sent",
+    "badgeVerified": true
+   },
+   "seq": 75,
+   "ts": "2026-11-23T10:23:39.812Z",
+   "prevHash": "6271f98fe248660addfec54f368682fe7b39c58ad27477aba4223cfce7bc1256",
+   "hash": "7d33a1970dd62639ceb6b0b4bb8b5a61087de34d0539859a7b873ccf3deb188a"
+  },
+  {
+   "actor": "agent",
+   "op": "chat",
+   "outcome": "ok",
+   "detail": "Owner asked: \"pay security invoice\" → prepare_payment",
+   "data": {
+    "mode": "builtin"
+   },
+   "seq": 76,
+   "ts": "2026-11-23T10:23:40.221Z",
+   "prevHash": "7d33a1970dd62639ceb6b0b4bb8b5a61087de34d0539859a7b873ccf3deb188a",
+   "hash": "372adde4572b2873d9815f970183923bf62e28d302fe79be98c1cd6d3376a22c"
+  },
+  {
+   "actor": "owner",
+   "op": "approve",
+   "lockId": "LCK-E24619",
+   "outcome": "ok",
+   "detail": "Release signed by owner wallet 39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "sent",
+    "account": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd"
+   },
+   "seq": 77,
+   "ts": "2026-11-23T10:24:28.961Z",
+   "prevHash": "372adde4572b2873d9815f970183923bf62e28d302fe79be98c1cd6d3376a22c",
+   "hash": "b69931d420ad0f672ddcb2f9bc440cbb63a5553995b2eaef2eddbc6e158728ec"
+  },
+  {
+   "actor": "owner",
+   "op": "release",
+   "lockId": "LCK-E24619",
+   "outcome": "error",
+   "detail": "402 from http://localhost:4021/invoices/INV-SEC-1130/pay/solana: settlement_pending: Solana error #8100002; Decode this error by running `npx @solana/errors decode -- 8100002 'X19jb2RlPTgxMDAwMDImaGVhZGVycz0lNUJvYmplY3QlMjBIZWFkZXJzJTVEJm1lc3NhZ2U9VG9vJTIwTWFueSUyMFJlcXVlc3RzJnN0YXR1c0NvZGU9NDI5'`",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "sent"
+   },
+   "seq": 78,
+   "ts": "2026-11-23T10:24:50.271Z",
+   "prevHash": "b69931d420ad0f672ddcb2f9bc440cbb63a5553995b2eaef2eddbc6e158728ec",
+   "hash": "63efab271ac0a999020ded84223c91cf7fa52b089c18d9ea257c21dfddfbb4b4"
+  },
+  {
+   "actor": "agent",
+   "op": "cancel",
+   "lockId": "LCK-E24619",
+   "outcome": "ok",
+   "detail": "Cancelled: cancelled from agent chat; €3,200 returned to today's budget",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "cancelled"
+   },
+   "seq": 79,
+   "ts": "2026-11-24T05:58:36.598Z",
+   "prevHash": "63efab271ac0a999020ded84223c91cf7fa52b089c18d9ea257c21dfddfbb4b4",
+   "hash": "7fe8d7f9be18aad3fae6b8851891d82453c3fc346614c092ab45a65aeb894cb5"
+  },
+  {
+   "actor": "agent",
+   "op": "chat",
+   "outcome": "ok",
+   "detail": "Owner asked: \"cancel LCK-E24619\" → cancel_lock",
+   "data": {
+    "mode": "builtin"
+   },
+   "seq": 80,
+   "ts": "2026-11-24T05:58:36.716Z",
+   "prevHash": "7fe8d7f9be18aad3fae6b8851891d82453c3fc346614c092ab45a65aeb894cb5",
+   "hash": "c462e708a40eb8c526cbd7001da5c69e8f1b3fa78d690cbed153169980a3fcac"
+  },
+  {
+   "actor": "agent",
+   "op": "create",
+   "lockId": "LCK-D39793",
+   "outcome": "ok",
+   "detail": "Lock opened for INV-SEC-1130 (Corporate Security Services (U) Ltd), €3,200, settles on Solana devnet",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "created"
+   },
+   "seq": 81,
+   "ts": "2026-11-24T05:59:00.893Z",
+   "prevHash": "c462e708a40eb8c526cbd7001da5c69e8f1b3fa78d690cbed153169980a3fcac",
+   "hash": "beb5e4713f82a650b140f29b14c747f8bd029c21a5b01b86212effda214f61a1"
+  },
+  {
+   "actor": "agent",
+   "op": "fund",
+   "lockId": "LCK-D39793",
+   "outcome": "ok",
+   "detail": "€3,200 set aside against today's budget",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "funded"
+   },
+   "seq": 82,
+   "ts": "2026-11-24T05:59:00.925Z",
+   "prevHash": "beb5e4713f82a650b140f29b14c747f8bd029c21a5b01b86212effda214f61a1",
+   "hash": "e895521d3f3cd16e106280b5248e2502a91b61d371beefc73e9dd224891651ed"
+  },
+  {
+   "actor": "agent",
+   "op": "send",
+   "lockId": "LCK-D39793",
+   "outcome": "ok",
+   "detail": "Checks passed: payee on Solana devnet, CIS-8 linked to Verified by Concordium owner 3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8, within limits. Awaiting human release.",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "sent",
+    "badgeVerified": true
+   },
+   "seq": 83,
+   "ts": "2026-11-24T05:59:02.552Z",
+   "prevHash": "e895521d3f3cd16e106280b5248e2502a91b61d371beefc73e9dd224891651ed",
+   "hash": "945f27bf8b22a7a0571915147b2d3a2b97f616007ebaf8b47be0260772a0f957"
+  },
+  {
+   "actor": "agent",
+   "op": "chat",
+   "outcome": "ok",
+   "detail": "Owner asked: \"lets pay security invoice\" → prepare_payment",
+   "data": {
+    "mode": "builtin"
+   },
+   "seq": 84,
+   "ts": "2026-11-24T05:59:02.562Z",
+   "prevHash": "945f27bf8b22a7a0571915147b2d3a2b97f616007ebaf8b47be0260772a0f957",
+   "hash": "8a77ace1db321fecd0e76d700152b323e223b8653844d85412d5a0ff874e797e"
+  },
+  {
+   "actor": "owner",
+   "op": "approve",
+   "lockId": "LCK-D39793",
+   "outcome": "ok",
+   "detail": "Release signed by owner wallet 39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "sent",
+    "account": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd"
+   },
+   "seq": 85,
+   "ts": "2026-11-24T06:08:25.256Z",
+   "prevHash": "8a77ace1db321fecd0e76d700152b323e223b8653844d85412d5a0ff874e797e",
+   "hash": "63dfc5af900e5cbc1e1f535a272d334af8418e36b1785608ce15fb72dbe85a88"
+  },
+  {
+   "actor": "owner",
+   "op": "release",
+   "lockId": "LCK-D39793",
+   "outcome": "error",
+   "detail": "402 from http://localhost:4021/invoices/INV-SEC-1130/pay/solana: invalid_exact_svm_transaction_simulation_failed {\"error\":\"invalid_exact_svm_transaction_simulation_failed\"}",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "sent"
+   },
+   "seq": 86,
+   "ts": "2026-11-24T06:08:35.811Z",
+   "prevHash": "63dfc5af900e5cbc1e1f535a272d334af8418e36b1785608ce15fb72dbe85a88",
+   "hash": "4a3c611ed4e0563b483dafcd1ad69ce0fdeef3a40f34484a73fbafaf201d2dcd"
+  },
+  {
+   "actor": "owner",
+   "op": "approve",
+   "lockId": "LCK-D39793",
+   "outcome": "ok",
+   "detail": "Release signed by owner wallet 39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "sent",
+    "account": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd"
+   },
+   "seq": 87,
+   "ts": "2026-11-24T07:26:02.433Z",
+   "prevHash": "4a3c611ed4e0563b483dafcd1ad69ce0fdeef3a40f34484a73fbafaf201d2dcd",
+   "hash": "52a75e9377ba71b5b700930e0facf4825628dfdb326e24868b77d1a2bc1d0661"
+  },
+  {
+   "actor": "owner",
+   "op": "release",
+   "lockId": "LCK-D39793",
+   "outcome": "ok",
+   "detail": "Released by owner: €3,200 settled on Solana devnet as 3.2 EURC (fee sponsored)",
+   "data": {
+    "invoiceId": "INV-SEC-1130",
+    "amountEur": 3200,
+    "status": "released",
+    "txHash": "bo7HQW1E1fMQ2iyjJHeUswZU9mqyEv52icX28jAEMfJcXKL3Sseaq6wM2RZeWrpykLcjg8zyVfwSqEGdjq1bHXk"
+   },
+   "seq": 88,
+   "ts": "2026-11-24T07:26:07.575Z",
+   "prevHash": "52a75e9377ba71b5b700930e0facf4825628dfdb326e24868b77d1a2bc1d0661",
+   "hash": "882153df86d4a6c7b392f919bd8a258a61287a1b70a5ad8427e0bc59e2fe8d6a"
   }
  ],
  "receipts": [
@@ -1612,6 +2398,40 @@
    "ts": "2026-11-23T08:12:31.438Z",
    "prevHash": "9574abe8d484e298606f661d479e3f3d0543ecd2de1cb8bc83b112ea7e134f3e",
    "hash": "5de5880dfcdcf55241c07d3273306e23c5644b7c54244e1323ca7f4f30f90eb1"
+  },
+  {
+   "role": "seller",
+   "resource": "/invoices/INV-SEC-1130/pay/solana",
+   "buyerAccount": "GyAEapHP36UaZ2FAXkB62dVhYbfwkL69TbzUzQ3PdzjT",
+   "buyerBadge": "JyP9U3BHQRbFTuQx4N1Gn",
+   "sellerAccount": "GDmQ2WahUCmVJ529aDUoRTtBehXnj3Q8Sv1RYGRU737R",
+   "sellerBadge": "JyP9TwhskJ6cKHDzW23Yj",
+   "amount": "3200000",
+   "asset": "EURC",
+   "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+   "txHash": "bo7HQW1E1fMQ2iyjJHeUswZU9mqyEv52icX28jAEMfJcXKL3Sseaq6wM2RZeWrpykLcjg8zyVfwSqEGdjq1bHXk",
+   "seq": 13,
+   "ts": "2026-11-24T07:26:07.556Z",
+   "prevHash": "5de5880dfcdcf55241c07d3273306e23c5644b7c54244e1323ca7f4f30f90eb1",
+   "hash": "dfbec75e8dc08678274c56a2c427aa97bb7c8c074dd4fda34819c77aa810beff"
+  },
+  {
+   "role": "buyer",
+   "resource": "http://localhost:4021/invoices/INV-SEC-1130/pay/solana",
+   "purpose": "Lock LCK-D39793: pay INV-SEC-1130 (Corporate Security Services (U) Ltd)",
+   "buyerBadge": "JyP9U3BHQRbFTuQx4N1Gn",
+   "buyerAccount": "GyAEapHP36UaZ2FAXkB62dVhYbfwkL69TbzUzQ3PdzjT",
+   "sellerAccount": "GDmQ2WahUCmVJ529aDUoRTtBehXnj3Q8Sv1RYGRU737R",
+   "sellerOwner": "3wT8KDVgXJY3XRLkUg4nbDvo6G2SnFqtTVEmPMv7UbyonPh6h8",
+   "amount": "3200000",
+   "asset": "EURC",
+   "network": "solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1",
+   "txHash": "bo7HQW1E1fMQ2iyjJHeUswZU9mqyEv52icX28jAEMfJcXKL3Sseaq6wM2RZeWrpykLcjg8zyVfwSqEGdjq1bHXk",
+   "explorerUrl": "https://explorer.solana.com/tx/bo7HQW1E1fMQ2iyjJHeUswZU9mqyEv52icX28jAEMfJcXKL3Sseaq6wM2RZeWrpykLcjg8zyVfwSqEGdjq1bHXk?cluster=devnet",
+   "seq": 14,
+   "ts": "2026-11-24T07:26:07.569Z",
+   "prevHash": "dfbec75e8dc08678274c56a2c427aa97bb7c8c074dd4fda34819c77aa810beff",
+   "hash": "c24eb78a87f06f216638a7d452bd67d4daa557d73380f316b9ebd8a66c796a41"
   }
  ],
  "anchors": [
