@@ -188,6 +188,10 @@ Set it up:
 1. `npm run wallets` creates the test wallets in `.env` (ProcureBot pays, TenderScout gets paid) and prints the addresses.
 2. Get test EURC at https://faucet.circle.com for ProcureBot on **Base Sepolia** and **Solana Devnet**, and once
    for TenderScout's Solana address (so it has a EURC account to receive into).
+   If Circle's faucet doesn't deliver on Solana devnet, run `npm run solana:token`: it gets free devnet SOL for
+   fees, creates a demo euro token with 6 decimals (a testnet stand-in for EURC, ProcureBot as mint authority),
+   creates both token accounts, mints 10,000 to ProcureBot and sets `EURC_SOLANA` in `.env`. On mainnet Kakasa uses
+   Circle's EURC mint.
 3. `npm run link-keys -- base` and `npm run link-keys -- solana` prove TenderScout's keys and dry-run the CIS-8
    `register` call; then send each from the dashboard (Policy → *Link TenderScout's keys* → **Send with wallet**)
    with the browser wallet on TenderScout's owner account (`SELLER_OWNER`).
