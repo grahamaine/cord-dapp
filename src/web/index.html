@@ -43,7 +43,10 @@
   .flow .step.human { border-color: rgba(4,120,87,.35); background: var(--ok-soft); color: var(--ok); }
   .flow .step.stop { border-color: rgba(185,28,28,.3); background: var(--bad-soft); color: var(--bad); }
   .actions { display: flex; flex-wrap: wrap; gap: .4rem; justify-content: flex-end; }
-  .err { color: var(--bad); font-size: .85rem; margin-top: .3rem; }
+  .err { color: var(--bad); font-size: .85rem; margin-top: .3rem; overflow-wrap: anywhere; word-break: break-word; max-width: 340px; }
+  #locks td:last-child { white-space: nowrap; }
+  #locks .actions { flex-wrap: nowrap; }
+  .lock-toggle { font: inherit; font-size: .85rem; border: 1px solid var(--line-2); background: #fff; border-radius: 999px; padding: .25rem .8rem; cursor: pointer; color: var(--ink-2); margin-left: .6rem; }
   .checks { font-size: .85rem; color: var(--muted); }
   .sup { display: flex; justify-content: space-between; align-items: center; gap: .8rem; padding: .7rem 0; border-top: 1px solid var(--line); }
   .sup:first-child { border-top: 0; }
@@ -168,7 +171,7 @@
       <div class="legend" id="budget-legend"></div>
     </div>
 
-    <h2 class="h">Payment locks <small>money moves only on Release, as a sponsored payment on Concordium</small></h2>
+    <h2 class="h">Payment locks <small>money moves only on Release, as a sponsored payment on Concordium</small><button class="lock-toggle hidden" id="lock-toggle" type="button"></button></h2>
     <div class="card stack" style="padding:1rem 1rem .4rem">
       <table>
         <thead><tr><th>Lock</th><th>Supplier</th><th class="r">Amount</th><th>Status</th><th>Agent checks</th><th class="r">Actions</th></tr></thead>
@@ -525,11 +528,30 @@ function renderBudget() {
   $("#budget-legend").innerHTML = `<span class="l1">Released today ${eur(t.spentTodayEur)}</span><span class="l2">Set aside ${eur(t.reservedEur)}</span><span class="l3">${t.dailyLimitEur ? `Left ${eur(left)} of ${eur(t.dailyLimitEur)}` : "No daily limit"}</span>`;
 }
 
+/** Long technical errors in plain words (full text stays in the tooltip and the Trail). */
+function friendlyError(e) {
+  const t = String(e || "");
+  if (/8100002|Too(%20| )Many(%20| )Requests|statusCode=429|\b429\b/i.test(t)) return "Solana devnet was busy (too many requests). Nothing was paid; press Release again in a minute.";
+  if (/registry unreachable|registry returned HTTP 0/i.test(t)) return "Couldn't reach the Concordium agent registry. Nothing was paid; check the internet connection and try again.";
+  if (/rejected without a reason/i.test(t)) return "The payment network rejected it without a reason. Nothing was paid; see Trail for details.";
+  return t.length > 180 ? t.slice(0, 180) + "…" : t;
+}
+// Finished locks (released or cancelled): only the latest few unless "Show all" is on.
+let showAllLocks = false;
+const FINISHED_SHOWN = 3;
 async function loadLocks() {
   try {
     const r = await api("/api/locks"); locks = r.locks;
     renderBudget();
-    $("#locks").innerHTML = locks.length ? locks.map((l) => {
+    const active = locks.filter((l) => l.status !== "released" && l.status !== "cancelled");
+    const finished = locks.filter((l) => l.status === "released" || l.status === "cancelled");
+    const shown = showAllLocks ? locks : [...active, ...finished.slice(0, FINISHED_SHOWN)];
+    const hiddenN = locks.length - shown.length;
+    const tg = $("#lock-toggle");
+    tg.classList.toggle("hidden", finished.length <= FINISHED_SHOWN);
+    tg.textContent = showAllLocks ? "Show fewer" : `Show all (${hiddenN} older)`;
+    tg.onclick = () => { showAllLocks = !showAllLocks; loadLocks(); };
+    $("#locks").innerHTML = shown.length ? shown.map((l) => {
       const [cls, label] = STATUS[l.status];
       const c = l.checks;
       const checks = c ? `${c.badgeVerified ? chip("ok", "Payee verified") : chip("warn", "Payee not verified")} ${c.policy ? chip("bad", "Over a limit") : chip("ok", "Within limits")}` : `<span class="checks">Not checked yet</span>`;
@@ -546,7 +568,7 @@ async function loadLocks() {
         <td>${esc(l.supplier)}<small>${esc(l.category)}</small></td>
         <td class="r">${eur(l.amountEur)}<small>${ccd(l.amount, l.asset)} ${settleNote(l.asset)}</small></td>
         <td>${chip(cls, label)}</td>
-        <td>${checks}${l.lastError ? `<div class="err">${esc(l.lastError)}</div>` : ""}</td>
+        <td>${checks}${l.lastError ? `<div class="err" title="${esc(l.lastError)}">${esc(friendlyError(l.lastError))}</div>` : ""}</td>
         <td><div class="actions">${actions}<button class="btn btn-outline btn-sm" data-trail="${esc(l.id)}">Trail</button></div></td>
       </tr>`;
     }).join("") : `<tr><td colspan="6" class="empty">No locks yet. Open one from an invoice below.</td></tr>`;
@@ -588,7 +610,7 @@ async function lockOp(btn) {
     }[op];
     toast(`<b>${esc(op)} · ${esc(L.id)}</b>${msg}`, "ok");
   } catch (e) {
-    toast(`<b>${e.body?.refused ? "Refused" : "Failed"} · ${esc(op)}</b>${esc(e.message)}`, "bad");
+    toast(`<b>${e.body?.refused ? "Refused" : "Failed"} · ${esc(op)}</b>${esc(friendlyError(e.message))}`, "bad");
   }
   lockBusy.delete(l.id);
   refreshAfterLock();
