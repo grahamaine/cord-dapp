@@ -258,7 +258,12 @@ The web server holds the buyer's signing key, so it listens on localhost only.
 
 Without `DASHBOARD_PASSWORD`, any request arriving through a tunnel is refused, so the dashboard can't be exposed by accident.
 
-### Judge demo mode (`JUDGE_PASSWORD`)
+### Judge demo mode (`JUDGE_OPEN` or `JUDGE_PASSWORD`)
+**Simplest, no passwords:** set `JUDGE_OPEN=true` in `.env`, run `npm run all -- --remote` and send judges the
+printed link (or set it as `AGENT_URL` in Vercel so the site's "Open the AI agent" buttons go there). Anyone on the
+link is a judge with the limits below; on your own computer you are the owner without signing in.
+
+**With a password** instead:
 Lets judges try the real agent themselves, on your computer or through the private link, without your wallet:
 1. In `.env`, next to `DASHBOARD_PASSWORD`, set `JUDGE_PASSWORD` (8+ characters, different from the owner password).
 2. `npm run all -- --remote` and send judges the printed link plus the judge password.

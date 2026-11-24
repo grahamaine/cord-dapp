@@ -96,7 +96,7 @@
   </div>
   <div class="notice warn hidden" role="note" id="judge-notice" style="margin-top:.8rem">
     <span class="ico" style="margin:0;width:36px;height:36px;font-size:.8rem">J</span>
-    <div><b>Judge demo mode · testnet.</b> Try the whole flow yourself: on the <b>Locks</b> tab press <b>New demo invoice</b>, then ask the <b>Agent</b> to pay it (or use Create → Fund → Send), and press <b>Release</b>. Releases need no wallet here and are capped at <span id="judge-caps">–</span>; the audit log records them as a judge. The owner's own invoices, policy, pause and anchoring are owner-only.</div>
+    <div><b>Judge demo mode · testnet.</b> Try the whole flow yourself: on the <b>Locks</b> tab press <b>New demo invoice</b>, then ask the <b>Agent</b> to pay it (or use Create → Fund → Send), and press <b>Release</b>. No password or wallet needed here: releases and are capped at <span id="judge-caps">–</span>; the audit log records them as a judge. The owner's own invoices, policy, pause and anchoring are owner-only.</div>
   </div>
 
   <div class="page-head">
@@ -386,6 +386,8 @@ const isJudge = () => session.role === "judge";
 api("/api/session").then((s) => {
   session = s;
   if (!s.auth) $("#logout-btn").classList.add("hidden");
+  // Open judge mode: judges aren't signed in, so offer the owner sign-in instead of Sign out.
+  if (s.open && isJudge() && !s.auth) { const b = $("#logout-btn"); b.classList.remove("hidden"); b.textContent = "Owner sign-in"; b.onclick = () => { location.href = "/login"; }; }
   if (s.judgeMode || isJudge()) $("#demo-inv").classList.remove("hidden");
   if (isJudge()) {
     document.body.classList.add("judge");

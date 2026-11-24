@@ -34,7 +34,7 @@ import { anchorNow, anchorData, checkAnchors } from "../lib/anchor.js";
 import { buy, PaymentRefused } from "../buyer/procurebot.js";
 import { mountAssets } from "../ui/assets.js";
 import { builtinReply } from "../agent/builtin.js";
-import { mountAuth, authEnabled, judgeEnabled, roleOf } from "./auth.js";
+import { mountAuth, authEnabled, judgeEnabled, judgeOpen, roleOf } from "./auth.js";
 import { assertJudgeInvoice, isDemoInvoice, judgeApproval, judgeLimits, judgeReleasedTodayEur } from "../lib/judge.js";
 import { agentContext } from "../agent/tools.js";
 import { claudeEnabled, claudeReply } from "../agent/claude.js";
@@ -191,7 +191,7 @@ app.post("/api/agent/:action(pause|resume)", (req, res) => {
 
 // Wallet connect settings for the owner page (no secrets here: the project id is public).
 app.get("/api/session", (req, res) =>
-  res.json({ auth: authEnabled(), role: roleOf(req), judgeMode: judgeEnabled(), judge: judgeEnabled() ? { ...judgeLimits(), releasedTodayEur: judgeReleasedTodayEur() } : null }));
+  res.json({ auth: authEnabled() && !(judgeOpen() && roleOf(req) === "judge" && !/cord_session=/.test(String(req.headers.cookie || ""))), open: judgeOpen(), role: roleOf(req), judgeMode: judgeEnabled(), judge: judgeEnabled() ? { ...judgeLimits(), releasedTodayEur: judgeReleasedTodayEur() } : null }));
 
 // ---- ProcureBot chat: built-in assistant (free) or Claude if ANTHROPIC_API_KEY is set. Never releases.
 app.get("/api/agent/info", (_req, res) => res.json({ mode: claudeEnabled() ? "claude" : "builtin", name: "ProcureBot" }));
@@ -384,5 +384,7 @@ app.post("/api/invoices/demo", async (req, res) => {
 
 app.listen(PORT, HOST, () => {
   console.log(`${APP_NAME} dashboard on http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`);
-  console.log(authEnabled() ? "Owner login: on (DASHBOARD_PASSWORD set). Phone access: npm run remote" : "Owner login: off (local only). Set DASHBOARD_PASSWORD in .env to enable sign-in and phone access.");
+  console.log(judgeOpen()
+    ? "Open judge mode: no passwords. This computer = owner; anyone on the remote link = judge (capped demo). Link: npm run remote"
+    : authEnabled() ? "Owner login: on (DASHBOARD_PASSWORD set). Phone access: npm run remote" : "Owner login: off (local only). Set DASHBOARD_PASSWORD in .env to enable sign-in and phone access.");
 });
