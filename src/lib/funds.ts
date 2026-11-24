@@ -45,8 +45,8 @@ export async function fundsProblem(lock: Lock): Promise<string | null> {
       return { n: r.value.length as number, amount: r.value.reduce((t: bigint, a: any) => t + BigInt(a.account.data.parsed.info.tokenAmount.amount), 0n) as bigint };
     };
     const [b, s] = await Promise.all([accounts(buyer), accounts(lock.payTo)]);
-    if (b.amount < need) return `ProcureBot holds ${fmtAtomic(b.amount, "EURC")} on Solana devnet but this payment needs ${fmtAtomic(need, "EURC")}. Get EURC at ${FAUCET} (Solana Devnet) for ${buyer}, then press Release again.`;
-    if (s.n === 0) return `The supplier's Solana address ${lock.payTo} has no EURC account yet, so it can't receive. Send it a little EURC once from ${FAUCET} (Solana Devnet), then press Release again.`;
+    if (b.amount < need) return `ProcureBot holds ${fmtAtomic(b.amount, "EURC")} on Solana devnet but this payment needs ${fmtAtomic(need, "EURC")}. If Circle's faucet (${FAUCET}, Solana Devnet) won't deliver, run npm run solana:token on the owner's computer, restart, then press Release again.`;
+    if (s.n === 0) return `The supplier's Solana address ${lock.payTo} has no EURC account yet, so it can't receive. Run npm run solana:token on the owner's computer (it creates it), restart, then press Release again.`;
     return null;
   } catch {
     return null; // couldn't check (RPC busy/unreachable): let the payment decide

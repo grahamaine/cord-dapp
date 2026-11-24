@@ -23,6 +23,7 @@
     "publish:judge": "tsx src/scripts/publish-judge.ts",
     "remote": "tsx src/scripts/remote.ts",
     "wallets": "tsx src/scripts/wallets.ts",
+    "solana:token": "tsx src/scripts/solana-demo-token.ts",
     "link-keys": "tsx src/scripts/link-keys.ts",
     "tenders": "tsx src/scripts/tenders.ts"
   },
@@ -34,6 +35,8 @@
     "@noble/curves": "^1.9.7",
     "@noble/hashes": "^1.8.0",
     "@scure/base": "^1.2.6",
+    "@solana-program/system": "^0.14.1",
+    "@solana-program/token": "^0.16.1",
     "@solana/kit": "^8.6.0",
     "@types/qrcode": "^1.5.6",
     "@x402/concordium": "~2.31.0",

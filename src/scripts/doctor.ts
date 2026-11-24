@@ -150,12 +150,12 @@ async function checkXChains(): Promise<boolean> {
         const bytes = buyerSol.startsWith("[") ? Uint8Array.from(JSON.parse(buyerSol)) : base58.decode(buyerSol);
         const addr = base58.encode(bytes.slice(32, 64));
         const b = await tokenBal(addr);
-        say(b.amount > 0n, `ProcureBot ${addr} holds ${fmtAtomic(b.amount, "EURC")} on Solana devnet${b.amount > 0n ? "" : " — get EURC at faucet.circle.com (Solana Devnet)"}`);
+        say(b.amount > 0n, `ProcureBot ${addr} holds ${fmtAtomic(b.amount, "EURC")} on Solana devnet${b.amount > 0n ? "" : " — get EURC at faucet.circle.com (Solana Devnet), or run npm run solana:token"}`);
         if (b.amount > 0n && b.amount < due("solana")) console.log(`  ! Solana invoices total ${fmtAtomic(due("solana"), "EURC")}`);
       } else say(false, "BUYER_SOLANA_SECRET_KEY is empty — run npm run wallets");
       if (sellerSol) {
         const b = await tokenBal(sellerSol);
-        say(b.accounts > 0, `TenderScout ${sellerSol} has a EURC account on Solana devnet${b.accounts > 0 ? "" : " — send it EURC once from faucet.circle.com (Solana Devnet) so it can receive"}`);
+        say(b.accounts > 0, `TenderScout ${sellerSol} has a EURC account on Solana devnet${b.accounts > 0 ? "" : " — run npm run solana:token (or send it EURC once from faucet.circle.com) so it can receive"}`);
       }
     } catch (e) { say(false, `Solana devnet RPC ${x.rpcUrl}: ${(e as Error).message}`); }
   }
