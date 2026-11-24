@@ -29,6 +29,7 @@ import { createChallenge, ownerAccounts, verifyApproval } from "../lib/approval.
 import { CHAINS, verifyCrossChain } from "../lib/xchain.js";
 import { chainByNetwork, explorerTx } from "../lib/chains.js";
 import { verifyPayee, verifyPayeeQuick } from "../lib/payee.js";
+import { fundsProblem } from "../lib/funds.js";
 import { registryTool } from "../lib/registry-mcp.js";
 import { anchorNow, anchorData, checkAnchors } from "../lib/anchor.js";
 import { buy, PaymentRefused } from "../buyer/procurebot.js";
@@ -143,13 +144,16 @@ app.get("/api/overview", async (_req, res) => {
   });
 });
 
+// Balances and badges change slowly: reuse the answer for 20 s (the page asks after every action).
+let accountsCache: { at: number; body: unknown } | null = null;
 app.get("/api/accounts", async (_req, res) => {
+  if (accountsCache && Date.now() - accountsCache.at < 20_000) return res.json(accountsCache.body);
   const out = await Promise.all(
     Object.entries(accounts).map(async ([role, address]) => {
       if (!address) return { role, address, missing: true };
       const [bal, badge, tokens] = await Promise.all([
         getJson(`${WALLET_PROXY}/v0/accBalance/${address}`),
-        role === "facilitator" ? Promise.resolve(null) : checkBadge(address),
+        role === "facilitator" ? Promise.resolve(null) : checkBadgeQuick(address),
         tokenBalances(address).catch(() => null),
       ]);
       const b = bal.body?.finalizedBalance ?? bal.body?.currentBalance;
@@ -163,6 +167,7 @@ app.get("/api/accounts", async (_req, res) => {
       };
     }),
   );
+  accountsCache = { at: Date.now(), body: { accounts: out } };
   res.json({ accounts: out });
 });
 
@@ -327,6 +332,7 @@ const withExplorer = (l: Lock) => ({ ...l, chainName: chainByNetwork(l.network)?
 /** Release = the only place money moves: a sponsored x402 payment through ProcureBot. */
 async function payLock(lock: Lock, reservedOtherEur: number) {
   const r = await buy(`${config.seller.url}${lock.payPath || `/invoices/${encodeURIComponent(lock.invoiceId)}/pay`}`, `Lock ${lock.id}: pay ${lock.invoiceId} (${lock.supplier})`, { reservedEur: reservedOtherEur });
+  accountsCache = null; // balances just changed
   return { txHash: r.receipt?.txHash, explorerUrl: r.receipt?.explorerUrl, receiptSeq: r.receipt?.seq };
 }
 
@@ -366,13 +372,18 @@ app.post("/api/locks/prepare", lockRoute(async (req) => {
 app.post("/api/locks/:id/fund", lockRoute((req) => { judgeLock(req); return fundLock(req.params.id, roleOf(req)); }));
 app.post("/api/locks/:id/send", lockRoute((req) => { judgeLock(req); return sendLock(req.params.id, (l) => releaseLock(l.id, "agent", payLock)); }));
 // Owner wallet approval: get a one-time challenge, sign it in the wallet, then release with the signature.
-app.post("/api/locks/:id/release-challenge", lockRoute((req) => {
+app.post("/api/locks/:id/release-challenge", lockRoute(async (req) => {
   const l = readLocks().find((x) => x.id === req.params.id);
   if (!l) throw new LockError(`unknown lock ${req.params.id}`);
   if (l.status !== "sent") throw new LockError(`lock is ${l.status}, not awaiting release`);
+  // Check the payment can go through before asking the owner to sign anything.
+  const problem = await fundsProblem(l);
+  if (problem) throw new LockError(problem);
   return createChallenge(l);
 }));
-app.post("/api/locks/:id/release", lockRoute((req) => {
+app.post("/api/locks/:id/release", lockRoute(async (req) => {
+  const l = readLocks().find((x) => x.id === req.params.id);
+  if (l && l.status === "sent") { const problem = await fundsProblem(l); if (problem) throw new LockError(problem); }
   if (roleOf(req) === "judge") { judgeLock(req); return releaseLock(req.params.id, "judge", payLock, async (l) => judgeApproval(l)); }
   return releaseLock(req.params.id, "owner", payLock, () => verifyApproval(req.params.id, req.body ?? {}));
 }));

@@ -7,7 +7,7 @@
 <title>{{APP_NAME}} · Owner dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&display=swap" />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Oswald:wght@300;400;500;600;700&display=swap" media="print" onload="this.media='all'" /><!-- font loads without blocking the page -->
 <link rel="icon" href="/favicon.ico" sizes="any" />
 <link rel="icon" type="image/png" sizes="32x32" href="/assets/brand/kakasa-mark-32.png" />
 <link rel="apple-touch-icon" href="/assets/brand/kakasa-mark-180.png" />
@@ -533,6 +533,7 @@ function friendlyError(e) {
   const t = String(e || "");
   if (/8100002|Too(%20| )Many(%20| )Requests|statusCode=429|\b429\b/i.test(t)) return "Solana devnet was busy (too many requests). Nothing was paid; press Release again in a minute.";
   if (/registry unreachable|registry returned HTTP 0/i.test(t)) return "Couldn't reach the Concordium agent registry. Nothing was paid; check the internet connection and try again.";
+  if (/simulation_failed/i.test(t)) return "Solana's test run of the payment failed, usually because ProcureBot has too little EURC on Solana devnet or the supplier has no EURC account yet. Nothing was paid; run npm run doctor to see which.";
   if (/rejected without a reason/i.test(t)) return "The payment network rejected it without a reason. Nothing was paid; see Trail for details.";
   return t.length > 180 ? t.slice(0, 180) + "…" : t;
 }
@@ -1039,7 +1040,10 @@ $("#x-metamask").onclick = async () => {
 walletCfg().then(renderWallet).catch(() => {});
 loadOverview().catch((e) => toast(`<b>Could not load dashboard</b>${esc(e.message)}`, "bad"));
 loadAccounts();
-setInterval(() => loadOverview().then(() => { if (!$("#tab-locks").classList.contains("hidden")) renderBudget(); }).catch(() => {}), 15000);
+// Background refresh every 30 s, only while the page is on screen; catch up as soon as it's shown again.
+const refreshVisible = () => loadOverview().then(() => { if (!$("#tab-locks").classList.contains("hidden")) renderBudget(); }).catch(() => {});
+setInterval(() => { if (!document.hidden) refreshVisible(); }, 30000);
+document.addEventListener("visibilitychange", () => { if (!document.hidden) refreshVisible(); });
 </script>
 <div class="agency-credit"><a href="https://github.com/grahamaine" target="_blank" rel="noopener"><img src="/assets/brand/thee-agency-mark-64.png" alt="" width="22" height="22"><span>Powered &amp; rendered by <strong>thee <span class="ag">AGENCY</span> Consults (UG) Limited</strong></span></a></div>
 </body>
