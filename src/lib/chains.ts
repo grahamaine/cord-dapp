@@ -136,3 +136,16 @@ export async function xchainTxStatus(network: string, tx: string): Promise<{ fin
   if (!st) return { finalized: false, success: false };
   return { finalized: st.confirmationStatus === "finalized", success: st.err === null };
 }
+
+/**
+ * Kakasa's Base and Solana settlement is testnet-only (Base Sepolia, Solana devnet). A mainnet RPC address in .env
+ * makes every balance, check and payment go to the wrong network, so say so loudly.
+ */
+export function rpcProblems(): string[] {
+  const out: string[] = [];
+  if (/mainnet/i.test(XCHAINS.base.rpcUrl) && !/sepolia/i.test(XCHAINS.base.rpcUrl))
+    out.push(`BASE_RPC_URL points to Base mainnet (${XCHAINS.base.rpcUrl.replace(/\/v2\/.*/, "/v2/…")}). Use a Base Sepolia address, e.g. https://sepolia.base.org`);
+  if (/mainnet/i.test(XCHAINS.solana.rpcUrl))
+    out.push(`SOLANA_RPC_URL points to Solana mainnet (${XCHAINS.solana.rpcUrl.replace(/\/v2\/.*/, "/v2/…")}). Use a devnet address, e.g. https://api.devnet.solana.com (or solana-devnet.g.alchemy.com for Alchemy)`);
+  return out;
+}
