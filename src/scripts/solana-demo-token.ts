@@ -26,7 +26,7 @@ import {
   TOKEN_PROGRAM_ADDRESS, fetchMaybeMint, findAssociatedTokenPda, getCreateAssociatedTokenIdempotentInstruction,
   getInitializeMint2Instruction, getMintSize, getMintToInstruction,
 } from "@solana-program/token";
-import { XCHAINS, buyerXKey, sellerXAddress } from "../lib/chains.js";
+import { XCHAINS, buyerXKey, sellerXAddress, rpcProblems } from "../lib/chains.js";
 
 const DECIMALS = 6;
 const TOP_UP = 10_000n * 10n ** BigInt(DECIMALS); // 10,000 demo euro
@@ -70,13 +70,15 @@ function setEnv(key: string, value: string) {
   writeFileSync(path, re.test(text) ? text.replace(re, line) : `${text.replace(/\n*$/, "\n")}${line}\n`);
 }
 
+const wrong = rpcProblems().filter((p) => p.startsWith("SOLANA"));
+if (wrong.length) fail(wrong[0]);
 // ---- who ----
 const secret = buyerXKey.solana() || fail("BUYER_SOLANA_SECRET_KEY is empty in .env: run npm run wallets first.");
 const bytes = secret.startsWith("[") ? Uint8Array.from(JSON.parse(secret)) : base58.decode(secret);
 const buyer = await createKeyPairSignerFromBytes(bytes);
 const sellerStr = sellerXAddress.solana() || fail("SELLER_SOLANA_ADDRESS is empty in .env: run npm run wallets first.");
 const seller = address(sellerStr);
-console.log(`Solana devnet (${RPC_URL})\n  ProcureBot  ${buyer.address}\n  TenderScout ${seller}\n`);
+console.log(`Solana devnet (${RPC_URL.replace(/\/v2\/.*/, "/v2/…")})\n  ProcureBot  ${buyer.address}\n  TenderScout ${seller}\n`);
 
 // ---- 1. SOL for fees ----
 const NEED = 50_000_000n; // 0.05 SOL covers the mint and two token accounts

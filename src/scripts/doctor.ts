@@ -16,7 +16,7 @@ import { INVOICE_ASSET, assetSpec, fmtAtomic, isCcd, unpriceable } from "../lib/
 import { tokenBalances, tokenDecimals, tokenList } from "../lib/plt.js";
 import { loadPolicy } from "../lib/policy.js";
 import { invoices } from "../seller/data.js";
-import { XCHAINS, XCHAIN_FACILITATOR_URL, buyerXKey, sellerEvmPublicKey, sellerXAddress } from "../lib/chains.js";
+import { XCHAINS, XCHAIN_FACILITATOR_URL, buyerXKey, rpcProblems, sellerEvmPublicKey, sellerXAddress } from "../lib/chains.js";
 import { evmAddressOf, verifyCrossChain } from "../lib/xchain.js";
 import { privateKeyToAccount } from "viem/accounts";
 import { base58 } from "@scure/base";
@@ -103,6 +103,7 @@ async function checkXChains(): Promise<boolean> {
     return r.result;
   };
   const policy = loadPolicy();
+  for (const p of rpcProblems()) say(false, p);
   say(policy.allowedAssets.includes("EURC"), `owner policy allows EURC${policy.allowedAssets.includes("EURC") ? "" : ` — add EURC under Policy → Allowed settlement assets (now: ${policy.allowedAssets.join(", ")})`}`);
   if (policy.approvedSuppliers.length) {
     for (const a of [sellerEvm, sellerSol].filter(Boolean))

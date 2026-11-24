@@ -119,6 +119,14 @@ function open(url: string) {
   spawn(cmd, cmdArgs, { stdio: "ignore", detached: true }).on("error", () => {}).unref();
 }
 
+{
+  const { rpcProblems } = await import("../lib/chains.js");
+  const problems = rpcProblems();
+  if (problems.length) {
+    console.error("✗ Wrong network in .env (Kakasa runs on testnets):\n" + problems.map((p) => "   • " + p).join("\n") + "\n  Fix .env, then run this again.");
+    process.exit(1);
+  }
+}
 if (doctor) {
   console.log("Running the checks first (npm run doctor)…\n");
   const r = spawnSync(process.execPath, nodeArgs("src/scripts/doctor.ts"), { stdio: "inherit", env: process.env });
