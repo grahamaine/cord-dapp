@@ -50,6 +50,7 @@
   .how ol { margin: .4rem 0 0; padding-left: 1.2rem; } .how li { margin: .35rem 0; }
   code { font-family: ui-monospace, Consolas, monospace; font-size: .85em; background: rgba(34,29,46,.06); padding: .05rem .35rem; border-radius: 6px; word-break: break-all; }
   footer { padding: 4rem 0 3rem; color: var(--muted); font-size: .9rem; }
+  .icn { width: 1em; height: 1em; display: inline-block; vertical-align: -.14em; flex: none; }
 </style>
 </head>
 <body>
@@ -145,6 +146,19 @@
 
 <script>
 const $ = (s) => document.querySelector(s);
+// Line icons used in place of tick/cross text symbols (inherit the text colour and size).
+const ICON = (() => {
+  const svg = (d) => `<svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  return {
+    check: svg('<path d="M20 6 9 17l-5-5"/>'),
+    x: svg('<path d="M18 6 6 18M6 6l12 12"/>'),
+    alert: svg('<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>'),
+    help: svg('<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/>'),
+    circle: svg('<circle cx="12" cy="12" r="9"/>'),
+    shield: svg('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>'),
+    arrow: svg('<path d="M5 12h14M13 5l7 7-7 7"/>'),
+  };
+})();
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const short = (a) => (a && a.length > 16 ? a.slice(0, 6) + "…" + a.slice(-5) : a || "");
 const when = (t) => new Date(t).toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
@@ -152,11 +166,11 @@ const eur = (n) => "€" + Number(n || 0).toLocaleString("en-IE", { maximumFract
 const ccd = (atomic) => (Number(atomic) / 1e6).toLocaleString(undefined, { maximumFractionDigits: 6 }) + " CCD";
 const WHO = { agent: "AI agent", owner: "Owner", system: "System", judge: "Judge (demo)" };
 const tri = (v) => (v === true ? "ok" : v === false ? "bad" : "warn");
-const mark = (v) => (v === true ? "✓" : v === false ? "✗" : "?");
+const mark = (v) => (v === true ? ICON.check : v === false ? ICON.x : ICON.help);
 let data;
 
 function check(state, title, text) {
-  return `<div class="card ck ${state}"><div class="i">${state === "ok" ? "✓" : state === "bad" ? "✗" : "!"}</div><div><h3>${title}</h3><p class="muted">${text}</p></div></div>`;
+  return `<div class="card ck ${state}"><div class="i">${state === "ok" ? ICON.check : state === "bad" ? ICON.x : ICON.alert}</div><div><h3>${title}</h3><p class="muted">${text}</p></div></div>`;
 }
 
 function render() {
@@ -166,10 +180,10 @@ function render() {
   const v = $("#verdict");
   v.className = "verdict " + (allOk ? "ok" : broken ? "bad" : "warn");
   v.innerHTML = allOk
-    ? `<span class="big">✓</span><div><b>Records verified against Concordium</b><span class="muted">${c.auditCount} audit entries, ${data.payments.length} payment${data.payments.length === 1 ? "" : "s"}, ${data.anchors.length} anchor${data.anchors.length === 1 ? "" : "s"}. Entries up to #${c.anchoredUpTo} are anchored on-chain.</span></div>`
+    ? `<span class="big">${ICON.check}</span><div><b>Records verified against Concordium</b><span class="muted">${c.auditCount} audit entries, ${data.payments.length} payment${data.payments.length === 1 ? "" : "s"}, ${data.anchors.length} anchor${data.anchors.length === 1 ? "" : "s"}. Entries up to #${c.anchoredUpTo} are anchored on-chain.</span></div>`
     : broken
-      ? `<span class="big">✗</span><div><b>Something doesn't match</b><span class="muted">See the checks below for which record differs from what's on-chain.</span></div>`
-      : `<span class="big">!</span><div><b>Partly verified</b><span class="muted">${c.nodeReachable ? "Some records aren't anchored yet." : "The Concordium node couldn't be reached just now; reload to try again, or use the CCDExplorer links."}</span></div>`;
+      ? `<span class="big">${ICON.x}</span><div><b>Something doesn't match</b><span class="muted">See the checks below for which record differs from what's on-chain.</span></div>`
+      : `<span class="big">${ICON.alert}</span><div><b>Partly verified</b><span class="muted">${c.nodeReachable ? "Some records aren't anchored yet." : "The Concordium node couldn't be reached just now; reload to try again, or use the CCDExplorer links."}</span></div>`;
 
   // Entries after the last anchor that only record anchoring itself are not counted as uncovered.
   const unanchored = data.audit.filter((e) => e.seq > c.anchoredUpTo && e.op !== "anchor").length;
@@ -194,7 +208,7 @@ function render() {
       <td class="r">${eur(l.amountEur)}${l.settled ? `<small>${esc(l.settled)}</small>` : ""}</td>
       <td><span class="chip ${l.status === "released" ? "ok" : l.status === "cancelled" ? "mute" : "info"}"><i></i>${esc(l.status === "sent" ? "awaiting release" : l.status)}</span>
         ${l.explorerUrl ? `<small><a href="${esc(l.explorerUrl)}" target="_blank" rel="noopener">payment ↗</a></small>` : ""}</td>
-      <td><div class="flow">${(l.history || []).map((h) => `<span class="${h.outcome !== "ok" ? "refused" : h.actor === "owner" ? "owner" : ""}" title="${esc(h.note)}">${esc(WHO[h.actor] || h.actor)}: ${esc(h.op)}${h.outcome !== "ok" ? " ✗" : ""}</span>`).join("")}</div></td></tr>`).join("")
+      <td><div class="flow">${(l.history || []).map((h) => `<span class="${h.outcome !== "ok" ? "refused" : h.actor === "owner" ? "owner" : ""}" title="${esc(h.note)}">${esc(WHO[h.actor] || h.actor)}: ${esc(h.op)}${h.outcome !== "ok" ? " " + ICON.x : ""}</span>`).join("")}</div></td></tr>`).join("")
     : `<tr><td colspan="5" class="empty">No locks yet.</td></tr>`;
 
   $("#anc").innerHTML = data.anchors.length ? [...data.anchors].reverse().map((a) => `<tr>
@@ -220,10 +234,10 @@ function renderAudit(f) {
 document.querySelectorAll("#filters button").forEach((b) => (b.onclick = () => renderAudit(b.dataset.f)));
 
 fetch("/api/judge").then((r) => r.json()).then((d) => {
-  if (!d.published) { $("#verdict").className = "verdict warn"; $("#verdict").innerHTML = `<span class="big">!</span><div><b>No records published yet</b><span class="muted">The owner publishes them with npm run publish:judge.</span></div>`; return; }
+  if (!d.published) { $("#verdict").className = "verdict warn"; $("#verdict").innerHTML = `<span class="big">${ICON.alert}</span><div><b>No records published yet</b><span class="muted">The owner publishes them with npm run publish:judge.</span></div>`; return; }
   if (d.error) throw new Error(d.error);
   data = d; render();
-}).catch((e) => { $("#verdict").className = "verdict bad"; $("#verdict").innerHTML = `<span class="big">✗</span><div><b>Couldn't load the records</b><span class="muted">${esc(e.message)}</span></div>`; });
+}).catch((e) => { $("#verdict").className = "verdict bad"; $("#verdict").innerHTML = `<span class="big">${ICON.x}</span><div><b>Couldn't load the records</b><span class="muted">${esc(e.message)}</span></div>`; });
 </script>
 <script>
   // Back button: steps back through sections you jumped to on this page, then to the previous Kakasa page,

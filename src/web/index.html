@@ -71,6 +71,7 @@
   .tl b { color: var(--ink); text-transform: uppercase; letter-spacing: .05em; }
   .tl small { display: block; color: var(--muted); }
   select { width: 100%; padding: .65rem .9rem; border-radius: 12px; border: 1px solid var(--line-2); background: #fff; color: var(--ink); font: 400 1rem var(--font); }
+  .icn { width: 1em; height: 1em; display: inline-block; vertical-align: -.14em; flex: none; }
 </style>
 </head>
 <body>
@@ -319,13 +320,26 @@
 
 <script>
 const $ = (s) => document.querySelector(s);
+// Line icons used in place of tick/cross text symbols (inherit the text colour and size).
+const ICON = (() => {
+  const svg = (d) => `<svg class="icn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+  return {
+    check: svg('<path d="M20 6 9 17l-5-5"/>'),
+    x: svg('<path d="M18 6 6 18M6 6l12 12"/>'),
+    alert: svg('<path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4M12 17h.01"/>'),
+    help: svg('<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3M12 17h.01"/>'),
+    circle: svg('<circle cx="12" cy="12" r="9"/>'),
+    shield: svg('<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="m9 12 2 2 4-4"/>'),
+    arrow: svg('<path d="M5 12h14M13 5l7 7-7 7"/>'),
+  };
+})();
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const eur = (n) => "€" + Number(n || 0).toLocaleString("en-IE", { maximumFractionDigits: 2 });
 // Decimals per settlement asset (CCD has 6; stablecoins report theirs via /api/overview and /api/accounts).
 const DEC = { CCD: 6 };
 const explorerName = (chain) => !chain || chain === "Concordium" ? "View on CCDExplorer" : chain.startsWith("Base") ? "View on BaseScan" : "View on Solana Explorer";
 const chainTag = (i) => i.chainName && i.chainName !== "Concordium"
-  ? `<small>on <b>${esc(i.chainName)}</b>${i.payeeLink ? ` · ${i.payeeLink.verified ? `<span title="${esc(i.payeeLink.summary)}">CIS-8 linked to verified owner ✓</span>` : `<span title="${esc(i.payeeLink.summary)}">not linked to a verified owner ✗</span>`}` : ""}</small>`
+  ? `<small>on <b>${esc(i.chainName)}</b>${i.payeeLink ? ` · ${i.payeeLink.verified ? `<span title="${esc(i.payeeLink.summary)}">CIS-8 linked to verified owner ${ICON.check}</span>` : `<span title="${esc(i.payeeLink.summary)}">not linked to a verified owner ${ICON.x}</span>`}` : ""}</small>`
   : "";
 const ccd = (atomic, asset = "CCD") => { if (atomic == null) return "–"; const dd = DEC[asset] ?? 6, n = BigInt(atomic), d = 10n ** BigInt(dd), f = dd ? (n % d).toString().padStart(dd, "0").replace(/0+$/, "") : ""; return `${(n / d).toLocaleString()}${f ? "." + f : ""} ${asset}`; };
 // How an invoice's on-chain amount relates to its EUR value.
@@ -425,7 +439,9 @@ document.querySelectorAll("[data-demo]").forEach((b) => b.onclick = async () => 
 
 // ---- ProcureBot chat
 const chat = { history: [], started: false, busy: false };
-const md = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\n/g, "<br>");
+const md = (t) => esc(t)
+  .replace(/✅\uFE0F?|✔\uFE0F?|✓/g, ICON.check).replace(/❌|✗|✘/g, ICON.x).replace(/⚠\uFE0F?/g, ICON.alert).replace(/👉/g, ICON.arrow)
+  .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/\n/g, "<br>");
 const TOOL_LABEL = { list_invoices: "read invoices", prepare_payment: "prepared a payment", list_locks: "read locks", cancel_lock: "cancelled a lock", budget_status: "checked budget", check_supplier: "checked a badge", check_cross_chain_supplier: "checked another chain", find_tenders: "bought tender data", price_benchmark: "bought a benchmark", audit_summary: "read the audit log" };
 function chatAdd(role, text, actions = []) {
   const d = document.createElement("div");
@@ -796,7 +812,7 @@ function renderWallet() {
   const b = $("#wallet-btn");
   if (wallet.account) {
     const owner = (wallet.cfg?.ownerAccounts || []).includes(wallet.account);
-    b.innerHTML = `${owner ? "✓ " : "⚠ "}${esc(short(wallet.account))}`;
+    b.innerHTML = `${owner ? ICON.check : ICON.alert} ${esc(short(wallet.account))}`;
     b.title = (owner ? "Connected: authorised owner" : "Connected, but this account is not an authorised owner") + " · click to switch account";
     b.className = owner ? "btn btn-outline btn-sm" : "btn btn-danger btn-sm";
   } else { b.textContent = "Connect wallet"; b.className = "btn btn-outline btn-sm"; b.title = ""; }
@@ -826,7 +842,7 @@ async function openAccounts() {
     ? "Tip: switching account inside the Concordium wallet extension also switches it here."
     : "To use another account from your phone, choose “Use a different wallet” and scan again, sharing that account.";
   $("#am-list").innerHTML = list.map((a) => `<button class="opt acct-opt${a === wallet.account ? " on" : ""}" data-acct="${esc(a)}" type="button">
-      <span class="ico" style="margin:0;width:40px;height:40px">${a === wallet.account ? "✓" : "○"}</span>
+      <span class="ico" style="margin:0;width:40px;height:40px">${a === wallet.account ? ICON.check : ICON.circle}</span>
       <span><span class="mono">${esc(short(a))}</span><small>${isOwner(a) ? "Owner · can sign releases" : "Not an owner of ProcureBot"}${a === wallet.account ? " · in use" : ""}</small></span></button>`).join("");
   document.querySelectorAll("#am-list [data-acct]").forEach((b) => (b.onclick = () => { selectAccount(b.dataset.acct); closeAccounts(); }));
   $("#acct-modal").classList.add("open");
