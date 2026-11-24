@@ -58,7 +58,7 @@
 <div class="aurora"><div class="grid-lines"></div></div>
 <header class="topbar">
   <div class="wrap">
-    <button class="back-btn" id="back-btn" type="button" aria-label="Go back">&larr; Back</button>
+    <button class="back-btn" id="back-btn" type="button" aria-label="Go back">&larr; Home</button>
     <a class="brand" href="/">
       <img class="logo-img" src="/assets/brand/kakasa-mark-128.png" alt="" width="38" height="38" />
       {{APP_NAME}}
@@ -270,18 +270,26 @@ load();
 setInterval(load, 30000);
 </script>
 <script>
-  // Back button: steps back through sections you jumped to on this page, then to the previous Kakasa page,
-  // otherwise goes to the home page (or the top of it).
+  // Back button: on the home page itself it reads "Home" and takes you to the top of the page.
+  // Once you jump to a section it reads "Back" and steps back through those jumps.
   (() => {
     let hops = 0;
+    const btn = document.getElementById("back-btn");
+    const atHome = () => location.pathname === "/" && hops === 0;
+    const label = () => {
+      const home = atHome();
+      btn.innerHTML = home ? "&larr; Home" : "&larr; Back";
+      btn.setAttribute("aria-label", home ? "Go to the top of the home page" : "Go back");
+    };
     const internal = () => { try { return !!document.referrer && new URL(document.referrer).origin === location.origin; } catch { return false; } };
-    document.addEventListener("click", (e) => { const a = e.target.closest && e.target.closest('a[href^="#"]'); if (a && a.getAttribute("href").length > 1) hops++; });
-    addEventListener("popstate", () => { hops = Math.max(0, hops - 1); });
-    document.getElementById("back-btn").addEventListener("click", () => {
-      if (hops > 0 || (internal() && history.length > 1)) history.back();
-      else if (location.pathname !== "/") location.href = "/";
-      else { history.replaceState(null, "", location.pathname); scrollTo({ top: 0, behavior: "smooth" }); }
+    document.addEventListener("click", (e) => { const a = e.target.closest && e.target.closest('a[href^="#"]'); if (a && a.getAttribute("href").length > 1) { hops++; label(); } });
+    addEventListener("popstate", () => { hops = Math.max(0, hops - 1); label(); });
+    btn.addEventListener("click", () => {
+      if (atHome()) { history.replaceState(null, "", location.pathname); scrollTo({ top: 0, behavior: "smooth" }); }
+      else if (hops > 0 || (internal() && history.length > 1)) history.back();
+      else location.href = "/";
     });
+    label();
   })();
 </script>
 </body>
