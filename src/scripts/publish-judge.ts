@@ -49,7 +49,8 @@ mkdirSync("judge", { recursive: true });
 writeFileSync("judge/snapshot.json", JSON.stringify(snapshot, null, 1) + "\n");
 console.log(`Wrote judge/snapshot.json: ${snapshot.audit.length} audit entries, ${snapshot.receipts.length} receipts, ${snapshot.anchors.length} anchors, ${snapshot.locks.length} locks.`);
 if (!snapshot.anchors.length) console.log("Tip: press Anchor now in the dashboard first, so judges can verify the log on-chain.");
-else if (snapshot.anchors.at(-1)!.auditSeq < snapshot.audit.at(-1)!.seq) console.log(`Note: entries after #${snapshot.anchors.at(-1)!.auditSeq} aren't anchored yet; press Anchor now and publish again to cover them.`);
+// Entries after the last anchor that only record anchoring itself don't need another anchor.
+else if (snapshot.audit.some((e: any) => e.seq > snapshot.anchors.at(-1)!.auditSeq && e.op !== "anchor")) console.log(`Note: entries after #${snapshot.anchors.at(-1)!.auditSeq} aren't anchored yet; press Anchor now and publish again to cover them.`);
 
 if (!process.argv.includes("--no-push")) {
   const git = (...a: string[]) => execFileSync("git", a, { stdio: "inherit" });

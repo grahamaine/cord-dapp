@@ -171,7 +171,8 @@ function render() {
       ? `<span class="big">✗</span><div><b>Something doesn't match</b><span class="muted">See the checks below for which record differs from what's on-chain.</span></div>`
       : `<span class="big">!</span><div><b>Partly verified</b><span class="muted">${c.nodeReachable ? "Some records aren't anchored yet." : "The Concordium node couldn't be reached just now; reload to try again, or use the CCDExplorer links."}</span></div>`;
 
-  const unanchored = c.auditCount - c.anchoredUpTo;
+  // Entries after the last anchor that only record anchoring itself are not counted as uncovered.
+  const unanchored = data.audit.filter((e) => e.seq > c.anchoredUpTo && e.op !== "anchor").length;
   $("#checklist").innerHTML = [
     check(c.auditChain.ok ? "ok" : "bad", "Audit log chain intact", c.auditChain.ok ? `All ${c.auditChain.count} entries link to the one before by SHA-256.` : `Broken at entry #${c.auditChain.brokenAt}.`),
     check(c.receiptChain.ok ? "ok" : "bad", "Receipt chain intact", c.receiptChain.ok ? `All ${c.receiptChain.count} payment receipts link correctly.` : `Broken at receipt #${c.receiptChain.brokenAt}.`),
