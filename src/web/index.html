@@ -565,7 +565,8 @@ const lockBusy = new Set();
 async function lockOp(btn) {
   const l = locks.find((x) => x.id === btn.dataset.id); const op = btn.dataset.op;
   if (lockBusy.has(l.id)) return toast("<b>Still working</b>This lock is already being processed — check your wallet.", "");
-  if (!confirm(OP_TEXT[op](l))) return;
+  // Only Release (money moves) and Cancel ask first; Fund and Send are safe steps.
+  if ((op === "release" || op === "cancel") && !confirm(OP_TEXT[op](l))) return;
   lockBusy.add(l.id);
   btn.disabled = true; btn.textContent = op === "release" ? "Releasing…" : op === "send" ? "Checking…" : "…";
   try {
@@ -590,8 +591,14 @@ async function lockOp(btn) {
     toast(`<b>${e.body?.refused ? "Refused" : "Failed"} · ${esc(op)}</b>${esc(e.message)}`, "bad");
   }
   lockBusy.delete(l.id);
-  await loadOverview().catch(() => {});
-  await loadLocksTab();
+  refreshAfterLock();
+}
+
+/** After a lock action: the locks list (local, instant) first; invoices, totals and balances in the background. */
+async function refreshAfterLock() {
+  await loadLocks().catch(() => {});
+  loadInvoices().catch(() => {});
+  loadOverview().then(renderBudget).catch(() => {});
   loadAccounts();
 }
 
@@ -603,7 +610,7 @@ async function loadInvoices() {
     $("#invoices").innerHTML = inv.items.map((i) => {
       const l = open.get(i.id);
       const status = i.status === "paid" ? chip("ok", "Paid") : l ? chip(STATUS[l.status][0], `${l.id} · ${STATUS[l.status][1]}`) : chip("mute", "Open");
-      const action = i.status === "paid" || l ? "" : isJudge() && !i.id.startsWith("DEMO-") ? `<span class="hint" style="margin:0">Owner only</span>` : `<button class="btn btn-outline btn-sm" data-create="${esc(i.id)}">Create lock</button>`;
+      const action = i.status === "paid" || l ? "" : isJudge() && !i.id.startsWith("DEMO-") ? `<span class="hint" style="margin:0">Owner only</span>` : `<button class="btn btn-primary btn-sm" data-prepare="${esc(i.id)}" title="Create, fund and check in one go; then you press Release">Prepare payment</button> <button class="btn btn-outline btn-sm" data-create="${esc(i.id)}" title="Step by step: create only">Create lock</button>`;
       return `<tr>
         <td>${esc(i.id)}<small>${esc(i.description)}</small></td>
         <td>${esc(i.supplier)}<small>${esc(i.category)}</small></td>
@@ -618,7 +625,15 @@ async function loadInvoices() {
       b.disabled = true;
       try { const r = await post("/api/locks", { invoiceId: b.dataset.create }); toast(`<b>Lock ${esc(r.lock.id)} created</b>Next: fund it.`, "ok"); }
       catch (e) { toast(`<b>Could not create lock</b>${esc(e.message)}`, "bad"); }
-      await loadLocksTab(); loadOverview().catch(() => {});
+      refreshAfterLock();
+    });
+    document.querySelectorAll("[data-prepare]").forEach((b) => b.onclick = async () => {
+      b.disabled = true; b.textContent = "Preparing…";
+      try {
+        const r = await post("/api/locks/prepare", { invoiceId: b.dataset.prepare });
+        toast(`<b>${esc(r.lock.id)} ready to release</b>${eur(r.lock.amountEur)} set aside and checks passed. Press <b>Release</b> on the lock.`, "ok");
+      } catch (e) { toast(`<b>${e.body?.refused ? "Refused" : "Could not prepare"}</b>${esc(e.message)}`, "bad"); }
+      refreshAfterLock();
     });
   } catch (e) {
     $("#invoices").innerHTML = `<tr><td colspan="7" class="empty">${esc(e.message)}. Is the seller running (npm run seller)?</td></tr>`;

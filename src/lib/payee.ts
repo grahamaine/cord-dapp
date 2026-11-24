@@ -25,7 +25,11 @@ export interface PayeeVerdict {
 }
 
 const cache = new Map<string, { at: number; v: PayeeVerdict }>();
-const TTL_MS = 60_000;
+/** Verified answers are reused for CHECK_CACHE_MS (default 10 min); failures for 30 s. */
+const TTL_MS = Number(process.env.CHECK_CACHE_MS || 600_000);
+const FAIL_TTL_MS = 30_000;
+const inflight = new Map<string, Promise<PayeeVerdict>>();
+const fresh = (h: { at: number; v: PayeeVerdict } | undefined) => h && Date.now() - h.at < (h.v.verified ? TTL_MS : FAIL_TTL_MS);
 
 let keysCache: { at: number; keys: Record<string, { address: string; publicKey?: string }> } | undefined;
 /** Public keys the seller publishes for its non-Concordium receiving addresses. */
@@ -44,10 +48,16 @@ export async function sellerPayeeKeys(): Promise<Record<string, { address: strin
 export async function verifyPayee(network: string | undefined, payTo: string): Promise<PayeeVerdict> {
   const id = `${network}|${payTo}`;
   const hit = cache.get(id);
-  if (hit && Date.now() - hit.at < TTL_MS) return hit.v;
-  const v = await check(network, payTo);
-  cache.set(id, { at: Date.now(), v });
-  return v;
+  if (fresh(hit)) return hit!.v;
+  if (!inflight.has(id)) inflight.set(id, check(network, payTo).then((v) => { cache.set(id, { at: Date.now(), v }); return v; }).finally(() => inflight.delete(id)));
+  return inflight.get(id)!;
+}
+
+/** For screens, not for payments: the last answer at once (refreshed in the background when old), or wait at most waitMs. */
+export async function verifyPayeeQuick(network: string | undefined, payTo: string, waitMs = 3000): Promise<PayeeVerdict | null> {
+  const hit = cache.get(`${network}|${payTo}`);
+  if (hit) { if (!fresh(hit)) verifyPayee(network, payTo).catch(() => {}); return hit.v; }
+  return Promise.race([verifyPayee(network, payTo), new Promise<null>((r) => setTimeout(() => r(null), waitMs))]);
 }
 
 async function check(network: string | undefined, payTo: string): Promise<PayeeVerdict> {
