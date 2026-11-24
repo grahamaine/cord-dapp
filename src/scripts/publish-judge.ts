@@ -58,6 +58,14 @@ if (!process.argv.includes("--no-push")) {
   // the live tender list (npm run tenders), so the Vercel copy of TenderScout sells the same tenders
   if (existsSync("data/tenders.json")) git("add", "data/tenders.json");
   try { git("commit", "-m", `Judge view snapshot ${snapshot.publishedAt}`); } catch { console.log("Nothing new to commit."); }
+  // Bring in anything newer on GitHub first (e.g. a merged pull request), keeping this snapshot on top.
+  // --autostash sets aside unsaved edits (such as Windows line-ending changes) and puts them back after.
+  try { git("pull", "--rebase", "--autostash", "origin", "main"); }
+  catch {
+    console.error(`\n✗ Couldn't bring in the latest changes from GitHub. Your snapshot is saved as a local commit.
+  Run:  git rebase --abort   then   git stash   git pull --rebase origin main   git push   git stash drop`);
+    process.exit(1);
+  }
   git("push");
   console.log("Pushed. Vercel redeploys in about a minute: https://cord-dapp.vercel.app/judge");
 }
