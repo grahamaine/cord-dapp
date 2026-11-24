@@ -32,6 +32,7 @@ const WEB_URL = `http://localhost:${WEB_PORT}`;
 const COLORS: Record<string, string> = { facilitator: "\x1b[36m", seller: "\x1b[35m", web: "\x1b[32m", remote: "\x1b[33m" };
 const RESET = "\x1b[0m";
 const children = new Map<string, ChildProcess>();
+const listening = new Set<string>(); // services that printed their "on :port" line
 let stopping = false;
 
 function label(name: string) {
@@ -42,7 +43,11 @@ function start(name: string, file: string, { critical = true } = {}) {
   const child = spawn(process.execPath, nodeArgs(file), { stdio: ["ignore", "pipe", "pipe"], env: process.env, windowsHide: true });
   children.set(name, child);
   const pipe = (buf: Buffer) => {
-    for (const line of buf.toString().split(/\r?\n/)) if (line.trim()) console.log(`${label(name)} ${line}`);
+    for (const line of buf.toString().split(/\r?\n/)) {
+      if (!line.trim()) continue;
+      if (/ on (:\d+|https?:\/\/)/.test(line)) listening.add(name);
+      console.log(`${label(name)} ${line}`);
+    }
   };
   child.stdout!.on("data", pipe);
   child.stderr!.on("data", pipe);
@@ -57,20 +62,34 @@ function start(name: string, file: string, { critical = true } = {}) {
   return child;
 }
 
-/** Wait until a URL answers (any HTTP status counts: 401 means the login is on, which is fine). */
+/**
+ * Wait until a service is ready: its health URL answers (any HTTP status counts: 401 means the login is on),
+ * or, failing that, it has printed its "on :port" line and 15 more seconds have passed. In that second case
+ * the others still start, with a warning, so one slow health check doesn't stop everything.
+ */
 async function waitFor(name: string, url: string, timeoutMs = 60_000) {
-  url = url.replace("//localhost:", "//127.0.0.1:"); // skip the IPv6 (::1) lookup on Windows
+  const urls = [url.replace("//localhost:", "//127.0.0.1:"), url]; // IPv4 first, then as configured
   const until = Date.now() + timeoutMs;
+  let listeningSince = 0;
   while (Date.now() < until) {
     if (!children.has(name)) return false;
-    try {
-      await fetch(url, { signal: AbortSignal.timeout(3000) });
-      return true;
-    } catch {
-      await new Promise((r) => setTimeout(r, 700));
+    for (const u of urls) {
+      try {
+        await fetch(u, { signal: AbortSignal.timeout(5000) });
+        return true;
+      } catch { /* try the next one */ }
     }
+    if (listening.has(name)) {
+      listeningSince ||= Date.now();
+      if (Date.now() - listeningSince > 15_000) {
+        console.log(`${label(name)} ! started, but ${url} didn't answer yet. Carrying on; if it stays unreachable,`);
+        console.log(`${label(name)}   check nothing else is using its port (Windows: netstat -ano | findstr :${new URL(url).port}).`);
+        return true;
+      }
+    }
+    await new Promise((r) => setTimeout(r, 700));
   }
-  return false;
+  return listening.has(name);
 }
 
 function stopAll(code = 0) {
