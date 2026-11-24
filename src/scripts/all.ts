@@ -13,7 +13,6 @@
  * Windows PowerShell: use npm.cmd, e.g.  npm.cmd run all -- --remote
  */
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
-import { createRequire } from "node:module";
 import "dotenv/config";
 
 const args = new Set(process.argv.slice(2));
@@ -21,8 +20,9 @@ const remote = args.has("--remote");
 const openBrowser = !args.has("--no-open");
 const doctor = args.has("--doctor");
 
-const require = createRequire(import.meta.url);
-const tsx = require.resolve("tsx/cli");
+// Run each service directly in Node with the tsx loader (one process per service). Going through the tsx
+// command-line launcher adds a second process per service, which on Windows hid all output and the port.
+const nodeArgs = (file: string) => ["--import", "tsx", file];
 
 const WEB_PORT = Number(process.env.WEB_PORT || 4030);
 const FACILITATOR_URL = process.env.FACILITATOR_URL || `http://localhost:${process.env.FACILITATOR_PORT || 4020}`;
@@ -39,7 +39,7 @@ function label(name: string) {
 }
 
 function start(name: string, file: string, { critical = true } = {}) {
-  const child = spawn(process.execPath, [tsx, file], { stdio: ["ignore", "pipe", "pipe"], env: process.env });
+  const child = spawn(process.execPath, nodeArgs(file), { stdio: ["ignore", "pipe", "pipe"], env: process.env, windowsHide: true });
   children.set(name, child);
   const pipe = (buf: Buffer) => {
     for (const line of buf.toString().split(/\r?\n/)) if (line.trim()) console.log(`${label(name)} ${line}`);
@@ -59,6 +59,7 @@ function start(name: string, file: string, { critical = true } = {}) {
 
 /** Wait until a URL answers (any HTTP status counts: 401 means the login is on, which is fine). */
 async function waitFor(name: string, url: string, timeoutMs = 60_000) {
+  url = url.replace("//localhost:", "//127.0.0.1:"); // skip the IPv6 (::1) lookup on Windows
   const until = Date.now() + timeoutMs;
   while (Date.now() < until) {
     if (!children.has(name)) return false;
@@ -90,7 +91,7 @@ function open(url: string) {
 
 if (doctor) {
   console.log("Running the checks first (npm run doctor)…\n");
-  const r = spawnSync(process.execPath, [tsx, "src/scripts/doctor.ts"], { stdio: "inherit", env: process.env });
+  const r = spawnSync(process.execPath, nodeArgs("src/scripts/doctor.ts"), { stdio: "inherit", env: process.env });
   if (r.status) {
     console.error("\n✗ The checks found a problem (see above). Fix it, or start without --doctor.");
     process.exit(r.status);
@@ -110,6 +111,7 @@ for (const [name, file, health] of steps) {
   if (!(await waitFor(name, health))) {
     if (!stopping) {
       console.error(`\n✗ ${name} didn't start within 60 seconds (${health}). Stopping.`);
+      console.error(`  Try it on its own to see why:  npm run ${name}`);
       stopAll(1);
     }
     await new Promise(() => {}); // wait for exit
