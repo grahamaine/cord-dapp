@@ -15,7 +15,11 @@ export interface BadgeVerdict {
 }
 
 const cache = new Map<string, { at: number; v: BadgeVerdict }>();
-const TTL_MS = 60_000;
+/** A verified answer is reused for CHECK_CACHE_MS (default 10 min); a failed one only for 30 s, so a network blip is retried soon. */
+const TTL_MS = Number(process.env.CHECK_CACHE_MS || 600_000);
+const FAIL_TTL_MS = 30_000;
+const inflight = new Map<string, Promise<BadgeVerdict>>();
+const fresh = (h: { at: number; v: BadgeVerdict } | undefined) => h && Date.now() - h.at < (h.v.verified ? TTL_MS : FAIL_TTL_MS);
 
 async function getJson(path: string): Promise<{ status: number; body: any }> {
   const url = `${config.registry.api}${path}${path.includes("?") ? "&" : "?"}network=${config.registry.network}`;
@@ -32,7 +36,24 @@ async function getJson(path: string): Promise<{ status: number; body: any }> {
 /** Check one badge (token address) or an account (all agents it owns). */
 export async function checkBadge(id: string): Promise<BadgeVerdict> {
   const hit = cache.get(id);
-  if (hit && Date.now() - hit.at < TTL_MS) return hit.v;
+  if (fresh(hit)) return hit!.v;
+  // One registry call per id at a time: parallel callers share it.
+  if (!inflight.has(id)) inflight.set(id, lookupBadge(id).finally(() => inflight.delete(id)));
+  return inflight.get(id)!;
+}
+
+/**
+ * For screens, not for payments: the last answer straight away (refreshed in the background when old),
+ * or, with none yet, wait at most waitMs and otherwise report "still checking".
+ */
+export async function checkBadgeQuick(id: string, waitMs = 3000): Promise<BadgeVerdict> {
+  const hit = cache.get(id);
+  if (hit) { if (!fresh(hit)) checkBadge(id).catch(() => {}); return hit.v; }
+  const pending: BadgeVerdict = { verified: false, subject: id, agents: 0, issues: ["still checking with the registry"], raw: null };
+  return Promise.race([checkBadge(id), new Promise<BadgeVerdict>((r) => setTimeout(() => r(pending), waitMs))]);
+}
+
+async function lookupBadge(id: string): Promise<BadgeVerdict> {
 
   const { status, body } = await getJson(`/v1/badge-check/${encodeURIComponent(id)}`);
   let v: BadgeVerdict;

@@ -18,7 +18,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { getExplorerTxUrl } from "@x402/concordium";
 import { config } from "../lib/config.js";
-import { checkBadge } from "../lib/badge.js";
+import { checkBadge, checkBadgeQuick } from "../lib/badge.js";
 import { readReceipts, verifyChain, type Receipt } from "../lib/receipts.js";
 import { loadPolicy, savePolicy, spentTodayEur } from "../lib/policy.js";
 import { audit, readAudit, verifyAudit } from "../lib/audit.js";
@@ -28,7 +28,7 @@ import { tokenBalances } from "../lib/plt.js";
 import { createChallenge, ownerAccounts, verifyApproval } from "../lib/approval.js";
 import { CHAINS, verifyCrossChain } from "../lib/xchain.js";
 import { chainByNetwork, explorerTx } from "../lib/chains.js";
-import { verifyPayee } from "../lib/payee.js";
+import { verifyPayee, verifyPayeeQuick } from "../lib/payee.js";
 import { registryTool } from "../lib/registry-mcp.js";
 import { anchorNow, anchorData, checkAnchors } from "../lib/anchor.js";
 import { buy, PaymentRefused } from "../buyer/procurebot.js";
@@ -298,11 +298,12 @@ app.get("/api/locks/:id/trail", (req, res) => {
 app.get("/api/invoices", async (_req, res) => {
   const r = await getJson(`${config.seller.url}/invoices`);
   if (!r.ok) return res.status(502).json({ error: `seller unreachable at ${config.seller.url}`, detail: r.body });
-  const badge = r.body.payTo ? await checkBadge(r.body.payTo) : null;
+  // Screen only: answer fast from the last registry check (payments always check properly on Send).
+  const badge = r.body.payTo ? await checkBadgeQuick(r.body.payTo) : null;
   const items = await Promise.all((r.body.items ?? []).map(async (i: any) => {
     const x = chainByNetwork(i.network);
     // Base / Solana payees: show whether their key is CIS-8 linked to a verified Concordium owner.
-    const link = x && i.status !== "paid" ? await verifyPayee(i.network, i.payTo).catch(() => null) : null;
+    const link = x && i.status !== "paid" ? await verifyPayeeQuick(i.network, i.payTo).catch(() => null) : null;
     return {
       ...i,
       chainName: x?.name ?? "Concordium",
@@ -351,6 +352,17 @@ app.post("/api/locks", lockRoute(async (req) => {
   if (role === "judge") assertJudgeInvoice(String(req.body?.invoiceId || ""));
   return createLock(await invoiceRef(String(req.body?.invoiceId || "")), role);
 }));
+// One click: create (if needed) → fund → send to the agent's checks, stopping at "awaiting release".
+app.post("/api/locks/prepare", lockRoute(async (req) => {
+  const role = roleOf(req);
+  const invoiceId = String(req.body?.invoiceId || "");
+  if (role === "judge") assertJudgeInvoice(invoiceId);
+  let lock = readLocks().find((l) => l.invoiceId === invoiceId && l.status !== "cancelled" && l.status !== "released")
+    ?? createLock(await invoiceRef(invoiceId), role);
+  if (lock.status === "created") lock = fundLock(lock.id, role);
+  if (lock.status === "funded") lock = await sendLock(lock.id, async (l) => l); // never auto-release here
+  return lock;
+}));
 app.post("/api/locks/:id/fund", lockRoute((req) => { judgeLock(req); return fundLock(req.params.id, roleOf(req)); }));
 app.post("/api/locks/:id/send", lockRoute((req) => { judgeLock(req); return sendLock(req.params.id, (l) => releaseLock(l.id, "agent", payLock)); }));
 // Owner wallet approval: get a one-time challenge, sign it in the wallet, then release with the signature.
@@ -383,6 +395,15 @@ app.post("/api/invoices/demo", async (req, res) => {
 });
 
 app.listen(PORT, HOST, () => {
+  // Ask the registry about our suppliers once now, so the first payment doesn't wait for it.
+  setTimeout(async () => {
+    try {
+      const r = await getJson(`${config.seller.url}/invoices`);
+      if (!r.ok) return;
+      if (r.body.payTo) checkBadge(r.body.payTo).catch(() => {});
+      for (const i of r.body.items ?? []) if (i.status !== "paid" && i.payTo) verifyPayee(i.network, i.payTo).catch(() => {});
+    } catch { /* seller not up yet: the first screen load will check */ }
+  }, 1500);
   console.log(`${APP_NAME} dashboard on http://${HOST === "0.0.0.0" ? "localhost" : HOST}:${PORT}`);
   console.log(judgeOpen()
     ? "Open judge mode: no passwords. This computer = owner; anyone on the remote link = judge (capped demo). Link: npm run remote"
