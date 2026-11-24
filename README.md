@@ -31,8 +31,8 @@ receipts (8) chains intact, all 3 anchors match their on-chain data, all 4 payme
 | Audit anchor: entries 1–35, receipts 1–8 | | owner | [c5c36694…](https://ccdexplorer.io/testnet/transaction/c5c36694428de46b6d49d29d00399827ddf4eb347c54b6ab0911ec4b8b79ddca) |
 | Audit anchor: entries 1–36, receipts 1–8 | | owner | [fb3325d2…](https://ccdexplorer.io/testnet/transaction/fb3325d2e26412b6bc1422857c45fb28d32d120aea9e0fa8de52261b4c398af2) |
 
-**Live proof on Base and Solana (23 Nov 2026).** TenderScout's Base Sepolia and Solana devnet keys are linked
-through CIS-8 to its identity-verified Concordium owner, and ProcureBot paid a supplier invoice in EURC on Base
+**Live proof on Base and Solana (23–24 Nov 2026).** TenderScout's Base Sepolia and Solana devnet keys are linked
+through CIS-8 to its identity-verified Concordium owner, and ProcureBot paid supplier invoices on Base and on Solana
 only after checking that link.
 
 | What happened | Amount | Who did it | Transaction |
@@ -40,9 +40,11 @@ only after checking that link.
 | TenderScout's Base Sepolia key linked (CIS-8) | | supplier's owner, wallet-signed | [f8d6c932…](https://ccdexplorer.io/testnet/transaction/f8d6c93210790ba53a71b65bb93e0a3932b44ee295c692ac518292d38f352aff) (Concordium) |
 | TenderScout's Solana devnet key linked (CIS-8) | | supplier's owner, wallet-signed | [978a836f…](https://ccdexplorer.io/testnet/transaction/978a836f7057424ff98aa2644e3b2b3ecdbf07455f29e67355c8694398f79525) (Concordium) |
 | MTN Uganda internet invoice paid on **Base Sepolia** | €1,150 = 1.15 EURC | agent prepared, owner signed Release | [0xce929862…](https://sepolia.basescan.org/tx/0xce9298625089a76251949cefc91a914886ecc4bcd8497a5db3770ca5bf9bba7e) (BaseScan) |
-| Corporate Security Services invoice on **Solana devnet** | €3,200 = 3.2 EURC | agent prepared, awaiting owner Release | pending |
+| Corporate Security Services invoice paid on **Solana devnet** | €3,200 = 3.2 demo EURC* | agent prepared, owner signed Release | [bo7HQW1E…](https://explorer.solana.com/tx/bo7HQW1E1fMQ2iyjJHeUswZU9mqyEv52icX28jAEMfJcXKL3Sseaq6wM2RZeWrpykLcjg8zyVfwSqEGdjq1bHXk?cluster=devnet) (Solana Explorer) |
 
-The Base payment's gas was paid by the public x402 facilitator, so neither agent holds ETH. See
+The fees were paid by the public x402 facilitator, so neither agent holds ETH for Base.
+\*Circle's EURC faucet didn't deliver on Solana devnet, so this payment used a demo euro token with the same 6 decimals
+(`npm run solana:token`, mint `6ehaw1BmmgnexDzpn8mWWja1YLc9stcBsxKkpvYzMVtC`); on mainnet Kakasa uses Circle's EURC. See
 [Settlement on Base and Solana](#settlement-on-base-and-solana-eurc).
 
 Every Concordium payment was a sponsored transaction (the Kakasa facilitator paid the fee) to a supplier agent that is
