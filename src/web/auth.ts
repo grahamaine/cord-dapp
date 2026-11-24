@@ -11,6 +11,10 @@
  * Judge demo mode: set JUDGE_PASSWORD too (8+ characters, different from DASHBOARD_PASSWORD). Signing in with
  * it gives a "judge" session: the whole flow on demo invoices, capped releases without the owner's wallet, and
  * no access to owner-only actions (policy, pause/resume, anchoring, CIS-8 key links). See src/lib/judge.ts.
+ *
+ * Open judge mode (JUDGE_OPEN=true): no passwords for judges. Anyone arriving through the remote link is a judge
+ * straight away (same limits as above); on this computer you are the owner without signing in. The owner can
+ * still sign in through the link with DASHBOARD_PASSWORD, if one is set.
  */
 import type express from "express";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
@@ -28,8 +32,10 @@ const GLOBAL_MAX = 20; let globalFails: number[] = []; // timestamps of recent w
 export const password = () => process.env.DASHBOARD_PASSWORD || "";
 export const authEnabled = () => password().length > 0;
 const judgePassword = () => process.env.JUDGE_PASSWORD || "";
-/** Judge demo mode is on when the owner login is on and a separate JUDGE_PASSWORD (8+ characters) is set. */
-export const judgeEnabled = () => authEnabled() && judgePassword().length >= 8 && judgePassword() !== password();
+/** Open judge mode: judges need no password (see the header). */
+export const judgeOpen = () => /^(1|true|yes|on)$/i.test(process.env.JUDGE_OPEN || "");
+/** Judge demo mode is on when it's open, or when the owner login is on and a separate JUDGE_PASSWORD (8+ characters) is set. */
+export const judgeEnabled = () => judgeOpen() || (authEnabled() && judgePassword().length >= 8 && judgePassword() !== password());
 
 /** Owner-only actions a judge session may not use. */
 const OWNER_ONLY: [string, RegExp][] = [
@@ -59,6 +65,7 @@ function sessionOf(req: express.Request) {
 const validSession = (req: express.Request) => Boolean(sessionOf(req));
 /** Who is using the dashboard. Without the login (this computer only) it is always the owner. */
 export function roleOf(req: express.Request): Role {
+  if (judgeOpen()) return sessionOf(req)?.role ?? (viaTunnel(req) ? "judge" : "owner");
   if (!authEnabled()) return "owner";
   return sessionOf(req)?.role ?? "owner";
 }
@@ -73,6 +80,12 @@ export function mountAuth(app: express.Express, appName: string) {
   app.use((req, res, next) => {
     res.setHeader("X-Frame-Options", "DENY");
     res.setHeader("Referrer-Policy", "no-referrer");
+    if (judgeOpen()) {
+      // No passwords: this computer = owner; the remote link = judge (unless signed in as the owner).
+      if (roleOf(req) === "judge" && OWNER_ONLY.some(([m, re]) => req.method === m && re.test(req.path)))
+        return res.status(403).json({ error: "Judge demo: only the owner can do this.", refused: true });
+      return next();
+    }
     if (!authEnabled()) {
       if (viaTunnel(req)) return res.status(403).type("text").send("Remote access is off: set DASHBOARD_PASSWORD in .env and restart the dashboard.");
       return next();
@@ -88,7 +101,7 @@ export function mountAuth(app: express.Express, appName: string) {
     return res.redirect(302, "/login");
   });
 
-  app.get("/login", (req, res) => (authEnabled() && validSession(req) ? res.redirect(302, "/") : res.type("html").send(loginPage(appName))));
+  app.get("/login", (req, res) => ((authEnabled() || judgeOpen()) && validSession(req) ? res.redirect(302, "/") : res.type("html").send(loginPage(appName))));
 
   app.post("/api/login", (req, res) => {
     if (!authEnabled()) return res.json({ ok: true });

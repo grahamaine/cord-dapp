@@ -14,7 +14,8 @@ import "dotenv/config";
 
 const PORT = Number(process.env.WEB_PORT || 4030);
 const pw = process.env.DASHBOARD_PASSWORD || "";
-if (pw.length < 12) {
+const open = /^(1|true|yes|on)$/i.test(process.env.JUDGE_OPEN || "");
+if (!open && pw.length < 12) {
   console.error(`✗ Set a strong DASHBOARD_PASSWORD (12+ characters) in .env first, then restart the dashboard (npm run web).
   It protects the link: anyone with the link must sign in before seeing anything.`);
   process.exit(1);
@@ -23,7 +24,13 @@ if (pw.length < 12) {
 // The dashboard must be running AND have the login on (otherwise it would refuse tunnel requests anyway).
 try {
   const r = await fetch(`http://127.0.0.1:${PORT}/api/session`, { signal: AbortSignal.timeout(5000) });
-  if (r.status !== 401) {
+  if (open) {
+    const s = await r.json().catch(() => ({}));
+    if (!s.open) {
+      console.error("✗ The dashboard is running without JUDGE_OPEN. Restart it (Ctrl+C, then npm run all) so it picks it up.");
+      process.exit(1);
+    }
+  } else if (r.status !== 401) {
     console.error("✗ The dashboard is running without the login. Restart it (Ctrl+C, then npm run web) so it picks up DASHBOARD_PASSWORD.");
     process.exit(1);
   }
@@ -50,10 +57,14 @@ const onData = async (buf: Buffer) => {
   const m = text.match(/https:\/\/(?!api\.)[a-z0-9]+(?:-[a-z0-9]+)+\.trycloudflare\.com/);
   if (!m || shown) return;
   shown = true;
-  console.log("\n✓ Your private dashboard link (sign in with DASHBOARD_PASSWORD):\n\n   " + m[0] + "\n");
-  console.log(await QRCode.toString(m[0], { type: "terminal", small: true }));
+  console.log(open
+    ? "\n✓ Judge link (no password: visitors are judges in capped demo mode; you are the owner on this computer):\n\n   " + m[0] + "/#agent\n"
+    : "\n✓ Your private dashboard link (sign in with DASHBOARD_PASSWORD):\n\n   " + m[0] + "\n");
+  console.log(await QRCode.toString(open ? m[0] + "/#agent" : m[0], { type: "terminal", small: true }));
   console.log("Scan the QR code with your phone's camera. Keep this window open; Ctrl+C closes the link.");
-  console.log("Don't share the link publicly. Wrong passwords are locked out and recorded in the audit log.\n");
+  console.log(open
+    ? "Send it to the judges (or set it as AGENT_URL in Vercel). It changes every time this window restarts.\n"
+    : "Don't share the link publicly. Wrong passwords are locked out and recorded in the audit log.\n");
 };
 cf.stdout.on("data", onData);
 cf.stderr.on("data", onData);

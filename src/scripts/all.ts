@@ -67,11 +67,17 @@ function start(name: string, file: string, { critical = true } = {}) {
  * or, failing that, it has printed its "on :port" line and 15 more seconds have passed. In that second case
  * the others still start, with a warning, so one slow health check doesn't stop everything.
  */
-async function waitFor(name: string, url: string, timeoutMs = 60_000) {
+async function waitFor(name: string, url: string, timeoutMs = 240_000) {
   const urls = [url.replace("//localhost:", "//127.0.0.1:"), url]; // IPv4 first, then as configured
   const until = Date.now() + timeoutMs;
   let listeningSince = 0;
+  const started = Date.now();
+  let nextNote = started + 20_000;
   while (Date.now() < until) {
+    if (Date.now() > nextNote && !listening.has(name)) {
+      console.log(`${label(name)} still starting… (${Math.round((Date.now() - started) / 1000)} s; the first start on a slower PC can take a couple of minutes)`);
+      nextNote += 20_000;
+    }
     if (!children.has(name)) return false;
     for (const u of urls) {
       try {
@@ -89,7 +95,12 @@ async function waitFor(name: string, url: string, timeoutMs = 60_000) {
     }
     await new Promise((r) => setTimeout(r, 700));
   }
-  return listening.has(name);
+  // Still running but never confirmed: carry on with a warning rather than stopping everything.
+  if (children.has(name)) {
+    console.log(`${label(name)} ! no answer after ${timeoutMs / 1000} s but still running. Carrying on; if it stays unreachable, try: npm run ${name}`);
+    return true;
+  }
+  return false;
 }
 
 function stopAll(code = 0) {
@@ -129,7 +140,7 @@ for (const [name, file, health] of steps) {
   start(name, file);
   if (!(await waitFor(name, health))) {
     if (!stopping) {
-      console.error(`\n✗ ${name} didn't start within 60 seconds (${health}). Stopping.`);
+      console.error(`\n✗ ${name} stopped before it was ready (${health}). Stopping.`);
       console.error(`  Try it on its own to see why:  npm run ${name}`);
       stopAll(1);
     }
@@ -137,14 +148,15 @@ for (const [name, file, health] of steps) {
   }
 }
 
-const judge = (process.env.JUDGE_PASSWORD || "").length > 0;
+const judgeOpen = /^(1|true|yes|on)$/i.test(process.env.JUDGE_OPEN || "");
+const judge = judgeOpen || (process.env.JUDGE_PASSWORD || "").length > 0;
 console.log(`
 ✓ Kakasa is running
    AI agent:     ${WEB_URL}/#agent
    Dashboard:    ${WEB_URL}
    Facilitator:  ${FACILITATOR_URL}
    Seller:       ${SELLER_URL}
-   Judge demo:   ${judge ? "on (judges sign in with JUDGE_PASSWORD)" : "off (set JUDGE_PASSWORD in .env to turn it on)"}
+   Judge demo:   ${judgeOpen ? "on, no passwords (anyone on the remote link is a judge; add --remote for the link)" : judge ? "on (judges sign in with JUDGE_PASSWORD)" : "off (set JUDGE_OPEN=true in .env to turn it on)"}
 Press Ctrl+C to stop everything.
 `);
 if (openBrowser) open(`${WEB_URL}/#agent`);
