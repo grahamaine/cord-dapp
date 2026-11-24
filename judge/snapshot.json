@@ -1,7 +1,7 @@
 {
  "kind": "cord-judge-snapshot",
  "version": 1,
- "publishedAt": "2026-11-24T07:39:19.475Z",
+ "publishedAt": "2026-11-24T08:31:23.264Z",
  "network": "ccd:4221332d34e1694168c2a0c0b3fd0f27",
  "accounts": {
   "procurebot": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
@@ -2205,6 +2205,32 @@
    "ts": "2026-11-24T07:26:07.575Z",
    "prevHash": "52a75e9377ba71b5b700930e0facf4825628dfdb326e24868b77d1a2bc1d0661",
    "hash": "882153df86d4a6c7b392f919bd8a258a61287a1b70a5ad8427e0bc59e2fe8d6a"
+  },
+  {
+   "actor": "owner",
+   "op": "anchor",
+   "outcome": "ok",
+   "detail": "Audit trail anchored on Concordium at #88 (receipts #14)",
+   "data": {
+    "txHash": "151804df4214dd0beb8cd1f3db77da98c813226432c2f3e7056ed3da7c75a197"
+   },
+   "seq": 89,
+   "ts": "2026-11-24T07:52:33.715Z",
+   "prevHash": "882153df86d4a6c7b392f919bd8a258a61287a1b70a5ad8427e0bc59e2fe8d6a",
+   "hash": "76018d7b815ac347820505e690c09fa2b25fd26e2775e8a7b53842394606bec4"
+  },
+  {
+   "actor": "owner",
+   "op": "anchor",
+   "outcome": "ok",
+   "detail": "Audit trail anchored on Concordium at #89 (receipts #14)",
+   "data": {
+    "txHash": "a3f3cbe804458e3eeeb27cb73915977aab6c0f937880eb2942cb8e62f0052b30"
+   },
+   "seq": 90,
+   "ts": "2026-11-24T07:52:53.720Z",
+   "prevHash": "76018d7b815ac347820505e690c09fa2b25fd26e2775e8a7b53842394606bec4",
+   "hash": "91f4568983bd201eecd7aee2dfdfcaa4537a17b214b54884c77a1c7fff213272"
   }
  ],
  "receipts": [
@@ -2492,6 +2518,30 @@
    "receiptHash": "fc7cd005bf71dbbe98afa43a3b11f3d373c86e970b570ea7edb6ac31a22d9285",
    "txHash": "eb531dca2315a8adde354daf9ee11a1b2516cdccfb2691ae4e647da0c7b0df19",
    "explorerUrl": "https://ccdexplorer.io/testnet/transaction/eb531dca2315a8adde354daf9ee11a1b2516cdccfb2691ae4e647da0c7b0df19",
+   "sender": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "finalized": true
+  },
+  {
+   "at": "2026-11-24T07:52:33.564Z",
+   "data": "cord:audit:v1|a=88:882153df86d4a6c7b392f919bd8a258a61287a1b70a5ad8427e0bc59e2fe8d6a|r=14:c24eb78a87f06f216638a7d452bd67d4daa557d73380f316b9ebd8a66c796a41",
+   "auditSeq": 88,
+   "auditHash": "882153df86d4a6c7b392f919bd8a258a61287a1b70a5ad8427e0bc59e2fe8d6a",
+   "receiptSeq": 14,
+   "receiptHash": "c24eb78a87f06f216638a7d452bd67d4daa557d73380f316b9ebd8a66c796a41",
+   "txHash": "151804df4214dd0beb8cd1f3db77da98c813226432c2f3e7056ed3da7c75a197",
+   "explorerUrl": "https://ccdexplorer.io/testnet/transaction/151804df4214dd0beb8cd1f3db77da98c813226432c2f3e7056ed3da7c75a197",
+   "sender": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
+   "finalized": true
+  },
+  {
+   "at": "2026-11-24T07:52:53.505Z",
+   "data": "cord:audit:v1|a=89:76018d7b815ac347820505e690c09fa2b25fd26e2775e8a7b53842394606bec4|r=14:c24eb78a87f06f216638a7d452bd67d4daa557d73380f316b9ebd8a66c796a41",
+   "auditSeq": 89,
+   "auditHash": "76018d7b815ac347820505e690c09fa2b25fd26e2775e8a7b53842394606bec4",
+   "receiptSeq": 14,
+   "receiptHash": "c24eb78a87f06f216638a7d452bd67d4daa557d73380f316b9ebd8a66c796a41",
+   "txHash": "a3f3cbe804458e3eeeb27cb73915977aab6c0f937880eb2942cb8e62f0052b30",
+   "explorerUrl": "https://ccdexplorer.io/testnet/transaction/a3f3cbe804458e3eeeb27cb73915977aab6c0f937880eb2942cb8e62f0052b30",
    "sender": "39hY4WXQ6q42vMQQvrmrUeoVZiYEYv4tDjQuqKD3sBHW4coiFd",
    "finalized": true
   }
